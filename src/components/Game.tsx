@@ -13,6 +13,7 @@ import { EnhancedAchievementSystem } from '../systems/EnhancedAchievementSystem'
 import { AudioSystem } from '../systems/AudioSystem';
 import { DifficultySystem } from '../systems/DifficultySystem';
 import { MobileSystem } from '../systems/MobileSystem';
+import ResponsiveSystem from '../systems/ResponsiveSystem';
 
 // Import new features
 import { Storyline } from '../story/Storyline';
@@ -113,13 +114,17 @@ const Game: React.FC = () => {
   const audioSystemRef = useRef(new AudioSystem());
   const difficultySystemRef = useRef(new DifficultySystem());
   const mobileSystemRef = useRef(new MobileSystem());
+  const responsiveSystemRef = useRef(new ResponsiveSystem());
 
-  // Initialize canvas
+  // Initialize canvas with responsive system
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
-      canvas.width = 800;
-      canvas.height = 600;
+      // Initialize responsive system
+      const responsiveSettings = responsiveSystemRef.current.initialize();
+      
+      // Update canvas with responsive settings
+      responsiveSystemRef.current.updateCanvas(canvas);
       
       // Initialize player position
       playerRef.current.x = canvas.width / 2 - 25;
@@ -330,6 +335,10 @@ const Game: React.FC = () => {
       gameTime: prevStats.gameTime + 16
     }));
 
+    // Update systems
+    comboSystemRef.current.updateCombo(16);
+    killStreakSystemRef.current.updateStreak(16);
+
     // Update player
     updatePlayer();
     
@@ -416,44 +425,24 @@ const Game: React.FC = () => {
   }, []);
 
   const updateEnemies = useCallback(() => {
-    const enemies = enemiesRef.current;
     const canvas = canvasRef.current;
+    if (!canvas) return;
     
-    enemies.forEach((enemy, index) => {
-      // Move enemies
-      enemy.y += enemy.speed;
+    // Use enhanced enemy system
+    const newEnemy = enemySystemRef.current.spawnEnemy(canvas, gameStats.score);
+    if (newEnemy) {
+      enemiesRef.current.push(newEnemy);
+    }
+    
+    // Update existing enemies with enhanced AI
+    enemiesRef.current.forEach((enemy, index) => {
+      enemySystemRef.current.updateEnemyAI(enemy, playerRef.current.x, playerRef.current.y, canvas, 16);
       
       // Remove enemies that are off screen
-      if (canvas && enemy.y > canvas.height) {
-        enemies.splice(index, 1);
+      if (enemy.y > canvas.height) {
+        enemiesRef.current.splice(index, 1);
       }
     });
-
-    // Spawn new enemies
-    if (Math.random() < 0.02) { // 2% chance per frame
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const enemyTypes = ['basic', 'fast', 'heavy'];
-        const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
-        
-        const enemy: Enemy = {
-          x: Math.random() * (canvas.width - 40),
-          y: -40,
-          width: 40,
-          height: 40,
-          speed: type === 'fast' ? 3 : type === 'heavy' ? 1 : 2,
-          health: type === 'heavy' ? 3 : 1,
-          maxHealth: type === 'heavy' ? 3 : 1,
-          type: type,
-          color: type === 'basic' ? '#ff0000' : type === 'fast' ? '#00ff00' : '#8800ff',
-          movementPattern: 'straight',
-          lastDirectionChange: 0,
-          direction: 0
-        };
-        
-        enemies.push(enemy);
-      }
-    }
   }, []);
 
   const updateBosses = useCallback(() => {
@@ -518,11 +507,15 @@ const Game: React.FC = () => {
             bullets.splice(bulletIndex, 1);
             
             if (enemy.health <= 0) {
-              // Enemy destroyed
+              // Enemy destroyed - use combo system
               enemies.splice(enemyIndex, 1);
+              const comboMultiplier = comboSystemRef.current.addKill();
+              const baseScore = 100;
+              const finalScore = baseScore * comboMultiplier;
+              
               setGameStats(prevStats => ({
                 ...prevStats,
-                score: prevStats.score + 100,
+                score: prevStats.score + finalScore,
                 enemiesDestroyed: prevStats.enemiesDestroyed + 1
               }));
             }
@@ -665,6 +658,15 @@ const Game: React.FC = () => {
     ctx.fillStyle = '#00aaff';
     ctx.font = '24px Arial';
     ctx.fillText(`Score: ${gameStats.score.toLocaleString()}`, 20, 40);
+
+    // Combo display
+    const currentCombo = comboSystemRef.current.getCurrentCombo();
+    const comboMultiplier = comboSystemRef.current.getComboMultiplier();
+    if (currentCombo > 0) {
+      ctx.fillStyle = '#ff6600';
+      ctx.font = '20px Arial';
+      ctx.fillText(`Combo: ${currentCombo}x${comboMultiplier}`, 20, 70);
+    }
 
     // Health bar
     const healthBarWidth = 200;
