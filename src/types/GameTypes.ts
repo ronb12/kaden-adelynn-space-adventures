@@ -75,6 +75,7 @@ export interface Bullet {
   color: string;
   damage: number;
   owner: 'player' | 'enemy' | 'boss';
+  direction?: number;
 }
 
 export interface PowerUp {
@@ -132,11 +133,4 @@ export interface GameStats {
   scoreMultiplierUses: number;
 }
 
-export interface GameState {
-  state: 'menu' | 'playing' | 'paused' | 'gameOver' | 'settings';
-  difficulty: 'easy' | 'medium' | 'hard';
-  showAchievements: boolean;
-  showSettings: boolean;
-  specialEvent: string | null;
-  specialEventTime: number;
-}
+export type GameState = 'menu' | 'playing' | 'paused' | 'gameOver' | 'settings';

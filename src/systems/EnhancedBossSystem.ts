@@ -133,8 +133,8 @@ export class EnhancedBossSystem {
         for (let i = 0; i < 8; i++) {
           const angle = (currentTime / 100) + (i * Math.PI / 4);
           bullets.push({
-            x: boss.x + boss.width / 2,
-            y: boss.y + boss.height,
+            x: boss.x + boss.width / 2 + Math.cos(angle) * 20,
+            y: boss.y + boss.height + Math.sin(angle) * 20,
             width: 6,
             height: 6,
             speed: 3,
@@ -167,6 +167,7 @@ export class EnhancedBossSystem {
         // Burst bullet pattern
         const angle = Math.atan2(player.y - boss.y, player.x - boss.x);
         for (let i = -2; i <= 2; i++) {
+          const spreadAngle = angle + (i * Math.PI / 8);
           bullets.push({
             x: boss.x + boss.width / 2,
             y: boss.y + boss.height / 2,
@@ -176,7 +177,8 @@ export class EnhancedBossSystem {
             type: 'boss_burst',
             color: '#ff6600',
             damage: 2,
-            owner: 'boss'
+            owner: 'boss',
+            direction: spreadAngle
           });
         }
         break;

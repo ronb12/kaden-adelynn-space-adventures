@@ -43,7 +43,24 @@ export class ComboSystem {
     if (this.currentCombo <= 5) return 2;
     if (this.currentCombo <= 10) return 3;
     if (this.currentCombo <= 20) return 4;
-    return 5; // Max 5x multiplier
+    if (this.currentCombo <= 50) return 6;
+    return 10; // Max 10x multiplier for insane combos
+  }
+
+  getComboReward(): string | null {
+    if (this.currentCombo === 10) return 'COMBO MASTER!';
+    if (this.currentCombo === 25) return 'UNSTOPPABLE!';
+    if (this.currentCombo === 50) return 'LEGENDARY!';
+    if (this.currentCombo === 100) return 'GODLIKE!';
+    return null;
+  }
+
+  getComboBonus(): { health?: number; powerUp?: string } | null {
+    if (this.currentCombo === 10) return { health: 10 };
+    if (this.currentCombo === 25) return { health: 25, powerUp: 'rapidFire' };
+    if (this.currentCombo === 50) return { health: 50, powerUp: 'shield' };
+    if (this.currentCombo === 100) return { health: 100, powerUp: 'invincibility' };
+    return null;
   }
 
   getComboScore(baseScore: number): number {

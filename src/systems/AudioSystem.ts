@@ -6,15 +6,24 @@ export class AudioSystem {
   private currentMusic: AudioBufferSourceNode | null = null;
 
   constructor() {
-    this.initializeAudio();
+    // Don't initialize audio context immediately - wait for user interaction
   }
 
   private async initializeAudio(): Promise<void> {
+    if (this.audioContext) return; // Already initialized
+    
     try {
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       await this.loadSounds();
     } catch (error) {
       console.warn('Audio not supported:', error);
+    }
+  }
+
+  // Initialize audio on first user interaction
+  public async initOnUserInteraction(): Promise<void> {
+    if (!this.audioContext) {
+      await this.initializeAudio();
     }
   }
 

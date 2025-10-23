@@ -1,0 +1,57 @@
+{
+  "app": {
+    "name": "Kaden & Adelynn Space Adventures",
+    "short_name": "Kaden & Adelynn",
+    "description": "Epic 2D space shooter adventure with Kaden and Adelynn",
+    "version": "1.0.0",
+    "icon": "🚀",
+    "icon_description": "Rocket emoji representing space adventures",
+    "theme_color": "#00aaff",
+    "background_color": "#000033",
+    "display": "fullscreen",
+    "orientation": "landscape"
+  },
+  "icons": {
+    "primary": "🚀",
+    "description": "Rocket emoji used as the main app icon",
+    "sizes": [
+      "16x16", "32x32", "72x72", "96x96", "128x128", 
+      "144x144", "150x150", "152x152", "180x180", 
+      "192x192", "384x384", "512x512"
+    ],
+    "format": "PNG and SVG",
+    "design": "Rocket emoji on blue background with space theme"
+  },
+  "features": [
+    "Cross Platform",
+    "Offline Support", 
+    "Fullscreen Mode",
+    "Touch Controls",
+    "Keyboard Controls",
+    "Gamepad Support"
+  ],
+  "characters": {
+    "kaden": {
+      "name": "Kaden",
+      "description": "Space pilot and hero",
+      "icon": "🚀"
+    },
+    "adelynn": {
+      "name": "Adelynn", 
+      "description": "Space pilot and hero",
+      "icon": "🚀"
+    }
+  },
+  "gameplay": {
+    "genre": "2D Space Shooter",
+    "theme": "Space Adventures",
+    "icon": "🚀",
+    "features": [
+      "Alien enemies",
+      "Power-ups",
+      "Boss battles", 
+      "Achievement system",
+      "Progressive difficulty"
+    ]
+  }
+}

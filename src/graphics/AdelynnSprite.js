@@ -450,4 +450,5 @@ export class AdelynnSpriteRenderer {
   }
 }
 
+
 export default AdelynnSprite;

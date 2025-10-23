@@ -7,10 +7,10 @@
     <meta name="build-version" content="2025-01-15-v1.0.0" />
     
     <!-- PWA Meta Tags -->
-    <meta name="application-name" content="Space Adventures" />
+    <meta name="application-name" content="Kaden & Adelynn" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Space Adventures" />
+    <meta name="apple-mobile-web-app-title" content="Kaden & Adelynn" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="msapplication-config" content="/browserconfig.xml" />
@@ -54,8 +54,7 @@
     <meta property="twitter:image" content="/icons/icon-512x512.svg" />
     
     <!-- Preload critical resources -->
-    <link rel="preload" href="/manifest.json" as="manifest" />
-    <link rel="preload" href="/icons/icon-192x192.svg" as="image" />
+    <!-- Icon preload removed to prevent unused preload warning -->
     
     <!-- Prevent zoom on double tap -->
     <style>
@@ -114,19 +113,7 @@
         e.preventDefault();
       });
       
-      // Handle PWA install prompt
-      let deferredPrompt;
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        console.log('📱 PWA install prompt available');
-      });
-      
-      // Handle PWA installed
-      window.addEventListener('appinstalled', () => {
-        console.log('🎉 PWA installed successfully');
-        deferredPrompt = null;
-      });
+      // PWA install prompt is now handled by the PWAInstallPrompt component
     </script>
   </body>
 </html>

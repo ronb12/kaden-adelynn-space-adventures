@@ -16,54 +16,65 @@ import { MobileSystem } from '../systems/MobileSystem';
 
 // Import new features
 import { Storyline } from '../story/Storyline';
-import { ShipDesigns, ShipRenderer } from '../graphics/ShipDesigns';
-import { KadenSprite, KadenSpriteRenderer } from '../graphics/KadenSprite';
-import { AdelynnSprite, AdelynnSpriteRenderer } from '../graphics/AdelynnSprite';
-import { GameEnhancementSystem } from '../systems/GameEnhancementSystem';
+import { ShipRenderer } from '../graphics/ShipDesigns';
+import { KadenSpriteRenderer } from '../graphics/KadenSprite';
+import { AdelynnSpriteRenderer } from '../graphics/AdelynnSprite';
 import SettingsPanel from './SettingsPanel';
 import CharacterSelection from './CharacterSelection';
 import PWAInstallPrompt from './PWAInstallPrompt';
 
 // Import types
-import { Player, Enemy, Bullet, PowerUp, Boss, Achievement, GameStats, GameState } from '../types/GameTypes';
+import { Player, Enemy, Bullet, PowerUp, Boss, GameStats, GameState } from '../types/GameTypes';
 
 const Game: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
-
+  
   // Game state
-  const [gameState, setGameState] = useState<GameState['state']>('menu');
+  const [gameState, setGameState] = useState<GameState>('menu');
   const [selectedCharacter, setSelectedCharacter] = useState<string>('kaden');
-  const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [showCharacterSelection, setShowCharacterSelection] = useState<boolean>(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showCharacterSelection, setShowCharacterSelection] = useState(false);
   const [currentStoryEvent, setCurrentStoryEvent] = useState<string>('');
-  const [gameSettings, setGameSettings] = useState<any>({
-    masterVolume: 0.7,
-    musicVolume: 0.6,
-    sfxVolume: 0.8,
-    particleEffects: true,
-    screenShake: true,
-    visualEffects: true,
-    highQuality: true,
-    difficulty: 'medium',
-    autoShoot: false,
-    showFPS: false,
-    showHitboxes: false,
-    keyboardControls: true,
-    touchControls: true,
-    gamepadSupport: true,
-    selectedCharacter: 'kaden',
-    fullscreen: false,
-    vsync: true,
-    frameRate: 60
+  
+  // Game objects
+  const playerRef = useRef<Player>({
+    x: 0,
+    y: 0,
+    width: 50,
+    height: 60,
+    speed: 5,
+    maxSpeed: 8,
+    health: 100,
+    maxHealth: 100,
+    invulnerable: false,
+    invulnerabilityTime: 0,
+    level: 1,
+    xp: 0,
+    maxXP: 100,
+    hasShield: false,
+    shieldTime: 0,
+    rapidFire: false,
+    rapidFireTime: 0,
+    doubleShot: false,
+    wingFighters: []
   });
+  
+  const bulletsRef = useRef<Bullet[]>([]);
+  const enemiesRef = useRef<Enemy[]>([]);
+  const bossesRef = useRef<Boss[]>([]);
+  const powerUpsRef = useRef<PowerUp[]>([]);
+  const keysRef = useRef<{ [key: string]: boolean }>({});
+  const touchRef = useRef({ startX: 0, startY: 0, currentX: 0, currentY: 0 });
+  
+  // Game stats
   const [gameStats, setGameStats] = useState<GameStats>({
     score: 0,
     highScore: parseInt(localStorage.getItem('highScore') || '0'),
     lives: 3,
-    health: 50,
-    maxHealth: 50,
+    health: 100,
+    maxHealth: 100,
     combo: 0,
     killStreak: 0,
     maxCombo: 0,
@@ -90,581 +101,211 @@ const Game: React.FC = () => {
     scoreMultiplierUses: 0
   });
 
-  // Player state
-  const playerRef = useRef<Player>({
-    x: 0,
-    y: 0,
-    width: 40,
-    height: 40,
-    speed: 4,
-    maxSpeed: 6,
-    health: 100,
-    maxHealth: 100,
-    invulnerable: false,
-    invulnerabilityTime: 0,
-    level: 1,
-    xp: 0,
-    maxXP: 100,
-    hasShield: false,
-    shieldTime: 0,
-    rapidFire: false,
-    rapidFireTime: 0,
-    doubleShot: false,
-    wingFighters: []
-  });
+  // System refs
+  const powerUpSystemRef = useRef(new PowerUpSystem());
+  const wingFighterSystemRef = useRef(new WingFighterSystem());
+  const shieldSystemRef = useRef(new ShieldSystem());
+  const comboSystemRef = useRef(new ComboSystem());
+  const killStreakSystemRef = useRef(new KillStreakSystem());
+  const bossSystemRef = useRef(new EnhancedBossSystem());
+  const enemySystemRef = useRef(new EnhancedEnemySystem());
+  const achievementSystemRef = useRef(new EnhancedAchievementSystem());
+  const audioSystemRef = useRef(new AudioSystem());
+  const difficultySystemRef = useRef(new DifficultySystem());
+  const mobileSystemRef = useRef(new MobileSystem());
 
-  // Game objects
-  const bulletsRef = useRef<Bullet[]>([]);
-  const enemiesRef = useRef<Enemy[]>([]);
-  const bossesRef = useRef<Boss[]>([]);
-  const powerUpsRef = useRef<PowerUp[]>([]);
+  // Initialize canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.width = 800;
+      canvas.height = 600;
+      
+      // Initialize player position
+      playerRef.current.x = canvas.width / 2 - 25;
+      playerRef.current.y = canvas.height - 80;
+    }
+  }, []);
 
-  // Systems
-  const powerUpSystemRef = useRef<PowerUpSystem>(new PowerUpSystem());
-  const wingFighterSystemRef = useRef<WingFighterSystem>(new WingFighterSystem());
-  const shieldSystemRef = useRef<ShieldSystem>(new ShieldSystem());
-  const comboSystemRef = useRef<ComboSystem>(new ComboSystem());
-  const killStreakSystemRef = useRef<KillStreakSystem>(new KillStreakSystem());
-  const bossSystemRef = useRef<EnhancedBossSystem>(new EnhancedBossSystem());
-  const enemySystemRef = useRef<EnhancedEnemySystem>(new EnhancedEnemySystem());
-  const achievementSystemRef = useRef<EnhancedAchievementSystem>(new EnhancedAchievementSystem());
-  const audioSystemRef = useRef<AudioSystem>(new AudioSystem());
-  const difficultySystemRef = useRef<DifficultySystem>(new DifficultySystem());
-  const mobileSystemRef = useRef<MobileSystem>(new MobileSystem());
+  // Initialize audio system on first user interaction
+  useEffect(() => {
+    const initAudio = async () => {
+      await audioSystemRef.current.initOnUserInteraction();
+    };
+    
+    // Initialize audio on any user interaction
+    const handleUserInteraction = () => {
+      initAudio();
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+    
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('keydown', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
+    
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+  }, []);
 
-  // Input state
-  const keysRef = useRef<{ [key: string]: boolean }>({});
-  const touchRef = useRef<{ startX: number; startY: number; currentX: number; currentY: number }>({
-    startX: 0,
-    startY: 0,
-    currentX: 0,
-    currentY: 0
-  });
+  // Keyboard event handlers
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      keysRef.current[event.code] = true;
+      
+      if (event.code === 'Space') {
+        event.preventDefault();
+        shoot();
+      }
+    };
 
-  // Initialize game
+    const handleKeyUp = (event: KeyboardEvent) => {
+      keysRef.current[event.code] = false;
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  // Touch event handlers
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const handleTouchStart = (event: TouchEvent) => {
+      event.preventDefault();
+      const touch = event.touches[0];
+      touchRef.current.startX = touch.clientX;
+      touchRef.current.startY = touch.clientY;
+      touchRef.current.currentX = touch.clientX;
+      touchRef.current.currentY = touch.clientY;
+    };
 
-    // Set canvas size
-    const { width, height } = mobileSystemRef.current.getOptimalCanvasSize();
-    canvas.width = width;
-    canvas.height = height;
+    const handleTouchMove = (event: TouchEvent) => {
+      event.preventDefault();
+      const touch = event.touches[0];
+      touchRef.current.currentX = touch.clientX;
+      touchRef.current.currentY = touch.clientY;
+    };
 
-    // Optimize for mobile
-    mobileSystemRef.current.optimizeForIOS();
-    mobileSystemRef.current.optimizeForAndroid();
-    mobileSystemRef.current.optimizeCanvasForDPI(canvas);
+    const handleTouchEnd = (event: TouchEvent) => {
+      event.preventDefault();
+      const touch = event.changedTouches[0];
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
-    // Initialize player position
-    playerRef.current.x = canvas.width / 2 - playerRef.current.width / 2;
-    playerRef.current.y = canvas.height - 100;
+      const rect = canvas.getBoundingClientRect();
+      const touchX = touch.clientX - rect.left;
+      const touchY = touch.clientY - rect.top;
 
-    // Set up event listeners
-    setupEventListeners();
+      // Check if touch is on shoot button
+      const shootButton = document.querySelector('.touch-shoot-button');
+      if (shootButton) {
+        const buttonRect = shootButton.getBoundingClientRect();
+        if (touchX >= buttonRect.left - rect.left && 
+            touchX <= buttonRect.right - rect.left &&
+            touchY >= buttonRect.top - rect.top && 
+            touchY <= buttonRect.bottom - rect.top) {
+          shoot();
+          mobileSystemRef.current.lightVibrate();
+          return;
+        }
+      }
+
+      // Handle touch movement for player control
+      const deltaX = touchRef.current.currentX - touchRef.current.startX;
+      const deltaY = touchRef.current.currentY - touchRef.current.startY;
+      
+      if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+        // Move player based on touch movement
+        const canvas = canvasRef.current;
+        if (canvas) {
+          playerRef.current.x = Math.max(0, Math.min(canvas.width - playerRef.current.width, playerRef.current.x + deltaX * 0.5));
+          playerRef.current.y = Math.max(0, Math.min(canvas.height - playerRef.current.height, playerRef.current.y + deltaY * 0.5));
+        }
+      }
+    };
+
+    canvas.addEventListener('touchstart', handleTouchStart);
+    canvas.addEventListener('touchmove', handleTouchMove);
+    canvas.addEventListener('touchend', handleTouchEnd);
 
     return () => {
-      cleanupEventListeners();
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const setupEventListeners = () => {
-    // Keyboard events
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    // Touch events
-    if (mobileSystemRef.current.hasTouchSupport()) {
-      const canvas = canvasRef.current;
-      if (canvas) {
-        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-        canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
-      }
-    }
-  };
-
-  const cleanupEventListeners = () => {
-    window.removeEventListener('keydown', handleKeyDown);
-    window.removeEventListener('keyup', handleKeyUp);
-
-    const canvas = canvasRef.current;
-    if (canvas) {
       canvas.removeEventListener('touchstart', handleTouchStart);
       canvas.removeEventListener('touchmove', handleTouchMove);
       canvas.removeEventListener('touchend', handleTouchEnd);
-    }
-  };
+    };
+  }, []);
 
-  const handleKeyDown = (event: KeyboardEvent) => {
-    keysRef.current[event.key] = true;
-    
-    if (event.key === ' ') {
-      event.preventDefault();
-      shoot();
-    }
-  };
-
-  const handleKeyUp = (event: KeyboardEvent) => {
-    keysRef.current[event.key] = false;
-  };
-
-  const handleTouchStart = (event: TouchEvent) => {
-    event.preventDefault();
-    const touch = event.touches[0];
-    touchRef.current.startX = touch.clientX;
-    touchRef.current.startY = touch.clientY;
-    touchRef.current.currentX = touch.clientX;
-    touchRef.current.currentY = touch.clientY;
-  };
-
-  const handleTouchMove = (event: TouchEvent) => {
-    event.preventDefault();
-    const touch = event.touches[0];
-    touchRef.current.currentX = touch.clientX;
-    touchRef.current.currentY = touch.clientY;
-  };
-
-  const handleTouchEnd = (event: TouchEvent) => {
-    event.preventDefault();
-    const touch = event.changedTouches[0];
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const touchX = touch.clientX - rect.left;
-    const touchY = touch.clientY - rect.top;
-
-    // Check if touch is on shoot button
-    const shootButton = document.querySelector('.touch-shoot-button');
-    if (shootButton) {
-      const buttonRect = shootButton.getBoundingClientRect();
-      if (touchX >= buttonRect.left - rect.left && 
-          touchX <= buttonRect.right - rect.left &&
-          touchY >= buttonRect.top - rect.top && 
-          touchY <= buttonRect.bottom - rect.top) {
-        shoot();
-        mobileSystemRef.current.lightVibrate();
-        return;
-      }
-    }
-
-    // Handle touch movement for player control
-    const deltaX = touchRef.current.currentX - touchRef.current.startX;
-    const deltaY = touchRef.current.currentY - touchRef.current.startY;
-    
-    if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
-      // Move player based on touch movement
-      const canvas = canvasRef.current;
-      if (canvas) {
-        playerRef.current.x = Math.max(0, Math.min(canvas.width - playerRef.current.width, playerRef.current.x + deltaX * 0.5));
-        playerRef.current.y = Math.max(0, Math.min(canvas.height - playerRef.current.height, playerRef.current.y + deltaY * 0.5));
-      }
-    }
-  };
-
-  const shoot = useCallback(() => {
-    if (gameState !== 'playing') return;
-
-    const player = playerRef.current;
-    const bullets = bulletsRef.current;
-
-    // Player bullet
-    bullets.push({
-      x: player.x + player.width / 2 - 2,
-      y: player.y,
-      width: 4,
-      height: 8,
-      speed: 6,
-      type: 'player_laser',
-      color: '#00ff00',
-      damage: 1,
-      owner: 'player'
-    });
-
-    // Double shot
-    if (player.doubleShot) {
-      bullets.push({
-        x: player.x + player.width / 2 - 2,
-        y: player.y,
-        width: 4,
-        height: 8,
-        speed: 6,
-        type: 'player_laser',
-        color: '#00ff00',
-        damage: 1,
-        owner: 'player'
-      });
-    }
-
-    // Wing fighter bullets
-    const wingBullets = wingFighterSystemRef.current.shootWingFighters(player);
-    bullets.push(...wingBullets);
-
-    audioSystemRef.current.playShootSound();
-  }, [gameState]);
-
-  const startGame = () => {
+  const startGame = useCallback(() => {
     setGameState('playing');
-    setGameStats(prev => ({
-      ...prev,
+    
+    // Reset game stats
+    setGameStats(prevStats => ({
+      ...prevStats,
       score: 0,
-      lives: difficultySystemRef.current.getPlayerHealth() / 10,
-      health: difficultySystemRef.current.getPlayerHealth(),
-      maxHealth: difficultySystemRef.current.getPlayerHealth(),
-      gameTime: 0
+      enemiesDestroyed: 0,
+      bossesDefeated: 0,
+      combo: 0,
+      killStreak: 0,
+      gameTime: 0,
+      weaponsUsed: 0,
+      livesLost: 0
     }));
-
-    // Reset player
+    
+    // Reset player position
     const canvas = canvasRef.current;
     if (canvas) {
-      playerRef.current.x = canvas.width / 2 - playerRef.current.width / 2;
-      playerRef.current.y = canvas.height - 100;
-      playerRef.current.health = difficultySystemRef.current.getPlayerHealth();
-      playerRef.current.speed = difficultySystemRef.current.getPlayerSpeed();
+      playerRef.current = {
+        x: canvas.width / 2 - 25,
+        y: canvas.height - 80,
+        width: 50,
+        height: 60,
+        speed: 5,
+        maxSpeed: 8,
+        health: 100,
+        maxHealth: 100,
+        invulnerable: false,
+        invulnerabilityTime: 0,
+        level: 1,
+        xp: 0,
+        maxXP: 100,
+        hasShield: false,
+        shieldTime: 0,
+        rapidFire: false,
+        rapidFireTime: 0,
+        doubleShot: false,
+        wingFighters: []
+      };
     }
-
-    // Clear game objects
+    
+    // Clear all game objects
     bulletsRef.current = [];
     enemiesRef.current = [];
     bossesRef.current = [];
     powerUpsRef.current = [];
-
+    
     // Reset systems
-    comboSystemRef.current.resetCombo();
-    killStreakSystemRef.current.resetStreak();
+    comboSystemRef.current = new ComboSystem();
+    killStreakSystemRef.current = new KillStreakSystem();
     achievementSystemRef.current = new EnhancedAchievementSystem();
+    
+    console.log('🎮 Game started!');
+  }, []);
 
-    // Start game loop
-    gameLoopRef.current = requestAnimationFrame(gameLoop);
-  };
-
-  const gameLoop = useCallback((currentTime: number) => {
+  // Game loop
+  const gameLoop = useCallback(() => {
     if (gameState !== 'playing') return;
 
-    const deltaTime = currentTime - lastTimeRef.current;
-    lastTimeRef.current = currentTime;
-
-    updateGame(deltaTime);
-    render();
-
-    gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [gameState]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const updateGame = (deltaTime: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const player = playerRef.current;
-    const bullets = bulletsRef.current;
-    const enemies = enemiesRef.current;
-    const bosses = bossesRef.current;
-    const powerUps = powerUpsRef.current;
-
-    // Update game time
-    setGameStats(prev => ({
-      ...prev,
-      gameTime: prev.gameTime + deltaTime
-    }));
-
-    // Update player
-    updatePlayer(deltaTime);
-
-    // Update systems
-    comboSystemRef.current.updateCombo(deltaTime);
-    killStreakSystemRef.current.updateStreak(deltaTime);
-    shieldSystemRef.current.updateShield(player, deltaTime);
-    wingFighterSystemRef.current.updateWingFighters(player, canvas);
-
-    // Update game objects
-    updateBullets(deltaTime);
-    updateEnemies(deltaTime);
-    updateBosses(deltaTime);
-    updatePowerUps(deltaTime);
-
-    // Spawn new objects
-    spawnEnemies();
-    spawnBosses();
-    spawnPowerUps();
-
-    // Check collisions
-    checkCollisions();
-
-    // Update achievements
-    const newAchievement = achievementSystemRef.current.updateAchievements(gameStats);
-    if (newAchievement) {
-      achievementSystemRef.current.displayAchievement(newAchievement);
-      audioSystemRef.current.playAchievementSound();
-      mobileSystemRef.current.heavyVibrate();
-    }
-
-    achievementSystemRef.current.updateAchievementDisplay();
-  };
-
-  const updatePlayer = (deltaTime: number) => {
-    const player = playerRef.current;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    // Handle input
-    if (keysRef.current['ArrowLeft'] || keysRef.current['a'] || keysRef.current['A']) {
-      player.x -= player.speed;
-    }
-    if (keysRef.current['ArrowRight'] || keysRef.current['d'] || keysRef.current['D']) {
-      player.x += player.speed;
-    }
-    if (keysRef.current['ArrowUp'] || keysRef.current['w'] || keysRef.current['W']) {
-      player.y -= player.speed;
-    }
-    if (keysRef.current['ArrowDown'] || keysRef.current['s'] || keysRef.current['S']) {
-      player.y += player.speed;
-    }
-
-    // Keep player within bounds
-    player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-    player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
-
-    // Update invulnerability
-    if (player.invulnerable) {
-      player.invulnerabilityTime -= deltaTime;
-      if (player.invulnerabilityTime <= 0) {
-        player.invulnerable = false;
-      }
-    }
-
-    // Update rapid fire
-    if (player.rapidFire) {
-      player.rapidFireTime -= deltaTime;
-      if (player.rapidFireTime <= 0) {
-        player.rapidFire = false;
-      }
-    }
-  };
-
-  const updateBullets = (deltaTime: number) => {
-    const bullets = bulletsRef.current;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    for (let i = bullets.length - 1; i >= 0; i--) {
-      const bullet = bullets[i];
-      bullet.y += bullet.speed * (bullet.owner === 'player' ? -1 : 1);
-
-      // Remove bullets that are off-screen
-      if (bullet.y < -bullet.height || bullet.y > canvas.height + bullet.height) {
-        bullets.splice(i, 1);
-      }
-    }
-  };
-
-  const updateEnemies = (deltaTime: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const enemyBullets = enemySystemRef.current.updateEnemies(canvas, playerRef.current);
-    bulletsRef.current.push(...enemyBullets);
-  };
-
-  const updateBosses = (deltaTime: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const bossBullets = bossSystemRef.current.updateBosses(canvas, playerRef.current);
-    bulletsRef.current.push(...bossBullets);
-  };
-
-  const updatePowerUps = (deltaTime: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    powerUpSystemRef.current.updatePowerUps(canvas);
-  };
-
-  const spawnEnemies = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const newEnemy = enemySystemRef.current.spawnEnemy(canvas, gameStats.score);
-    if (newEnemy) {
-      enemiesRef.current.push(newEnemy);
-    }
-  };
-
-  const spawnBosses = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const newBoss = bossSystemRef.current.spawnBoss(canvas, gameStats.score);
-    if (newBoss) {
-      bossesRef.current.push(newBoss);
-    }
-  };
-
-  const spawnPowerUps = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const newPowerUp = powerUpSystemRef.current.spawnPowerUp(canvas, gameStats.score);
-    if (newPowerUp) {
-      powerUpsRef.current.push(newPowerUp);
-    }
-  };
-
-  const checkCollisions = useCallback(() => {
-    const player = playerRef.current;
-    const bullets = bulletsRef.current;
-    const enemies = enemiesRef.current;
-    const bosses = bossesRef.current;
-    const powerUps = powerUpsRef.current;
-
-    // Bullet vs Enemy collisions
-    for (let i = bullets.length - 1; i >= 0; i--) {
-      const bullet = bullets[i];
-      if (bullet.owner !== 'player') continue;
-
-      for (let j = enemies.length - 1; j >= 0; j--) {
-        const enemy = enemies[j];
-        if (isColliding(bullet, enemy)) {
-          bullets.splice(i, 1);
-          const destroyed = enemySystemRef.current.damageEnemy(j, bullet.damage);
-          
-          if (destroyed) {
-            enemies.splice(j, 1);
-            const comboMultiplier = comboSystemRef.current.addKill();
-            const streakData = killStreakSystemRef.current.addKill();
-            
-            setGameStats(prev => ({
-              ...prev,
-              score: prev.score + (100 * comboMultiplier * streakData.multiplier),
-              enemiesDestroyed: prev.enemiesDestroyed + 1
-            }));
-
-            audioSystemRef.current.playEnemyDestroySound();
-            mobileSystemRef.current.mediumVibrate();
-          } else {
-            audioSystemRef.current.playEnemyHitSound();
-          }
-          break;
-        }
-      }
-    }
-
-    // Bullet vs Boss collisions
-    for (let i = bullets.length - 1; i >= 0; i--) {
-      const bullet = bullets[i];
-      if (bullet.owner !== 'player') continue;
-
-      for (let j = bosses.length - 1; j >= 0; j--) {
-        const boss = bosses[j];
-        if (isColliding(bullet, boss)) {
-          bullets.splice(i, 1);
-          boss.health -= bullet.damage;
-          
-          if (boss.health <= 0) {
-            bosses.splice(j, 1);
-            setGameStats(prev => ({
-              ...prev,
-              score: prev.score + 1000,
-              bossesDefeated: prev.bossesDefeated + 1
-            }));
-
-            audioSystemRef.current.playBossDestroySound();
-            mobileSystemRef.current.heavyVibrate();
-          } else {
-            audioSystemRef.current.playBossHitSound();
-          }
-          break;
-        }
-      }
-    }
-
-    // Player vs Enemy/Boss collisions
-    for (let i = enemies.length - 1; i >= 0; i--) {
-      const enemy = enemies[i];
-      if (isColliding(player, enemy)) {
-        enemies.splice(i, 1);
-        takeDamage(1);
-        break;
-      }
-    }
-
-    for (let i = bosses.length - 1; i >= 0; i--) {
-      const boss = bosses[i];
-      if (isColliding(player, boss)) {
-        takeDamage(2);
-        break;
-      }
-    }
-
-    // Player vs Enemy Bullet collisions
-    for (let i = bullets.length - 1; i >= 0; i--) {
-      const bullet = bullets[i];
-      if (bullet.owner === 'player') continue;
-
-      if (isColliding(player, bullet)) {
-        bullets.splice(i, 1);
-        takeDamage(bullet.damage);
-        break;
-      }
-    }
-
-    // Player vs PowerUp collisions
-    for (let i = powerUps.length - 1; i >= 0; i--) {
-      const powerUp = powerUps[i];
-      if (isColliding(player, powerUp)) {
-        powerUps.splice(i, 1);
-        powerUpSystemRef.current.collectPowerUp(powerUp, player);
-        
-        setGameStats(prev => ({
-          ...prev,
-          powerUpsCollected: prev.powerUpsCollected + 1
-        }));
-
-        audioSystemRef.current.playPowerUpSound();
-        mobileSystemRef.current.lightVibrate();
-        break;
-      }
-    }
-  }, [gameStats]);
-
-  const takeDamage = (damage: number) => {
-    if (playerRef.current.invulnerable) return;
-
-    // Check shield first
-    if (shieldSystemRef.current.takeDamage(playerRef.current, damage)) {
-      return; // Shield absorbed damage
-    }
-
-    setGameStats(prev => {
-      const newHealth = prev.health - damage;
-      if (newHealth <= 0) {
-        // Player died
-        setGameState('gameOver');
-        if (prev.score > prev.highScore) {
-          localStorage.setItem('highScore', prev.score.toString());
-          return { ...prev, highScore: prev.score };
-        }
-        return prev;
-      }
-      return { ...prev, health: newHealth };
-    });
-
-    // Make player invulnerable briefly
-    playerRef.current.invulnerable = true;
-    playerRef.current.invulnerabilityTime = 2000;
-  };
-
-  const isColliding = (obj1: any, obj2: any): boolean => {
-    return obj1.x < obj2.x + obj2.width &&
-           obj1.x + obj1.width > obj2.x &&
-           obj1.y < obj2.y + obj2.height &&
-           obj1.y + obj1.height > obj2.y;
-  };
-
-  const render = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -672,38 +313,262 @@ const Game: React.FC = () => {
     if (!ctx) return;
 
     // Clear canvas
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = '#000011';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw stars background
-    drawStars(ctx, canvas);
-
-    // Draw game objects
-    drawPlayer(ctx);
-    drawBullets(ctx);
-    enemySystemRef.current.drawEnemies(ctx);
-    bossSystemRef.current.drawBosses(ctx);
-    drawPowerUps(ctx);
-    wingFighterSystemRef.current.drawWingFighters(ctx);
-    shieldSystemRef.current.drawShield(ctx, playerRef.current);
-
-    // Draw UI
-    drawUI(ctx, canvas);
-    comboSystemRef.current.drawComboUI(ctx, canvas);
-    killStreakSystemRef.current.drawStreakUI(ctx, canvas);
-    achievementSystemRef.current.drawAchievementNotification(ctx, canvas);
-  };
-
-  const drawStars = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+    // Draw starfield background
     ctx.fillStyle = '#ffffff';
     for (let i = 0; i < 100; i++) {
-      const x = (i * 7) % canvas.width;
-      const y = (i * 11) % canvas.height;
+      const x = (i * 37) % canvas.width;
+      const y = (i * 23 + Date.now() * 0.1) % canvas.height;
       ctx.fillRect(x, y, 1, 1);
     }
-  };
 
-  const drawPlayer = (ctx: CanvasRenderingContext2D) => {
+    // Update game time
+    setGameStats(prevStats => ({
+      ...prevStats,
+      gameTime: prevStats.gameTime + 16
+    }));
+
+    // Update player
+    updatePlayer();
+    
+    // Update bullets
+    updateBullets();
+    
+    // Update enemies
+    updateEnemies();
+    
+    // Update bosses
+    updateBosses();
+    
+    // Update power-ups
+    updatePowerUps();
+    
+    // Check collisions
+    checkCollisions();
+    
+    // Draw everything
+    drawPlayer(ctx);
+    drawBullets(ctx);
+    drawEnemies(ctx);
+    drawBosses(ctx);
+    drawPowerUps(ctx);
+    drawUI(ctx);
+
+    // Continue game loop
+    requestAnimationFrame(gameLoop);
+  }, [gameState]);
+
+  // Start game loop when game starts
+  useEffect(() => {
+    if (gameState === 'playing') {
+      gameLoop();
+    }
+  }, [gameState, gameLoop]);
+
+  // Update functions
+  const updatePlayer = useCallback(() => {
+    const player = playerRef.current;
+    const keys = keysRef.current;
+
+    // Handle player movement
+    if (keys['ArrowLeft'] || keys['KeyA']) {
+      player.x = Math.max(0, player.x - player.speed);
+    }
+    if (keys['ArrowRight'] || keys['KeyD']) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        player.x = Math.min(canvas.width - player.width, player.x + player.speed);
+      }
+    }
+    if (keys['ArrowUp'] || keys['KeyW']) {
+      player.y = Math.max(0, player.y - player.speed);
+    }
+    if (keys['ArrowDown'] || keys['KeyS']) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        player.y = Math.min(canvas.height - player.height, player.y + player.speed);
+      }
+    }
+
+    // Update invulnerability
+    if (player.invulnerable) {
+      player.invulnerabilityTime--;
+      if (player.invulnerabilityTime <= 0) {
+        player.invulnerable = false;
+      }
+    }
+  }, []);
+
+  const updateBullets = useCallback(() => {
+    const bullets = bulletsRef.current;
+    
+    bullets.forEach((bullet, index) => {
+      bullet.y += bullet.speed * (bullet.owner === 'player' ? -1 : 1);
+      
+      // Remove bullets that are off screen
+      const canvas = canvasRef.current;
+      if (canvas && (bullet.y < 0 || bullet.y > canvas.height)) {
+        bullets.splice(index, 1);
+      }
+    });
+  }, []);
+
+  const updateEnemies = useCallback(() => {
+    const enemies = enemiesRef.current;
+    const canvas = canvasRef.current;
+    
+    enemies.forEach((enemy, index) => {
+      // Move enemies
+      enemy.y += enemy.speed;
+      
+      // Remove enemies that are off screen
+      if (canvas && enemy.y > canvas.height) {
+        enemies.splice(index, 1);
+      }
+    });
+
+    // Spawn new enemies
+    if (Math.random() < 0.02) { // 2% chance per frame
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const enemyTypes = ['basic', 'fast', 'heavy'];
+        const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+        
+        const enemy: Enemy = {
+          x: Math.random() * (canvas.width - 40),
+          y: -40,
+          width: 40,
+          height: 40,
+          speed: type === 'fast' ? 3 : type === 'heavy' ? 1 : 2,
+          health: type === 'heavy' ? 3 : 1,
+          maxHealth: type === 'heavy' ? 3 : 1,
+          type: type,
+          color: type === 'basic' ? '#ff0000' : type === 'fast' ? '#00ff00' : '#8800ff',
+          movementPattern: 'straight',
+          lastDirectionChange: 0,
+          direction: 0
+        };
+        
+        enemies.push(enemy);
+      }
+    }
+  }, []);
+
+  const updateBosses = useCallback(() => {
+    // Boss spawning logic would go here
+    // For now, just update existing bosses
+    const bosses = bossesRef.current;
+    bosses.forEach((boss, index) => {
+      boss.y += boss.speed;
+      
+      // Remove bosses that are off screen
+      const canvas = canvasRef.current;
+      if (canvas && boss.y > canvas.height) {
+        bosses.splice(index, 1);
+      }
+    });
+  }, []);
+
+  const updatePowerUps = useCallback(() => {
+    const powerUps = powerUpsRef.current;
+    
+    powerUps.forEach((powerUp, index) => {
+      powerUp.y += 2; // Fixed speed for power-ups
+      
+      // Remove power-ups that are off screen
+      const canvas = canvasRef.current;
+      if (canvas && powerUp.y > canvas.height) {
+        powerUps.splice(index, 1);
+      }
+    });
+  }, []);
+
+  const checkCollisions = useCallback(() => {
+    const player = playerRef.current;
+    const bullets = bulletsRef.current;
+    const enemies = enemiesRef.current;
+    const powerUps = powerUpsRef.current;
+
+    // Player vs Enemies
+    enemies.forEach((enemy, enemyIndex) => {
+      if (player.x < enemy.x + enemy.width &&
+          player.x + player.width > enemy.x &&
+          player.y < enemy.y + enemy.height &&
+          player.y + player.height > enemy.y) {
+        
+        // Player takes damage
+        takeDamage(20);
+        enemies.splice(enemyIndex, 1);
+      }
+    });
+
+    // Bullets vs Enemies
+    bullets.forEach((bullet, bulletIndex) => {
+      if (bullet.owner === 'player') {
+        enemies.forEach((enemy, enemyIndex) => {
+          if (bullet.x < enemy.x + enemy.width &&
+              bullet.x + bullet.width > enemy.x &&
+              bullet.y < enemy.y + enemy.height &&
+              bullet.y + bullet.height > enemy.y) {
+            
+            // Enemy takes damage
+            enemy.health--;
+            bullets.splice(bulletIndex, 1);
+            
+            if (enemy.health <= 0) {
+              // Enemy destroyed
+              enemies.splice(enemyIndex, 1);
+              setGameStats(prevStats => ({
+                ...prevStats,
+                score: prevStats.score + 100,
+                enemiesDestroyed: prevStats.enemiesDestroyed + 1
+              }));
+            }
+          }
+        });
+      }
+    });
+
+    // Player vs Power-ups
+    powerUps.forEach((powerUp, powerUpIndex) => {
+      if (player.x < powerUp.x + powerUp.width &&
+          player.x + player.width > powerUp.x &&
+          player.y < powerUp.y + powerUp.height &&
+          player.y + player.height > powerUp.y) {
+        
+        // Collect power-up
+        powerUps.splice(powerUpIndex, 1);
+        // Power-up effects would be applied here
+        setGameStats(prevStats => ({
+          ...prevStats,
+          score: prevStats.score + 50
+        }));
+      }
+    });
+  }, []);
+
+  const takeDamage = useCallback((damage: number) => {
+    const player = playerRef.current;
+    
+    if (player.invulnerable) return;
+    
+    player.health -= damage;
+    player.invulnerable = true;
+    player.invulnerabilityTime = 60; // 1 second at 60fps
+    
+    if (player.health <= 0) {
+      setGameState('gameOver');
+      setGameStats(prevStats => ({
+        ...prevStats,
+        livesLost: prevStats.livesLost + 1
+      }));
+    }
+  }, []);
+
+  // Draw functions
+  const drawPlayer = useCallback((ctx: CanvasRenderingContext2D) => {
     const player = playerRef.current;
     
     if (player.invulnerable) {
@@ -718,7 +583,7 @@ const Game: React.FC = () => {
     }
 
     ctx.globalAlpha = 1;
-  };
+  }, [selectedCharacter]);
 
   const drawBullets = useCallback((ctx: CanvasRenderingContext2D) => {
     const bullets = bulletsRef.current;
@@ -763,63 +628,93 @@ const Game: React.FC = () => {
     });
   }, []);
 
-  const drawPowerUps = (ctx: CanvasRenderingContext2D) => {
-    const powerUps = powerUpSystemRef.current.getPowerUps();
+  const drawEnemies = useCallback((ctx: CanvasRenderingContext2D) => {
+    const enemies = enemiesRef.current;
+    
+    enemies.forEach(enemy => {
+      ShipRenderer.drawEnemyShip(ctx, enemy.x, enemy.y, enemy.width, enemy.height, enemy.type, 0);
+    });
+  }, []);
+
+  const drawBosses = useCallback((ctx: CanvasRenderingContext2D) => {
+    const bosses = bossesRef.current;
+    
+    bosses.forEach(boss => {
+      ShipRenderer.drawBossShip(ctx, boss.x, boss.y, boss.width, boss.height, boss.health, boss.maxHealth);
+    });
+  }, []);
+
+  const drawPowerUps = useCallback((ctx: CanvasRenderingContext2D) => {
+    const powerUps = powerUpsRef.current;
     
     powerUps.forEach(powerUp => {
       ctx.fillStyle = powerUp.color;
+      ctx.shadowBlur = 5;
+      ctx.shadowColor = powerUp.color;
       ctx.fillRect(powerUp.x, powerUp.y, powerUp.width, powerUp.height);
-      
-      // Draw power-up icon
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '16px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(
-        powerUp.icon,
-        powerUp.x + powerUp.width / 2,
-        powerUp.y + powerUp.height / 2 + 5
-      );
-      ctx.textAlign = 'left';
+      ctx.shadowBlur = 0;
     });
-  };
+  }, []);
 
-  const drawUI = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+  const drawUI = useCallback((ctx: CanvasRenderingContext2D) => {
+    const player = playerRef.current;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     // Score
+    ctx.fillStyle = '#00aaff';
+    ctx.font = '24px Arial';
+    ctx.fillText(`Score: ${gameStats.score.toLocaleString()}`, 20, 40);
+
+    // Health bar
+    const healthBarWidth = 200;
+    const healthBarHeight = 20;
+    const healthPercentage = player.health / player.maxHealth;
+    
+    ctx.fillStyle = '#333333';
+    ctx.fillRect(20, canvas.height - 40, healthBarWidth, healthBarHeight);
+    
+    ctx.fillStyle = healthPercentage > 0.5 ? '#00ff00' : healthPercentage > 0.25 ? '#ffff00' : '#ff0000';
+    ctx.fillRect(20, canvas.height - 40, healthBarWidth * healthPercentage, healthBarHeight);
+    
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 24px Arial';
-    ctx.fillText(`Score: ${gameStats.score}`, 20, 40);
-    
-    // High Score
-    ctx.font = '18px Arial';
-    ctx.fillText(`High Score: ${gameStats.highScore}`, 20, 70);
-    
-    // Health
-    ctx.fillStyle = '#ff0000';
-    ctx.font = 'bold 20px Arial';
-    ctx.fillText(`Health: ${gameStats.health}`, 20, 100);
-    
-    // Lives
-    ctx.fillStyle = '#ffff00';
-    ctx.fillText(`Lives: ${gameStats.lives}`, 20, 130);
-    
-    // Difficulty
-    ctx.fillStyle = difficultySystemRef.current.getDifficultyColor();
-    ctx.fillText(`Difficulty: ${difficultySystemRef.current.getDifficultyName()}`, 20, 160);
-    
-    // Game Time
-    ctx.fillStyle = '#00ffff';
-    ctx.fillText(`Time: ${Math.floor(gameStats.gameTime / 1000)}s`, 20, 190);
-  }, [gameStats]);
+    ctx.font = '16px Arial';
+    ctx.fillText(`Health: ${player.health}/${player.maxHealth}`, 20, canvas.height - 45);
+  }, [gameStats.score]);
+
+  const shoot = useCallback(() => {
+    if (gameState !== 'playing') return;
+
+    const player = playerRef.current;
+    const bullets = bulletsRef.current;
+
+    // Player bullet
+    bullets.push({
+      x: player.x + player.width / 2 - 2,
+      y: player.y,
+      width: 4,
+      height: 10,
+      speed: 8,
+      type: 'energy',
+      color: '#00aaff',
+      damage: 1,
+      owner: 'player'
+    });
+
+    // Update weapons used stat
+    setGameStats(prevStats => ({
+      ...prevStats,
+      weaponsUsed: prevStats.weaponsUsed + 1
+    }));
+  }, [gameState]);
 
   return (
     <div className="game-container">
-      <canvas
+      <canvas 
         ref={canvasRef}
         className="game-canvas"
-        style={{
-          border: '2px solid #333',
-          background: '#000000'
-        }}
+        width={800}
+        height={600}
       />
       
       {gameState === 'menu' && (
@@ -920,7 +815,7 @@ const Game: React.FC = () => {
       <SettingsPanel 
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
-        onSettingsChange={setGameSettings}
+        onSettingsChange={() => {}}
       />
 
       {/* Character Selection */}

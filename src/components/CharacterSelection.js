@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Storyline } from '../story/Storyline';
-import { KadenSprite, KadenSpriteRenderer } from '../graphics/KadenSprite';
-import { AdelynnSprite, AdelynnSpriteRenderer } from '../graphics/AdelynnSprite';
+import { KadenSpriteRenderer } from '../graphics/KadenSprite';
+import { AdelynnSpriteRenderer } from '../graphics/AdelynnSprite';
 import './CharacterSelection.css';
 
 const CharacterSelection = ({ isOpen, onClose, onCharacterSelect }) => {

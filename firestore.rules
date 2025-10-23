@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Players collection - read/write for authenticated users
+    match /players/{playerId} {
+      allow read, write: if request.auth != null && request.auth.uid == playerId;
+      allow read: if true; // Allow public read for leaderboards
+    }
+    
+    // Leaderboard collection - read for all, write for authenticated users
+    match /leaderboard/{entryId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Achievements collection - read for all, write for authenticated users
+    match /achievements/{achievementId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Game stats collection - read/write for authenticated users
+    match /gameStats/{statId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Multiplayer rooms - read/write for authenticated users
+    match /multiplayer/{roomId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Global game data - read for all
+    match /gameData/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}

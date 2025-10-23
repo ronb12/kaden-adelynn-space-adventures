@@ -155,6 +155,67 @@ export class EnhancedEnemySystem {
     }
   }
 
+  // Enhanced AI movement patterns
+  updateEnemyAI(enemy: Enemy, playerX: number, playerY: number, canvas: HTMLCanvasElement, deltaTime: number): void {
+    const currentTime = Date.now();
+    
+    switch (enemy.movementPattern) {
+      case 'straight':
+        enemy.y += enemy.speed;
+        break;
+        
+      case 'zigzag':
+        enemy.y += enemy.speed;
+        if (currentTime - enemy.lastDirectionChange > 1000) {
+          enemy.direction *= -1;
+          enemy.lastDirectionChange = currentTime;
+        }
+        enemy.x += enemy.direction * 2;
+        break;
+        
+      case 'hover':
+        enemy.y += enemy.speed * 0.5;
+        if (currentTime - enemy.lastDirectionChange > 2000) {
+          enemy.direction *= -1;
+          enemy.lastDirectionChange = currentTime;
+        }
+        enemy.x += enemy.direction * 1.5;
+        break;
+        
+      case 'kamikaze':
+        // Move towards player
+        const dx = playerX - enemy.x;
+        const dy = playerY - enemy.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > 0) {
+          enemy.x += (dx / distance) * enemy.speed;
+          enemy.y += (dy / distance) * enemy.speed;
+        }
+        break;
+        
+      case 'circle':
+        // Circular movement pattern
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 3;
+        const radius = 100;
+        const angle = (currentTime * 0.002) % (Math.PI * 2);
+        enemy.x = centerX + Math.cos(angle) * radius;
+        enemy.y = centerY + Math.sin(angle) * radius;
+        break;
+        
+      case 'spiral':
+        // Spiral movement pattern
+        const spiralAngle = (currentTime * 0.003) % (Math.PI * 2);
+        const spiralRadius = 50 + (currentTime * 0.01) % 100;
+        enemy.x = canvas.width / 2 + Math.cos(spiralAngle) * spiralRadius;
+        enemy.y = canvas.height / 3 + Math.sin(spiralAngle) * spiralRadius;
+        break;
+    }
+    
+    // Keep enemies within bounds
+    enemy.x = Math.max(0, Math.min(canvas.width - enemy.width, enemy.x));
+  }
+
   drawEnemies(ctx: CanvasRenderingContext2D): void {
     this.enemies.forEach(enemy => {
       // Draw enhanced enemy ship using ShipRenderer

@@ -8,18 +8,24 @@ const PWAInstallPrompt = () => {
 
   useEffect(() => {
     // Check if app is already installed
-    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    if (window.matchMedia('(display-mode: standalone)').matches || 
+        window.navigator.standalone === true) {
       setIsInstalled(true);
+      return;
     }
 
-    // Listen for beforeinstallprompt event
+    // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallPrompt(true);
+      console.log('📱 PWA install prompt available');
+      
+      // Store the event globally so it can be used by the install button
+      window.deferredPrompt = e;
     };
 
-    // Listen for appinstalled event
+    // Listen for the appinstalled event
     const handleAppInstalled = () => {
       setIsInstalled(true);
       setShowInstallPrompt(false);
@@ -30,42 +36,48 @@ const PWAInstallPrompt = () => {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    // Auto-hide prompt after 10 seconds
+    // Show install prompt after a delay if available
     const timer = setTimeout(() => {
-      setShowInstallPrompt(false);
-    }, 10000);
+      if (deferredPrompt && !isInstalled) {
+        setShowInstallPrompt(true);
+      }
+    }, 3000); // Show after 3 seconds
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
       clearTimeout(timer);
     };
-  }, []);
+  }, [deferredPrompt, isInstalled]);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt && !window.deferredPrompt) return;
 
+    const prompt = deferredPrompt || window.deferredPrompt;
+    
     // Show the install prompt
-    deferredPrompt.prompt();
+    prompt.prompt();
 
     // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
-
+    const { outcome } = await prompt.userChoice;
+    
+    console.log(`User response to the install prompt: ${outcome}`);
+    
     if (outcome === 'accepted') {
-      console.log('✅ User accepted the install prompt');
-    } else {
-      console.log('❌ User dismissed the install prompt');
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+      window.deferredPrompt = null;
     }
-
-    setDeferredPrompt(null);
-    setShowInstallPrompt(false);
   };
 
   const handleDismiss = () => {
     setShowInstallPrompt(false);
+    // Don't show again for this session
+    sessionStorage.setItem('pwa-install-dismissed', 'true');
   };
 
-  if (isInstalled || !showInstallPrompt) {
+  // Don't show if already installed or dismissed
+  if (isInstalled || !showInstallPrompt || sessionStorage.getItem('pwa-install-dismissed')) {
     return null;
   }
 
@@ -74,20 +86,17 @@ const PWAInstallPrompt = () => {
       <div className="pwa-install-content">
         <div className="pwa-install-icon">📱</div>
         <div className="pwa-install-text">
-          <h3>Install Space Adventures</h3>
-          <p>Get the full experience with our app! Play offline, get notifications, and enjoy faster loading.</p>
+          <h3>Install Kaden & Adelynn Space Adventures</h3>
+          <p>Get quick access and play offline!</p>
         </div>
         <div className="pwa-install-buttons">
-          <button className="pwa-install-button install" onClick={handleInstallClick}>
+          <button className="pwa-install-button primary" onClick={handleInstallClick}>
             Install
           </button>
-          <button className="pwa-install-button dismiss" onClick={handleDismiss}>
-            Not Now
+          <button className="pwa-install-button secondary" onClick={handleDismiss}>
+            Later
           </button>
         </div>
-        <button className="pwa-close-button" onClick={handleDismiss}>
-          ×
-        </button>
       </div>
     </div>
   );

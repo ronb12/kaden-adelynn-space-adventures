@@ -1,6 +1,6 @@
 {
   "name": "Kaden & Adelynn Space Adventures",
-  "short_name": "Space Adventures",
+  "short_name": "Kaden & Adelynn",
   "description": "Epic 2D space shooter adventure with Kaden and Adelynn",
   "start_url": "/",
   "display": "fullscreen",
@@ -33,7 +33,7 @@
       "src": "/icons/icon-144x144.svg",
       "sizes": "144x144",
       "type": "image/svg+xml",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-152x152.svg",

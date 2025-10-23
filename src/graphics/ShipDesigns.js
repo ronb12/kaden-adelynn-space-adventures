@@ -392,6 +392,17 @@ export const ShipRenderer = {
         ctx.fillRect(-width/2, -height/6, width/4, height/3);
         ctx.fillRect(width/4, -height/6, width/4, height/3);
         break;
+        
+      default:
+        // Default enemy ship design
+        ctx.beginPath();
+        ctx.moveTo(0, -height/2);
+        ctx.lineTo(-width/2, height/2);
+        ctx.lineTo(width/2, height/2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
     }
     
     ctx.restore();

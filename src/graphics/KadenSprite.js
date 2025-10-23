@@ -346,4 +346,5 @@ export class KadenSpriteRenderer {
   }
 }
 
+
 export default KadenSprite;

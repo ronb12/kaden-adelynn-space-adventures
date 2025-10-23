@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { KadenSprite, KadenSpriteRenderer } from '../graphics/KadenSprite';
-import { AdelynnSprite, AdelynnSpriteRenderer } from '../graphics/AdelynnSprite';
+import { KadenSpriteRenderer } from '../graphics/KadenSprite';
+import { AdelynnSpriteRenderer } from '../graphics/AdelynnSprite';
 import './SettingsPanel.css';
 
 const SettingsPanel = ({ isOpen, onClose, onSettingsChange }) => {

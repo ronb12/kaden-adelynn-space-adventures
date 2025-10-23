@@ -2,116 +2,98 @@
 .pwa-install-prompt {
   position: fixed;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10000;
-  max-width: 400px;
-  width: 90%;
-  animation: slideUpIn 0.3s ease-out;
-}
-
-.pwa-install-content {
+  left: 20px;
+  right: 20px;
   background: linear-gradient(135deg, #001122, #002244);
   border: 2px solid #00aaff;
   border-radius: 15px;
-  padding: 1.5rem;
+  padding: 1rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  position: relative;
+  z-index: 10000;
+  animation: slideUpIn 0.5s ease-out;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.pwa-install-content {
   display: flex;
   align-items: center;
   gap: 1rem;
+  color: #ffffff;
 }
 
 .pwa-install-icon {
-  font-size: 2.5rem;
+  font-size: 2rem;
   animation: pulse 2s infinite;
 }
 
 .pwa-install-text {
   flex: 1;
-  color: #ffffff;
 }
 
 .pwa-install-text h3 {
   color: #00aaff;
-  font-size: 1.2rem;
-  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  margin: 0 0 0.25rem 0;
   text-shadow: 0 0 5px #00aaff;
 }
 
 .pwa-install-text p {
+  color: #cccccc;
   font-size: 0.9rem;
   margin: 0;
-  line-height: 1.4;
-  color: #cccccc;
 }
 
 .pwa-install-buttons {
   display: flex;
-  flex-direction: column;
   gap: 0.5rem;
+  flex-direction: column;
 }
 
 .pwa-install-button {
-  background: linear-gradient(45deg, #0066cc, #004499);
-  color: #ffffff;
+  padding: 0.5rem 1rem;
   border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 20px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: bold;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   min-width: 80px;
 }
 
-.pwa-install-button:hover {
+.pwa-install-button.primary {
+  background: linear-gradient(45deg, #0066cc, #004499);
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.pwa-install-button.primary:hover {
   background: linear-gradient(45deg, #0088ff, #0066cc);
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-.pwa-install-button.dismiss {
-  background: linear-gradient(45deg, #555555, #333333);
+.pwa-install-button.secondary {
+  background: transparent;
+  color: #00aaff;
+  border: 1px solid #00aaff;
 }
 
-.pwa-install-button.dismiss:hover {
-  background: linear-gradient(45deg, #777777, #555555);
-}
-
-.pwa-close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  color: #ffffff;
-  font-size: 1.5rem;
-  cursor: pointer;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.3s ease;
-}
-
-.pwa-close-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ff4444;
+.pwa-install-button.secondary:hover {
+  background: rgba(0, 170, 255, 0.1);
+  border-color: #00ffff;
+  color: #00ffff;
 }
 
 /* Animations */
 @keyframes slideUpIn {
   from {
+    transform: translateY(100%);
     opacity: 0;
-    transform: translateX(-50%) translateY(100px);
   }
   to {
+    transform: translateY(0);
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
   }
 }
 
@@ -121,56 +103,49 @@
   100% { transform: scale(1); }
 }
 
-/* Responsive Design */
-@media (max-width: 480px) {
+/* Mobile optimizations */
+@media (max-width: 768px) {
   .pwa-install-prompt {
     bottom: 10px;
     left: 10px;
     right: 10px;
-    transform: none;
-    max-width: none;
-    width: auto;
+    padding: 0.8rem;
   }
   
   .pwa-install-content {
-    padding: 1rem;
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
+    gap: 0.8rem;
   }
   
-  .pwa-install-buttons {
-    flex-direction: row;
-    justify-content: center;
-    gap: 1rem;
-  }
-  
-  .pwa-install-button {
-    padding: 0.8rem 1.5rem;
-    font-size: 1rem;
+  .pwa-install-icon {
+    font-size: 1.5rem;
   }
   
   .pwa-install-text h3 {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
   
   .pwa-install-text p {
     font-size: 0.8rem;
   }
+  
+  .pwa-install-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
 }
 
-@media (max-width: 360px) {
+/* Hide on very small screens */
+@media (max-width: 480px) {
+  .pwa-install-prompt {
+    padding: 0.6rem;
+  }
+  
   .pwa-install-content {
-    padding: 0.8rem;
+    gap: 0.6rem;
   }
   
   .pwa-install-buttons {
     flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .pwa-install-button {
-    padding: 0.7rem 1.2rem;
-    font-size: 0.9rem;
+    gap: 0.3rem;
   }
 }

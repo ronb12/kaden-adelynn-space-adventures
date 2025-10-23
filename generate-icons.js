@@ -27,7 +27,7 @@ const createPlaceholderIcon = (size) => {
   return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
     <rect width="${width}" height="${height}" fill="#000033"/>
     <rect x="${width * 0.1}" y="${height * 0.1}" width="${width * 0.8}" height="${height * 0.8}" fill="#00aaff" rx="${width * 0.1}"/>
-    <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="${width * 0.4}" fill="white" text-anchor="middle" dominant-baseline="central">🚀</text>
+    <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="${width * 0.5}" fill="white" text-anchor="middle" dominant-baseline="central">🚀</text>
   </svg>`;
 };
 
