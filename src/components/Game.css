@@ -86,10 +86,12 @@
     0 0 20px #00aaff,
     0 0 30px #00aaff,
     2px 2px 4px rgba(0, 0, 0, 0.8);
-  animation: titleGlow 3s ease-in-out infinite alternate;
+  animation: titleGlow 3s ease-in-out infinite alternate, titleScroll 4s ease-in-out infinite;
   letter-spacing: 2px;
   z-index: 10;
   position: relative;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .game-subtitle {
@@ -440,6 +442,23 @@
   0% { transform: scale(1); }
   50% { transform: scale(1.1); }
   100% { transform: scale(1); }
+}
+
+@keyframes titleScroll {
+  0% { 
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  20% { 
+    opacity: 1;
+  }
+  80% { 
+    opacity: 1;
+  }
+  100% { 
+    transform: translateX(100%);
+    opacity: 0;
+  }
 }
 
 /* Enhanced Responsive Design for All Devices */

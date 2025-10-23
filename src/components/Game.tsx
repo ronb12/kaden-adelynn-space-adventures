@@ -162,8 +162,9 @@ const Game: React.FC = () => {
     const handleKeyDown = (event: KeyboardEvent) => {
       keysRef.current[event.code] = true;
       
-      if (event.code === 'Space') {
+      if (event.code === 'KeyS') {
         event.preventDefault();
+        console.log('🎮 S key pressed!');
         shoot();
       }
     };
@@ -703,6 +704,9 @@ const Game: React.FC = () => {
       owner: 'player'
     });
 
+    // Debug logging
+    console.log('🚀 Player shot! Bullets count:', bullets.length);
+
     // Update weapons used stat
     setGameStats(prevStats => ({
       ...prevStats,
@@ -767,7 +771,7 @@ const Game: React.FC = () => {
           <div className="game-info">
             <p><strong>🎯 Mission:</strong> Defend the galaxy from alien invaders!</p>
             <p><strong>🚀 Features:</strong> Power-ups, Boss Battles, Achievements & More!</p>
-            <p><strong>🎮 Controls:</strong> Arrow Keys / WASD to move, Space to shoot</p>
+            <p><strong>🎮 Controls:</strong> Arrow Keys / WASD to move, S to shoot</p>
             <p><strong>📱 Mobile:</strong> Touch controls with haptic feedback</p>
             <p className="company-branding"><strong>© 2025 Bradley Virtual Solutions, LLC</strong></p>
           </div>
