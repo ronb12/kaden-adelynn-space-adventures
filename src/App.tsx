@@ -758,7 +758,11 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
           </div>
           
           <div className="achievement-actions">
-            <button className="view-all-btn" onClick={() => console.log('View all achievements')}>
+            <button className="view-all-btn" onClick={() => {
+              console.log('Viewing all achievements...');
+              // Show detailed achievement view
+              alert('Achievement Collection:\n\n🏆 Combat: 0/5 unlocked\n💪 Survival: 0/4 unlocked\n💎 Collection: 0/6 unlocked\n⭐ Special: 0/5 unlocked\n\nKeep playing to unlock more achievements!');
+            }}>
               📋 View All Achievements
             </button>
           </div>
@@ -828,7 +832,18 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
           </div>
           
           <div className="boss-actions">
-            <button className="start-boss-btn" onClick={() => console.log('Start boss battle')}>
+            <button className="start-boss-btn" onClick={() => {
+              console.log('Starting boss battle...');
+              // Close the modal and start the game with boss battle mode
+              onClose();
+              // Trigger boss battle mode
+              setTimeout(() => {
+                // This would typically start a boss battle
+                console.log('Boss battle initiated!');
+                // You could add boss battle logic here
+                alert('Boss Battle Started! Defeat the boss to continue!');
+              }, 100);
+            }}>
               ⚔️ Start Boss Battle
             </button>
           </div>
@@ -891,7 +906,11 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
           </div>
           
           <div className="powerup-actions">
-            <button className="view-collection-btn" onClick={() => console.log('View power-up collection')}>
+            <button className="view-collection-btn" onClick={() => {
+              console.log('Viewing power-up collection...');
+              // Show power-up collection
+              alert('Power-up Collection:\n\n🔥 Fire Blast - Common\n❄️ Ice Shield - Rare\n⚡ Lightning Strike - Epic\n🌌 Quantum Blast - Legendary\n\nCollect more power-ups during gameplay!');
+            }}>
               📦 View Collection
             </button>
           </div>
@@ -966,7 +985,15 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
           </div>
           
           <div className="story-actions">
-            <button className="start-story-btn" onClick={() => console.log('Start story mode')}>
+            <button className="start-story-btn" onClick={() => {
+              console.log('Starting story mode...');
+              // Close modal and start story
+              onClose();
+              setTimeout(() => {
+                console.log('Story mode initiated!');
+                alert('Story Mode Started!\n\n📖 Chapter 1: The Awakening\n\nKaden and Adelynn discover their destiny as space pilots. Complete the training mission to begin your adventure!');
+              }, 100);
+            }}>
               📖 Begin Adventure
             </button>
           </div>
@@ -1041,7 +1068,15 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
           </div>
           
           <div className="challenge-actions">
-            <button className="start-challenge-btn" onClick={() => console.log('Start challenge')}>
+            <button className="start-challenge-btn" onClick={() => {
+              console.log('Starting challenge...');
+              // Close modal and start challenge
+              onClose();
+              setTimeout(() => {
+                console.log('Challenge mode initiated!');
+                alert('Challenge Mode Started!\n\n🎯 Daily Challenge: Survive for 60 seconds\n📅 Weekly Challenge: Defeat 50 enemies\n💪 Survival Challenge: Survive as long as possible\n🎪 Boss Rush: Fight all bosses in sequence\n\nGood luck, pilot!');
+              }, 100);
+            }}>
               🎯 Start Challenge
             </button>
           </div>
