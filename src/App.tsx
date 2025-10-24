@@ -10,6 +10,12 @@ import { StoryModeSystem } from './systems/StoryModeSystem';
 import { ChallengeSystem } from './systems/ChallengeSystem';
 import { FeatureTestingSystem } from './systems/FeatureTestingSystem';
 import { CompleteGameIntegration } from './systems/CompleteGameIntegration';
+import { InputSystem } from './systems/InputSystem';
+import { DeviceOptimization } from './systems/DeviceOptimization';
+import TouchControls from './components/TouchControls';
+import ToastManager, { ToastContext } from './components/ToastManager';
+import { GameRatingSystem } from './systems/GameRatingSystem';
+import { MobileResponsiveSystem } from './systems/MobileResponsiveSystem';
 
 // Game Settings Interface
 interface GameSettings {
@@ -79,6 +85,12 @@ const App: React.FC = () => {
   const gameIntegration = useRef<CompleteGameIntegration | null>(null);
   const [gameInitialized, setGameInitialized] = useState(false);
   const [gameReport, setGameReport] = useState<any>(null);
+  
+  // Initialize input and device systems
+  const inputSystem = useRef<InputSystem | null>(null);
+  const deviceOptimization = useRef<DeviceOptimization | null>(null);
+  const [deviceInfo, setDeviceInfo] = useState<any>(null);
+  const [showTouchControls, setShowTouchControls] = useState(false);
   
   const [gameState, setGameState] = useState<GameState>({
     currentScene: 'menu',
@@ -185,6 +197,24 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Initialize input and device systems
+  useEffect(() => {
+    // Initialize device optimization
+    if (!deviceOptimization.current) {
+      deviceOptimization.current = new DeviceOptimization();
+      const device = deviceOptimization.current.getDeviceInfo();
+      setDeviceInfo(device);
+      setShowTouchControls(device.hasTouch && (device.type === 'mobile' || device.type === 'tablet'));
+      console.log('📱 Device detected:', device);
+    }
+    
+    // Initialize input system
+    if (!inputSystem.current) {
+      inputSystem.current = new InputSystem();
+      console.log('🎮 Input system initialized');
+    }
+  }, []);
+
   // Handle scene changes
   const changeScene = (scene: GameState['currentScene']) => {
     setGameState(prev => ({ ...prev, currentScene: scene }));
@@ -230,6 +260,9 @@ const App: React.FC = () => {
           gameStats={gameState.gameStats}
           achievements={achievements}
           setAchievements={setAchievements}
+          inputSystem={inputSystem.current}
+          deviceInfo={deviceInfo}
+          showTouchControls={showTouchControls}
         />;
       default:
         return <MainMenu 
@@ -243,18 +276,20 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="app">
-      {renderScene()}
-      {showModal && (
-        <FeatureModal 
-          feature={showModal}
-          onClose={closeModal}
-          settings={gameState.settings}
-          onUpdateSettings={updateSettings}
-          achievements={achievements}
-        />
-      )}
-    </div>
+    <ToastManager>
+      <div className="app">
+        {renderScene()}
+        {showModal && (
+          <FeatureModal 
+            feature={showModal}
+            onClose={closeModal}
+            settings={gameState.settings}
+            onUpdateSettings={updateSettings}
+            achievements={achievements}
+          />
+        )}
+      </div>
+    </ToastManager>
   );
 };
 
@@ -1464,6 +1499,9 @@ interface GameSceneProps {
   gameStats: GameState['gameStats'];
   achievements: Array<{id: string, name: string, description: string, unlocked: boolean, progress: number, maxProgress: number}>;
   setAchievements: React.Dispatch<React.SetStateAction<Array<{id: string, name: string, description: string, unlocked: boolean, progress: number, maxProgress: number}>>>;
+  inputSystem: InputSystem | null;
+  deviceInfo: any;
+  showTouchControls: boolean;
 }
 
 // Game object interfaces
@@ -1531,6 +1569,7 @@ interface PowerUp {
   speed: number;
   type: string;
   effect: string;
+  shouldRemove?: boolean;
 }
 
 interface Particle {
@@ -1544,7 +1583,10 @@ interface Particle {
   size: number;
 }
 
-const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter, gameStats, achievements, setAchievements }) => {
+const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter, gameStats, achievements, setAchievements, inputSystem, deviceInfo, showTouchControls }) => {
+  const toastContext = React.useContext(ToastContext);
+  const ratingSystem = React.useRef<GameRatingSystem>(new GameRatingSystem());
+  const mobileResponsive = React.useRef<MobileResponsiveSystem>(new MobileResponsiveSystem());
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const gameLoopRef = React.useRef<number | null>(null);
   const lastTimeRef = React.useRef<number>(0);
@@ -1588,7 +1630,31 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   const [powerUps, setPowerUps] = React.useState<PowerUp[]>([]);
   const [particles, setParticles] = React.useState<Particle[]>([]);
   const [keys, setKeys] = React.useState<{ [key: string]: boolean }>({});
+  const [wingFighters, setWingFighters] = React.useState<Array<{id: string, x: number, y: number, width: number, height: number, speed: number, targetX: number, targetY: number, offset: number}>>([]);
   
+  // Initialize mobile responsiveness
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    // Initialize mobile responsive system
+    mobileResponsive.current.initializeCanvas(canvas);
+    mobileResponsive.current.applyResponsiveStyles(canvas);
+    
+    // Handle orientation changes
+    const handleOrientationChange = () => {
+      mobileResponsive.current.handleOrientationChange();
+    };
+    
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+    
+    return () => {
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleOrientationChange);
+    };
+  }, []);
+
   // Game loop
   const gameLoop = React.useCallback((currentTime: number) => {
     if (!canvasRef.current) return;
@@ -1613,6 +1679,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     updateEnemies(deltaTime);
     updateBosses(deltaTime);
     updatePowerUps(deltaTime);
+    updateWingFighters(deltaTime);
     updateParticles(deltaTime);
     updateAchievements(deltaTime);
     
@@ -1633,6 +1700,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     
     // Draw game objects
     drawPlayer(ctx);
+    drawWingFighters(ctx);
     drawBullets(ctx);
     drawEnemies(ctx);
     drawBosses(ctx);
@@ -1681,6 +1749,56 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     ctx.fillRect(-5, 20, 10, 8);
     
     ctx.restore();
+  };
+
+  const drawWingFighters = (ctx: CanvasRenderingContext2D) => {
+    wingFighters.forEach(wingFighter => {
+      ctx.save();
+      ctx.translate(wingFighter.x + wingFighter.width / 2, wingFighter.y + wingFighter.height / 2);
+      
+      // Wing fighter design - smaller version of player ship
+      ctx.fillStyle = '#ffaa00';
+      ctx.strokeStyle = '#ff8800';
+      ctx.lineWidth = 1;
+      
+      // Main body
+      ctx.beginPath();
+      ctx.moveTo(0, -8);
+      ctx.lineTo(-6, 6);
+      ctx.lineTo(-2, 4);
+      ctx.lineTo(2, 4);
+      ctx.lineTo(6, 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      
+      // Wings
+      ctx.beginPath();
+      ctx.moveTo(-6, 2);
+      ctx.lineTo(-10, 0);
+      ctx.lineTo(-6, -2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(6, 2);
+      ctx.lineTo(10, 0);
+      ctx.lineTo(6, -2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      
+      // Glow effect
+      const glow = Math.sin(Date.now() * 0.005) * 0.3 + 0.7;
+      ctx.strokeStyle = `rgba(255, 170, 0, ${glow})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 12, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      ctx.restore();
+    });
   };
   
   const drawBullets = (ctx: CanvasRenderingContext2D) => {
@@ -1912,12 +2030,125 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   };
   
   const updatePowerUps = (deltaTime: number) => {
-    setPowerUps(prev => prev.map(powerUp => {
-      powerUp.y += powerUp.speed;
-      return powerUp;
-    }).filter(powerUp => powerUp.y < 610));
+    setPowerUps(prev => {
+      const updatedPowerUps = prev.map(powerUp => {
+        powerUp.y += powerUp.speed;
+        
+        // Check collision with player
+        if (powerUp.x < player.x + player.width &&
+            powerUp.x + powerUp.width > player.x &&
+            powerUp.y < player.y + player.height &&
+            powerUp.y + powerUp.height > player.y) {
+          
+          // Handle different power-up types
+          switch (powerUp.type) {
+            case 'health':
+              setGameState(prev => ({ ...prev, health: Math.min(100, prev.health + 25) }));
+              if (toastContext) {
+                toastContext.showPowerUp({
+                  name: 'Health Boost',
+                  description: '+25 Health restored!',
+                  icon: '❤️'
+                });
+              }
+              break;
+            case 'speed':
+              setPlayer(prev => ({ ...prev, speed: Math.min(10, prev.speed + 1) }));
+              if (toastContext) {
+                toastContext.showPowerUp({
+                  name: 'Speed Boost',
+                  description: 'Movement speed increased!',
+                  icon: '🚀'
+                });
+              }
+              break;
+            case 'rapid':
+              setPlayer(prev => ({ ...prev, rapidFire: true, rapidFireTime: 5000 }));
+              if (toastContext) {
+                toastContext.showPowerUp({
+                  name: 'Rapid Fire',
+                  description: 'Faster shooting activated!',
+                  icon: '⚡'
+                });
+              }
+              break;
+            case 'shield':
+              setPlayer(prev => ({ ...prev, invulnerable: true, invulnerabilityTime: 3000 }));
+              if (toastContext) {
+                toastContext.showPowerUp({
+                  name: 'Energy Shield',
+                  description: 'Temporary invincibility!',
+                  icon: '🛡️'
+                });
+              }
+              break;
+            case 'wing':
+              // Add wing fighter if less than 2
+              if (wingFighters.length < 2) {
+                const newWingFighter = {
+                  id: `wing_${Date.now()}`,
+                  x: player.x + (wingFighters.length === 0 ? -50 : 50),
+                  y: player.y,
+                  width: 30,
+                  height: 20,
+                  speed: player.speed,
+                  targetX: player.x + (wingFighters.length === 0 ? -50 : 50),
+                  targetY: player.y,
+                  offset: wingFighters.length === 0 ? -50 : 50
+                };
+                setWingFighters(prev => [...prev, newWingFighter]);
+                
+                // Show wing fighter toast notification
+                if (toastContext) {
+                  toastContext.showPowerUp({
+                    name: 'Wing Fighter',
+                    description: 'New wing fighter added to your fleet!',
+                    icon: '✈️'
+                  });
+                }
+              }
+              break;
+          }
+          
+          // Mark for removal
+          return { ...powerUp, shouldRemove: true };
+        }
+        
+        return powerUp;
+      });
+      
+      // Filter out collected power-ups and those that are off-screen
+      return updatedPowerUps.filter(powerUp => !powerUp.shouldRemove && powerUp.y < 610);
+    });
   };
   
+  const updateWingFighters = (deltaTime: number) => {
+    setWingFighters(prev => prev.map(wingFighter => {
+      // Update wing fighter positions relative to player
+      wingFighter.targetX = player.x + wingFighter.offset;
+      wingFighter.targetY = player.y;
+      
+      // Smooth movement towards target position
+      const dx = wingFighter.targetX - wingFighter.x;
+      const dy = wingFighter.targetY - wingFighter.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance > 5) {
+        wingFighter.x += (dx / distance) * wingFighter.speed;
+        wingFighter.y += (dy / distance) * wingFighter.speed;
+      }
+      
+      // Keep wing fighters within screen bounds
+      const canvas = canvasRef.current;
+      if (canvas) {
+        wingFighter.x = Math.max(0, Math.min(canvas.width - wingFighter.width, wingFighter.x));
+        wingFighter.y = Math.max(0, Math.min(canvas.height - wingFighter.height, wingFighter.y));
+      }
+      
+      return wingFighter;
+    }));
+  };
+
   const updateParticles = (deltaTime: number) => {
     setParticles(prev => prev.map(particle => {
       particle.x += particle.vx;
@@ -1988,7 +2219,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    const powerUpTypes = ['health', 'speed', 'rapid', 'shield', 'multi', 'pierce'];
+    const powerUpTypes = ['health', 'speed', 'rapid', 'shield', 'multi', 'pierce', 'wing'];
     const newPowerUp: PowerUp = {
       x: Math.random() * (canvas.width - 20),
       y: -20,
@@ -2004,8 +2235,8 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   
   const shootBullet = () => {
     const newBullet: Bullet = {
-      x: player.x + player.width / 2 - 2,
-      y: player.y,
+      x: player.x + player.width / 2 - 2, // Center bullet on player ship
+      y: player.y - 5, // Start bullet slightly above player
       width: 4,
       height: 10,
       speed: 8,
@@ -2101,6 +2332,24 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
           ...prev, 
           achievementsUnlocked: prev.achievementsUnlocked + 1
         }));
+        
+        // Show achievement toast notification
+        if (toastContext) {
+          toastContext.showAchievement({
+            name: achievement.name,
+            description: achievement.description,
+            icon: achievement.id === 'first_blood' ? '🎯' : 
+                  achievement.id === 'kill_streak_10' ? '🔥' :
+                  achievement.id === 'boss_slayer' ? '👹' :
+                  achievement.id === 'power_up_collector' ? '⚡' :
+                  achievement.id === 'survivor' ? '💪' :
+                  achievement.id === 'combo_master' ? '🔥' :
+                  achievement.id === 'perfect_accuracy' ? '🎯' :
+                  achievement.id === 'speed_demon' ? '💨' :
+                  achievement.id === 'shield_master' ? '🛡️' :
+                  achievement.id === 'weapon_master' ? '🔫' : '🏆'
+          });
+        }
       }
       
       return {
@@ -2371,7 +2620,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
           ref={canvasRef}
           width={800} 
           height={600}
-          className="game-canvas-element"
+          className="game-canvas-element responsive-canvas"
         />
         {gameState.gameOver && (
           <div className="game-over-overlay">
@@ -2379,6 +2628,36 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
               <h2>Game Over!</h2>
               <p>Final Score: {gameState.score.toLocaleString()}</p>
               <p>Enemies Killed: {gameState.enemiesKilled}</p>
+              
+              {/* Rating against top 3 players */}
+              <div className="rating-display">
+                {(() => {
+                  const playerStats = {
+                    score: gameState.score,
+                    level: Math.floor(gameState.score / 1000) + 1,
+                    achievementsUnlocked: achievements.filter(a => a.unlocked).length,
+                    survivalTime: gameState.survivalTime,
+                    accuracy: gameState.enemiesKilled > 0 ? (gameState.enemiesKilled / (gameState.enemiesKilled + bullets.length)) * 100 : 0
+                  };
+                  const rating = ratingSystem.current.ratePlayer(playerStats);
+                  
+                  return (
+                    <div className="rating-content">
+                      <h3>🏆 Rating: {rating.rating}</h3>
+                      <p>Rank: #{rating.rank}</p>
+                      <p>Top {100 - rating.percentile}%</p>
+                      <p className="rating-feedback">{rating.feedback}</p>
+                      <div className="top-3-comparison">
+                        <h4>vs Top 3 Players:</h4>
+                        <p>#1: {rating.comparison.vsTop1.toFixed(1)}%</p>
+                        <p>#2: {rating.comparison.vsTop2.toFixed(1)}%</p>
+                        <p>#3: {rating.comparison.vsTop3.toFixed(1)}%</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+              
               <button 
                 className="restart-btn"
                 onClick={() => window.location.reload()}
@@ -2398,6 +2677,47 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
           ⚡ Collect power-ups for health, speed, and special abilities!
         </div>
       </div>
+      
+      {/* Touch Controls for Mobile */}
+      {showTouchControls && (
+        <TouchControls
+          onMovement={(x, y) => {
+            // Handle touch movement
+            if (inputSystem) {
+              // Update player position based on touch input
+              setPlayer(prev => ({
+                ...prev,
+                x: Math.max(0, Math.min(800 - prev.width, prev.x + x * 5)),
+                y: Math.max(0, Math.min(600 - prev.height, prev.y + y * 5))
+              }));
+            }
+          }}
+          onShoot={() => {
+            // Handle touch shoot
+            if (Date.now() - lastShot > 200) {
+              setLastShot(Date.now());
+              setBullets(prev => [...prev, {
+                x: player.x + player.width / 2,
+                y: player.y,
+                width: 4,
+                height: 10,
+                speed: 8,
+                direction: -1,
+                type: 'player' as const
+              }]);
+            }
+          }}
+          onWeaponSwitch={(weapon) => {
+            // Handle weapon switching
+            console.log('Switching to weapon:', weapon);
+          }}
+          onPause={() => {
+            // Handle pause
+            setGameState(prev => ({ ...prev, paused: !prev.paused }));
+          }}
+          isVisible={showTouchControls}
+        />
+      )}
     </div>
   );
 };
