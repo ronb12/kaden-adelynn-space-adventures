@@ -1,11 +1,11 @@
 import React from 'react';
-import Game from './components/Game';
+import PhaserGame from './components/PhaserGame';
 import './App.css';
 
 function App() {
   return (
     <div className="App">
-      <Game />
+      <PhaserGame />
     </div>
   );
 }

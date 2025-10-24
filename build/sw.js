@@ -2,12 +2,12 @@
 // Version: 1.0.0
 // Cache Strategy: Cache First with Network Fallback
 
-const CACHE_NAME = 'kaden-adelynn-space-adventures-v1.0.0';
+const CACHE_NAME = 'kaden-adelynn-space-adventures-v1.0.1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/static/js/main.js',
-  '/static/css/main.css',
+  '/index.js',
+  '/index.css',
   '/manifest.json',
   '/icons/icon-192x192.svg',
   '/icons/icon-512x512.svg'
@@ -36,14 +36,12 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('🗑️ Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
+          console.log('🗑️ Deleting cache:', cacheName);
+          return caches.delete(cacheName);
         })
       );
     }).then(() => {
-      console.log('✅ Service Worker activated');
+      console.log('✅ Service Worker activated - All caches cleared');
       return self.clients.claim();
     })
   );
