@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 // Import all game systems
-import { CompleteGameSystem } from './systems/CompleteGameSystem';
-import { EnhancedAudioSystem } from './systems/EnhancedAudioSystem';
-import { EnhancedVisualEffects } from './systems/EnhancedVisualEffects';
-import { MultiplayerSystem } from './systems/MultiplayerSystem';
-import { StoryModeSystem } from './systems/StoryModeSystem';
-import { ChallengeSystem } from './systems/ChallengeSystem';
-import { FeatureTestingSystem } from './systems/FeatureTestingSystem';
+// import { CompleteGameSystem } from './systems/CompleteGameSystem';
+// import { EnhancedAudioSystem } from './systems/EnhancedAudioSystem';
+// import { EnhancedVisualEffects } from './systems/EnhancedVisualEffects';
+// import { MultiplayerSystem } from './systems/MultiplayerSystem';
+// import { StoryModeSystem } from './systems/StoryModeSystem';
+// import { ChallengeSystem } from './systems/ChallengeSystem';
+// import { FeatureTestingSystem } from './systems/FeatureTestingSystem';
 import { CompleteGameIntegration } from './systems/CompleteGameIntegration';
 import { InputSystem } from './systems/InputSystem';
 import { DeviceOptimization } from './systems/DeviceOptimization';
@@ -90,8 +90,8 @@ interface GameState {
 const App: React.FC = () => {
   // Initialize game integration
   const gameIntegration = useRef<CompleteGameIntegration | null>(null);
-  const [gameInitialized, setGameInitialized] = useState(false);
-  const [gameReport, setGameReport] = useState<any>(null);
+  // const [gameInitialized, setGameInitialized] = useState(false);
+  // const [gameReport, setGameReport] = useState<any>(null);
   
   // Initialize input and device systems
   const inputSystem = useRef<InputSystem | null>(null);
@@ -180,12 +180,12 @@ const App: React.FC = () => {
         gameIntegration.current = new CompleteGameIntegration();
         await gameIntegration.current.initialize();
         
-        setGameInitialized(true);
+        // setGameInitialized(true);
         console.log('✅ Game initialization complete');
         
         // Get initial game report
-        const report = gameIntegration.current.getGameReport();
-        setGameReport(report);
+        // const report = gameIntegration.current.getGameReport();
+        // setGameReport(report);
         
         // Start the game
         gameIntegration.current.start();
@@ -1596,13 +1596,13 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   const mobileResponsive = React.useRef<MobileResponsiveSystem>(new MobileResponsiveSystem());
   
   // Initialize new 10/10 systems
-  const advancedWeaponSystem = React.useRef<AdvancedWeaponSystem>(new AdvancedWeaponSystem());
-  const missionSystem = React.useRef<MissionSystem>(new MissionSystem());
+  // const advancedWeaponSystem = React.useRef<AdvancedWeaponSystem>(new AdvancedWeaponSystem());
+  // const missionSystem = React.useRef<MissionSystem>(new MissionSystem());
   const enhanced3DGraphics = React.useRef<Enhanced3DGraphics | null>(null);
   const bulletHellSystem = React.useRef<BulletHellSystem>(new BulletHellSystem());
   const proceduralGeneration = React.useRef<ProceduralGenerationSystem>(new ProceduralGenerationSystem());
-  const socialFeatures = React.useRef<SocialFeaturesSystem>(new SocialFeaturesSystem());
-  const monetizationSystem = React.useRef<MonetizationSystem>(new MonetizationSystem());
+  // const socialFeatures = React.useRef<SocialFeaturesSystem>(new SocialFeaturesSystem());
+  // const monetizationSystem = React.useRef<MonetizationSystem>(new MonetizationSystem());
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const gameLoopRef = React.useRef<number | null>(null);
   const lastTimeRef = React.useRef<number>(0);
