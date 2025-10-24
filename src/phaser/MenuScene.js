@@ -39,22 +39,24 @@ export class MenuScene extends Phaser.Scene {
   }
 
   createCharacterSprites() {
-    // Create human emoji textures for characters
+    // Create human emoji textures for characters using canvas
     // Kaden - using boy emoji
-    const kadenText = this.add.text(0, 0, '👦', {
-      fontSize: '80px',
-      fill: '#ffffff'
-    });
-    kadenText.generateTexture('kadenSprite', 80, 80);
-    kadenText.destroy();
+    const kadenCanvas = this.textures.createCanvas('kadenSprite', 80, 80);
+    const kadenContext = kadenCanvas.getContext();
+    kadenContext.font = '60px Arial';
+    kadenContext.textAlign = 'center';
+    kadenContext.textBaseline = 'middle';
+    kadenContext.fillText('👦🏿', 40, 40);
+    kadenCanvas.refresh();
     
     // Adelynn - using girl emoji
-    const adelynnText = this.add.text(0, 0, '👧', {
-      fontSize: '80px',
-      fill: '#ffffff'
-    });
-    adelynnText.generateTexture('adelynnSprite', 80, 80);
-    adelynnText.destroy();
+    const adelynnCanvas = this.textures.createCanvas('adelynnSprite', 80, 80);
+    const adelynnContext = adelynnCanvas.getContext();
+    adelynnContext.font = '60px Arial';
+    adelynnContext.textAlign = 'center';
+    adelynnContext.textBaseline = 'middle';
+    adelynnContext.fillText('👧', 40, 40);
+    adelynnCanvas.refresh();
   }
 
   createBackground() {
@@ -280,112 +282,9 @@ export class MenuScene extends Phaser.Scene {
         duration: 100,
         yoyo: true
       });
-    });
-    
-    // Professional character cards with glassmorphism effect - centered
-    const centerX = this.scale.width / 2;
-    const kadenCard = this.add.rectangle(centerX - 100, 300, 140, 180, 0x00aaff, 0.15);
-    kadenCard.setStrokeStyle(3, 0x00aaff);
-    kadenCard.setInteractive();
-    kadenCard.setDepth(1);
-    
-    const adelynnCard = this.add.rectangle(centerX + 100, 300, 140, 180, 0xff69b4, 0.15);
-    adelynnCard.setStrokeStyle(3, 0xff69b4);
-    adelynnCard.setInteractive();
-    adelynnCard.setDepth(1);
-    
-    // Character sprites with professional styling
-    const kadenSprite = this.add.sprite(centerX - 100, 260, 'kadenSprite');
-    kadenSprite.setScale(1.2);
-    kadenSprite.setDepth(2);
-    
-    const adelynnSprite = this.add.sprite(centerX + 100, 260, 'adelynnSprite');
-    adelynnSprite.setScale(1.2);
-    adelynnSprite.setDepth(2);
-    
-    // Professional character names
-    const kadenName = this.add.text(centerX - 100, 320, 'KADEN', {
-      fontSize: '20px',
-      fill: '#ffffff',
-      fontStyle: 'bold',
-      stroke: '#00aaff',
-      strokeThickness: 2
-    });
-    kadenName.setOrigin(0.5);
-    kadenName.setDepth(3);
-    
-    const adelynnName = this.add.text(centerX + 100, 320, 'ADELYNN', {
-      fontSize: '20px',
-      fill: '#ffffff',
-      fontStyle: 'bold',
-      stroke: '#ff69b4',
-      strokeThickness: 2
-    });
-    adelynnName.setOrigin(0.5);
-    adelynnName.setDepth(3);
-    
-    // Character descriptions
-    const kadenDesc = this.add.text(centerX - 100, 340, 'Thunderbolt Fighter', {
-      fontSize: '14px',
-      fill: '#cccccc',
-      fontStyle: 'italic'
-    });
-    kadenDesc.setOrigin(0.5);
-    kadenDesc.setDepth(3);
-    
-    const adelynnDesc = this.add.text(centerX + 100, 340, 'Starlight Defender', {
-      fontSize: '14px',
-      fill: '#cccccc',
-      fontStyle: 'italic'
-    });
-    adelynnDesc.setOrigin(0.5);
-    adelynnDesc.setDepth(3);
-    
-    // Professional selection indicator
-    const selectionIndicator = this.add.rectangle(centerX - 100, 300, 140, 180, 0x00ff00, 0.1);
-    selectionIndicator.setStrokeStyle(4, 0x00ff00);
-    selectionIndicator.setDepth(0);
-    
-    // Professional hover effects
-    kadenCard.on('pointerover', () => {
-      kadenCard.setStrokeStyle(4, 0x00ccff);
-      kadenCard.setScale(1.05);
-    });
-    
-    kadenCard.on('pointerout', () => {
-      if (this.selectedCharacter !== 'kaden') {
-        kadenCard.setStrokeStyle(3, 0x00aaff);
-        kadenCard.setScale(1);
-      }
-    });
-    
-    adelynnCard.on('pointerover', () => {
-      adelynnCard.setStrokeStyle(4, 0xff99cc);
-      adelynnCard.setScale(1.05);
-    });
-    
-    adelynnCard.on('pointerout', () => {
-      if (this.selectedCharacter !== 'adelynn') {
-        adelynnCard.setStrokeStyle(3, 0xff69b4);
-        adelynnCard.setScale(1);
-      }
-    });
-    
-    // Professional click handlers
-    kadenCard.on('pointerdown', () => {
-      this.selectedCharacter = 'kaden';
-      selectionIndicator.setPosition(centerX - 100, 300);
-      selectionIndicator.setStrokeStyle(4, 0x00ff00);
-      kadenCard.setStrokeStyle(4, 0x00ff00);
-      adelynnCard.setStrokeStyle(3, 0xff69b4);
-    });
-    
-    adelynnCard.on('pointerdown', () => {
-      this.selectedCharacter = 'adelynn';
-      selectionIndicator.setPosition(centerX + 100, 300);
-      selectionIndicator.setStrokeStyle(4, 0xff69b4);
-      adelynnCard.setStrokeStyle(4, 0xff69b4);
-      kadenCard.setStrokeStyle(3, 0x00aaff);
+      
+      // Open character selection modal
+      this.openCharacterModal();
     });
   }
 
@@ -393,12 +292,12 @@ export class MenuScene extends Phaser.Scene {
     const centerX = this.scale.width / 2;
     
     // Professional Start Game button
-    const startButton = this.add.rectangle(centerX, 450, 250, 60, 0x00aaff, 0.8);
+    const startButton = this.add.rectangle(centerX, 480, 250, 60, 0x00aaff, 0.8);
     startButton.setStrokeStyle(3, 0xffffff);
     startButton.setInteractive();
     startButton.setDepth(2);
     
-    const startText = this.add.text(centerX, 450, '🚀 START MISSION', {
+    const startText = this.add.text(centerX, 480, '🚀 START MISSION', {
       fontSize: '24px',
       fill: '#ffffff',
       fontStyle: 'bold',
@@ -409,12 +308,12 @@ export class MenuScene extends Phaser.Scene {
     startText.setDepth(3);
     
     // Professional Settings button
-    const settingsButton = this.add.rectangle(centerX, 520, 200, 50, 0x666666, 0.8);
+    const settingsButton = this.add.rectangle(centerX, 560, 200, 50, 0x666666, 0.8);
     settingsButton.setStrokeStyle(2, 0xffffff);
     settingsButton.setInteractive();
     settingsButton.setDepth(2);
     
-    const settingsText = this.add.text(centerX, 520, '⚙️ SETTINGS', {
+    const settingsText = this.add.text(centerX, 560, '⚙️ SETTINGS', {
       fontSize: '20px',
       fill: '#ffffff',
       fontStyle: 'bold'

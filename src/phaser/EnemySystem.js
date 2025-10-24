@@ -5,6 +5,7 @@ export class EnemySystem {
   constructor(scene) {
     this.scene = scene;
     this.enemyTypes = {
+      // Original 20 enemies
       BASIC: { emoji: '👾', health: 1, speed: 100, points: 10, behavior: 'straight' },
       FAST: { emoji: '💨', health: 1, speed: 200, points: 15, behavior: 'straight' },
       TANK: { emoji: '🛡️', health: 3, speed: 50, points: 25, behavior: 'straight' },
@@ -24,18 +25,73 @@ export class EnemySystem {
       MINI_BOSS: { emoji: '🤖', health: 10, speed: 60, points: 100, behavior: 'miniBoss' },
       ELITE: { emoji: '⭐', health: 5, speed: 110, points: 50, behavior: 'elite' },
       STEALTH: { emoji: '👻', health: 1, speed: 130, points: 30, behavior: 'stealth' },
-      KAMIKAZE: { emoji: '💥', health: 1, speed: 180, points: 20, behavior: 'kamikaze' }
+      KAMIKAZE: { emoji: '💥', health: 1, speed: 180, points: 20, behavior: 'kamikaze' },
+      
+      // 30 New Enemy Types
+      // Advanced AI Enemies
+      PREDATOR: { emoji: '🦅', health: 2, speed: 140, points: 35, behavior: 'predator' },
+      HUNTER: { emoji: '🏹', health: 3, speed: 120, points: 40, behavior: 'hunter' },
+      STALKER: { emoji: '👁️', health: 2, speed: 110, points: 30, behavior: 'stalker' },
+      TRACKER: { emoji: '🔍', health: 1, speed: 160, points: 25, behavior: 'tracker' },
+      INTERCEPTOR: { emoji: '🚀', health: 2, speed: 180, points: 35, behavior: 'interceptor' },
+      AMBUSH: { emoji: '🕳️', health: 3, speed: 90, points: 40, behavior: 'ambush' },
+      PATROL: { emoji: '🚁', health: 2, speed: 100, points: 30, behavior: 'patrol' },
+      SCOUT: { emoji: '🔭', health: 1, speed: 150, points: 20, behavior: 'scout' },
+      
+      // Elemental Enemies
+      FIRE_DEMON: { emoji: '🔥', health: 4, speed: 80, points: 50, behavior: 'fireDemon' },
+      ICE_GOLEM: { emoji: '🧊', health: 5, speed: 60, points: 60, behavior: 'iceGolem' },
+      LIGHTNING_BOLT: { emoji: '⚡', health: 2, speed: 200, points: 40, behavior: 'lightning' },
+      EARTH_ELEMENTAL: { emoji: '🗿', health: 6, speed: 40, points: 70, behavior: 'earthElemental' },
+      WIND_SPIRIT: { emoji: '💨', health: 2, speed: 160, points: 35, behavior: 'windSpirit' },
+      WATER_DRAGON: { emoji: '🐉', health: 4, speed: 100, points: 55, behavior: 'waterDragon' },
+      DARK_SHADOW: { emoji: '🌑', health: 3, speed: 120, points: 45, behavior: 'darkShadow' },
+      LIGHT_ANGEL: { emoji: '👼', health: 3, speed: 110, points: 50, behavior: 'lightAngel' },
+      
+      // Mechanical Enemies
+      DRONE: { emoji: '🤖', health: 1, speed: 130, points: 25, behavior: 'drone' },
+      TURRET: { emoji: '🔫', health: 4, speed: 0, points: 60, behavior: 'turret' },
+      MECH: { emoji: '🦾', health: 6, speed: 70, points: 80, behavior: 'mech' },
+      CYBORG: { emoji: '🤖', health: 4, speed: 100, points: 55, behavior: 'cyborg' },
+      ANDROID: { emoji: '👤', health: 3, speed: 120, points: 45, behavior: 'android' },
+      ROBOT: { emoji: '🤖', health: 5, speed: 80, points: 65, behavior: 'robot' },
+      AUTOMATON: { emoji: '⚙️', health: 4, speed: 90, points: 50, behavior: 'automaton' },
+      SYNTHETIC: { emoji: '🧬', health: 3, speed: 110, points: 40, behavior: 'synthetic' },
+      
+      // Space Creatures
+      ALIEN: { emoji: '👽', health: 3, speed: 100, points: 40, behavior: 'alien' },
+      MUTANT: { emoji: '🧬', health: 4, speed: 90, points: 50, behavior: 'mutant' },
+      PARASITE: { emoji: '🦠', health: 1, speed: 140, points: 30, behavior: 'parasite' },
+      VIRUS: { emoji: '🦠', health: 1, speed: 160, points: 25, behavior: 'virus' },
+      BACTERIA: { emoji: '🦠', health: 1, speed: 180, points: 20, behavior: 'bacteria' },
+      SPORE: { emoji: '🍄', health: 1, speed: 120, points: 15, behavior: 'spore' },
+      TENTACLE: { emoji: '🦑', health: 3, speed: 80, points: 45, behavior: 'tentacle' },
+      EYE: { emoji: '👁️', health: 2, speed: 100, points: 35, behavior: 'eye' },
+      
+      // Boss Variants
+      MEGA_BOSS: { emoji: '👑', health: 50, speed: 30, points: 500, behavior: 'megaBoss' },
+      ULTRA_BOSS: { emoji: '🐉', health: 75, speed: 25, points: 750, behavior: 'ultraBoss' },
+      OMEGA_BOSS: { emoji: '👽', health: 100, speed: 20, points: 1000, behavior: 'omegaBoss' },
+      FINAL_BOSS: { emoji: '👑', health: 150, speed: 15, points: 1500, behavior: 'finalBoss' }
     };
   }
 
   createEnemySprite(type) {
     const config = this.enemyTypes[type];
-    const text = this.scene.add.text(0, 0, config.emoji, {
-      fontSize: '32px',
-      fill: '#ffffff'
+    const canvas = this.scene.textures.createCanvas(`enemy_${type}`, 40, 40);
+    const context = canvas.getContext();
+    context.font = '24px Arial';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(config.emoji, 20, 20);
+    canvas.refresh();
+  }
+
+  createEnemySprites() {
+    // Create sprites for all enemy types
+    Object.keys(this.enemyTypes).forEach(type => {
+      this.createEnemySprite(type);
     });
-    text.generateTexture(`enemy_${type}`, 40, 40);
-    text.destroy();
   }
 
   spawnEnemy(type = null) {

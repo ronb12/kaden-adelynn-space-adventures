@@ -18,6 +18,7 @@ export class WeaponSystem {
       PLASMA: 1
     };
     this.weaponTypes = {
+      // Original 10 weapons
       BASIC: { 
         name: 'Basic Blaster', 
         emoji: '🔫', 
@@ -97,6 +98,167 @@ export class WeaponSystem {
         fireRate: 1000, 
         bulletSpeed: 400,
         description: 'Most powerful weapon in the game'
+      },
+      
+      // 20 New Weapons
+      // Advanced Energy Weapons
+      QUANTUM_BLASTER: { 
+        name: 'Quantum Blaster', 
+        emoji: '⚛️', 
+        damage: 3, 
+        fireRate: 400, 
+        bulletSpeed: 450,
+        description: 'Quantum energy projectiles'
+      },
+      GRAVITY_GUN: { 
+        name: 'Gravity Gun', 
+        emoji: '🌌', 
+        damage: 4, 
+        fireRate: 800, 
+        bulletSpeed: 200,
+        description: 'Creates gravity wells that pull enemies'
+      },
+      VOID_CANNON: { 
+        name: 'Void Cannon', 
+        emoji: '🌑', 
+        damage: 6, 
+        fireRate: 1200, 
+        bulletSpeed: 300,
+        description: 'Fires void energy that destroys everything'
+      },
+      NEBULA_BEAM: { 
+        name: 'Nebula Beam', 
+        emoji: '🌌', 
+        damage: 4, 
+        fireRate: 600, 
+        bulletSpeed: 500,
+        description: 'Cosmic energy beam from nebula'
+      },
+      STAR_BURST: { 
+        name: 'Star Burst', 
+        emoji: '⭐', 
+        damage: 5, 
+        fireRate: 1000, 
+        bulletSpeed: 400,
+        description: 'Explodes like a supernova'
+      },
+      
+      // Elemental Weapons
+      FIRE_BLASTER: { 
+        name: 'Fire Blaster', 
+        emoji: '🔥', 
+        damage: 3, 
+        fireRate: 500, 
+        bulletSpeed: 350,
+        description: 'Flaming projectiles that burn enemies'
+      },
+      ICE_CANNON: { 
+        name: 'Ice Cannon', 
+        emoji: '🧊', 
+        damage: 2, 
+        fireRate: 600, 
+        bulletSpeed: 300,
+        description: 'Freezing projectiles that slow enemies'
+      },
+      LIGHTNING_STORM: { 
+        name: 'Lightning Storm', 
+        emoji: '⚡', 
+        damage: 4, 
+        fireRate: 700, 
+        bulletSpeed: 600,
+        description: 'Chain lightning that jumps between enemies'
+      },
+      EARTH_SHAKER: { 
+        name: 'Earth Shaker', 
+        emoji: '🌍', 
+        damage: 5, 
+        fireRate: 900, 
+        bulletSpeed: 250,
+        description: 'Seismic waves that shake the battlefield'
+      },
+      WIND_SLASHER: { 
+        name: 'Wind Slasher', 
+        emoji: '💨', 
+        damage: 2, 
+        fireRate: 300, 
+        bulletSpeed: 500,
+        description: 'Rapid wind blades that cut through enemies'
+      },
+      
+      // Specialized Weapons
+      BOUNCE_SHOT: { 
+        name: 'Bounce Shot', 
+        emoji: '🏀', 
+        damage: 2, 
+        fireRate: 500, 
+        bulletSpeed: 300,
+        description: 'Bullets that bounce off walls and enemies'
+      },
+      SPIRAL_CANNON: { 
+        name: 'Spiral Cannon', 
+        emoji: '🌀', 
+        damage: 3, 
+        fireRate: 600, 
+        bulletSpeed: 400,
+        description: 'Spiral pattern bullets that curve'
+      },
+      WAVE_GUN: { 
+        name: 'Wave Gun', 
+        emoji: '🌊', 
+        damage: 2, 
+        fireRate: 400, 
+        bulletSpeed: 350,
+        description: 'Wave pattern projectiles'
+      },
+      ORBIT_WEAPON: { 
+        name: 'Orbit Weapon', 
+        emoji: '🪐', 
+        damage: 1, 
+        fireRate: 200, 
+        bulletSpeed: 200,
+        description: 'Projectiles that orbit around the player'
+      },
+      SEEKER_MINE: { 
+        name: 'Seeker Mine', 
+        emoji: '💣', 
+        damage: 4, 
+        fireRate: 800, 
+        bulletSpeed: 100,
+        description: 'Mines that seek out enemies'
+      },
+      
+      // Ultimate Weapons
+      MEGA_CANNON: { 
+        name: 'Mega Cannon', 
+        emoji: '💥', 
+        damage: 8, 
+        fireRate: 1500, 
+        bulletSpeed: 500,
+        description: 'Ultimate destructive force'
+      },
+      ULTRA_LASER: { 
+        name: 'Ultra Laser', 
+        emoji: '🔴', 
+        damage: 10, 
+        fireRate: 2000, 
+        bulletSpeed: 600,
+        description: 'Most powerful laser in existence'
+      },
+      OMEGA_BEAM: { 
+        name: 'Omega Beam', 
+        emoji: '⚡', 
+        damage: 12, 
+        fireRate: 2500, 
+        bulletSpeed: 700,
+        description: 'The ultimate weapon of destruction'
+      },
+      FINAL_BLAST: { 
+        name: 'Final Blast', 
+        emoji: '💥', 
+        damage: 15, 
+        fireRate: 3000, 
+        bulletSpeed: 800,
+        description: 'The end of all things'
       }
     };
     this.lastFireTime = 0;
