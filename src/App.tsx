@@ -16,13 +16,13 @@ import TouchControls from './components/TouchControls';
 import ToastManager, { ToastContext } from './components/ToastManager';
 import { GameRatingSystem } from './systems/GameRatingSystem';
 import { MobileResponsiveSystem } from './systems/MobileResponsiveSystem';
-import { AdvancedWeaponSystem } from './systems/AdvancedWeaponSystem';
-import { MissionSystem } from './systems/MissionSystem';
+// import { AdvancedWeaponSystem } from './systems/AdvancedWeaponSystem';
+// import { MissionSystem } from './systems/MissionSystem';
 import { Enhanced3DGraphics } from './systems/Enhanced3DGraphics';
 import { BulletHellSystem } from './systems/BulletHellSystem';
 import { ProceduralGenerationSystem } from './systems/ProceduralGenerationSystem';
-import { SocialFeaturesSystem } from './systems/SocialFeaturesSystem';
-import { MonetizationSystem } from './systems/MonetizationSystem';
+// import { SocialFeaturesSystem } from './systems/SocialFeaturesSystem';
+// import { MonetizationSystem } from './systems/MonetizationSystem';
 
 // Game Settings Interface
 interface GameSettings {
@@ -1756,7 +1756,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     if (!gameState.gameOver) {
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     }
-  }, [gameState.gameOver, player, bullets, enemies, powerUps, particles, keys]);
+  }, [gameState.gameOver, player, bullets, enemies, powerUps, particles, keys, bosses.length, gameState.score]); // eslint-disable-line react-hooks/exhaustive-deps
   
   // Draw functions
   const drawStars = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
@@ -2456,7 +2456,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     const bulletCount = phase === 1 ? 1 : phase === 2 ? 3 : 5;
     
     for (let i = 0; i < bulletCount; i++) {
-      const angle = (i - (bulletCount - 1) / 2) * 0.5;
+      // const angle = (i - (bulletCount - 1) / 2) * 0.5;
       const newBullet: Bullet = {
         x: x - 2,
         y: y,

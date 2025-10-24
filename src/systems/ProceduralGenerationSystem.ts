@@ -345,11 +345,11 @@ export class ProceduralGenerationSystem {
   private generateObstacles(level: ProceduralLevel) {
     const obstacleTypes = ['asteroid', 'debris', 'energy_field', 'black_hole', 'nebula'];
     const obstacleCount = this.getObstacleCount(level.difficulty);
-    const spawnInterval = level.duration / obstacleCount;
+    // const spawnInterval = level.duration / obstacleCount;
 
     for (let i = 0; i < obstacleCount; i++) {
       const obstacleType = obstacleTypes[Math.floor(this.random() * obstacleTypes.length)];
-      const spawnTime = i * spawnInterval + (this.random() * spawnInterval * 0.5);
+      // const spawnTime = i * spawnInterval + (this.random() * spawnInterval * 0.5);
       
       const obstacle: ProceduralObstacle = {
         id: `obstacle_${i}`,

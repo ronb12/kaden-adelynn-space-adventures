@@ -133,7 +133,7 @@ export class FeatureTestingSystem {
     
     console.log('🚀 Starting comprehensive feature testing...');
     
-    for (const [suiteId, suite] of Array.from(this.testSuites.entries())) {
+    for (const [suiteId] of Array.from(this.testSuites.entries())) {
       await this.runTestSuite(suiteId);
     }
     

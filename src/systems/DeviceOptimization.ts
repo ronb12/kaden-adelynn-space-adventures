@@ -385,7 +385,7 @@ export class DeviceOptimization {
   }
   
   getOptimalCanvasSize(): { width: number; height: number; scale: number } {
-    const { width, height, ratio } = this.deviceInfo.screenSize;
+    const { width, height } = this.deviceInfo.screenSize;
     
     // Base resolution
     const baseWidth = 1920;

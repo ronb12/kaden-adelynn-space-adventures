@@ -5,9 +5,9 @@ export class AudioSystem {
   private soundEnabled: boolean = true;
   private currentMusic: AudioBufferSourceNode | null = null;
 
-  constructor() {
-    // Don't initialize audio context immediately - wait for user interaction
-  }
+  // constructor() {
+  //   // Don't initialize audio context immediately - wait for user interaction
+  // }
 
   private async initializeAudio(): Promise<void> {
     if (this.audioContext) return; // Already initialized

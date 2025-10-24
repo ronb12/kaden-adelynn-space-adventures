@@ -160,6 +160,8 @@ export class EnhancedWeaponSystem {
       case 'multi':
         this.createMultiShot(playerCenterX, playerCenterY, weapon, bullets);
         break;
+      default:
+        break;
     }
   }
 

@@ -83,6 +83,8 @@ export class EnhancedScoreSystem {
       case 'headshot':
         this.sessionStats.headshots++;
         break;
+      default:
+        break;
     }
   }
 
