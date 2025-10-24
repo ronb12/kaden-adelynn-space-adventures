@@ -417,11 +417,11 @@ export class SocialFeaturesSystem {
         case 'combo':
           return player.stats.maxCombo >= requirement.target;
         case 'weapons':
-          return this.getUnlockedWeaponsCount(playerId) >= requirement.target;
+          return this.getUnlockedWeaponsCount(player.id) >= requirement.target;
         case 'ships':
-          return this.getUnlockedShipsCount(playerId) >= requirement.target;
+          return this.getUnlockedShipsCount(player.id) >= requirement.target;
         case 'missions':
-          return this.getCompletedMissionsCount(playerId) >= requirement.target;
+          return this.getCompletedMissionsCount(player.id) >= requirement.target;
         default:
           return false;
       }

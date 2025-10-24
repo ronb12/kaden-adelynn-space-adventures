@@ -669,7 +669,7 @@ export class BulletHellSystem {
     this.waveTimers.clear();
   }
 
-  getBulletCount(): number {
+  getActiveBulletCount(): number {
     return this.activeBullets.length;
   }
 
