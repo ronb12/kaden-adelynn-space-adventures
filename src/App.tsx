@@ -16,6 +16,13 @@ import TouchControls from './components/TouchControls';
 import ToastManager, { ToastContext } from './components/ToastManager';
 import { GameRatingSystem } from './systems/GameRatingSystem';
 import { MobileResponsiveSystem } from './systems/MobileResponsiveSystem';
+import { AdvancedWeaponSystem } from './systems/AdvancedWeaponSystem';
+import { MissionSystem } from './systems/MissionSystem';
+import { Enhanced3DGraphics } from './systems/Enhanced3DGraphics';
+import { BulletHellSystem } from './systems/BulletHellSystem';
+import { ProceduralGenerationSystem } from './systems/ProceduralGenerationSystem';
+import { SocialFeaturesSystem } from './systems/SocialFeaturesSystem';
+import { MonetizationSystem } from './systems/MonetizationSystem';
 
 // Game Settings Interface
 interface GameSettings {
@@ -1524,7 +1531,7 @@ interface Bullet {
   height: number;
   speed: number;
   direction: number;
-  type: 'player' | 'enemy';
+  type: 'player' | 'enemy' | 'wing_fighter';
 }
 
 interface Enemy {
@@ -1587,6 +1594,15 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   const toastContext = React.useContext(ToastContext);
   const ratingSystem = React.useRef<GameRatingSystem>(new GameRatingSystem());
   const mobileResponsive = React.useRef<MobileResponsiveSystem>(new MobileResponsiveSystem());
+  
+  // Initialize new 10/10 systems
+  const advancedWeaponSystem = React.useRef<AdvancedWeaponSystem>(new AdvancedWeaponSystem());
+  const missionSystem = React.useRef<MissionSystem>(new MissionSystem());
+  const enhanced3DGraphics = React.useRef<Enhanced3DGraphics | null>(null);
+  const bulletHellSystem = React.useRef<BulletHellSystem>(new BulletHellSystem());
+  const proceduralGeneration = React.useRef<ProceduralGenerationSystem>(new ProceduralGenerationSystem());
+  const socialFeatures = React.useRef<SocialFeaturesSystem>(new SocialFeaturesSystem());
+  const monetizationSystem = React.useRef<MonetizationSystem>(new MonetizationSystem());
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const gameLoopRef = React.useRef<number | null>(null);
   const lastTimeRef = React.useRef<number>(0);
@@ -1630,7 +1646,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   const [powerUps, setPowerUps] = React.useState<PowerUp[]>([]);
   const [particles, setParticles] = React.useState<Particle[]>([]);
   const [keys, setKeys] = React.useState<{ [key: string]: boolean }>({});
-  const [wingFighters, setWingFighters] = React.useState<Array<{id: string, x: number, y: number, width: number, height: number, speed: number, targetX: number, targetY: number, offset: number}>>([]);
+  const [wingFighters, setWingFighters] = React.useState<Array<{id: string, x: number, y: number, width: number, height: number, speed: number, targetX: number, targetY: number, offset: number, lastShot?: number}>>([]);
   
   // Initialize mobile responsiveness
   React.useEffect(() => {
@@ -1640,6 +1656,19 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     // Initialize mobile responsive system
     mobileResponsive.current.initializeCanvas(canvas);
     mobileResponsive.current.applyResponsiveStyles(canvas);
+    
+    // Initialize 3D graphics system
+    enhanced3DGraphics.current = new Enhanced3DGraphics(canvas, {
+      quality: 'high',
+      shadows: true,
+      particles: true,
+      lighting: true,
+      reflections: true,
+      postProcessing: true,
+      antiAliasing: true,
+      textureQuality: 'high',
+      renderDistance: 1000
+    });
     
     // Handle orientation changes
     const handleOrientationChange = () => {
@@ -1683,6 +1712,13 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     updateParticles(deltaTime);
     updateAchievements(deltaTime);
     
+    // Update new 10/10 systems
+    if (enhanced3DGraphics.current) {
+      enhanced3DGraphics.current.render(deltaTime);
+    }
+    bulletHellSystem.current.updateBullets(deltaTime);
+    proceduralGeneration.current.generateLevel('current', 300000);
+    
     // Spawn enemies
     if (Math.random() < 0.02) {
       spawnEnemy();
@@ -1707,6 +1743,12 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     drawPowerUps(ctx);
     drawParticles(ctx);
     
+    // Draw new 10/10 systems
+    if (enhanced3DGraphics.current) {
+      // Enhanced 3D graphics are handled in the render method
+    }
+    drawBulletHellPatterns(ctx);
+    
     // Check collisions
     checkCollisions();
     
@@ -1728,25 +1770,84 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   
   const drawPlayer = (ctx: CanvasRenderingContext2D) => {
     ctx.save();
-    ctx.translate(player.x, player.y);
+    ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
     
-    // Player ship body
-    ctx.fillStyle = selectedCharacter === 'kaden' ? '#4a90e2' : '#e24a90';
+    // Enhanced player ship design
+    const shipColor = selectedCharacter === 'kaden' ? '#4a90e2' : '#e24a90';
+    const accentColor = selectedCharacter === 'kaden' ? '#2c5aa0' : '#a02c5a';
+    
+    // Main ship body - enhanced triangle
+    ctx.fillStyle = shipColor;
+    ctx.strokeStyle = accentColor;
+    ctx.lineWidth = 2;
+    
     ctx.beginPath();
-    ctx.moveTo(0, -25);
-    ctx.lineTo(-15, 20);
-    ctx.lineTo(15, 20);
+    ctx.moveTo(0, -20);  // Top point
+    ctx.lineTo(-18, 15); // Bottom left
+    ctx.lineTo(-8, 18);  // Left wing connection
+    ctx.lineTo(8, 18);   // Right wing connection
+    ctx.lineTo(18, 15);  // Bottom right
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
     
-    // Player ship details
+    // Wing extensions
+    ctx.fillStyle = shipColor;
+    ctx.strokeStyle = accentColor;
+    ctx.lineWidth = 1;
+    
+    // Left wing
+    ctx.beginPath();
+    ctx.moveTo(-8, 18);
+    ctx.lineTo(-12, 20);
+    ctx.lineTo(-6, 22);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    
+    // Right wing
+    ctx.beginPath();
+    ctx.moveTo(8, 18);
+    ctx.lineTo(12, 20);
+    ctx.lineTo(6, 22);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    
+    // Cockpit/canopy
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-3, -15, 6, 10);
-    ctx.fillRect(-8, 5, 16, 5);
+    ctx.beginPath();
+    ctx.arc(0, -8, 6, 0, Math.PI * 2);
+    ctx.fill();
     
-    // Engine glow
+    // Cockpit highlight
+    ctx.fillStyle = '#e0e0e0';
+    ctx.beginPath();
+    ctx.arc(0, -10, 3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Engine details
     ctx.fillStyle = '#00ffff';
-    ctx.fillRect(-5, 20, 10, 8);
+    ctx.fillRect(-6, 18, 4, 6);
+    ctx.fillRect(2, 18, 4, 6);
+    
+    // Engine glow effect
+    const glow = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+    ctx.fillStyle = `rgba(0, 255, 255, ${glow * 0.8})`;
+    ctx.fillRect(-8, 20, 6, 8);
+    ctx.fillRect(2, 20, 6, 8);
+    
+    // Ship outline glow
+    ctx.strokeStyle = `rgba(255, 255, 255, ${glow * 0.5})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, -20);
+    ctx.lineTo(-18, 15);
+    ctx.lineTo(-8, 18);
+    ctx.lineTo(8, 18);
+    ctx.lineTo(18, 15);
+    ctx.closePath();
+    ctx.stroke();
     
     ctx.restore();
   };
@@ -1756,45 +1857,89 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
       ctx.save();
       ctx.translate(wingFighter.x + wingFighter.width / 2, wingFighter.y + wingFighter.height / 2);
       
-      // Wing fighter design - smaller version of player ship
-      ctx.fillStyle = '#ffaa00';
-      ctx.strokeStyle = '#ff8800';
+      // Wing fighter design - exact mini version of player ship
+      const shipColor = selectedCharacter === 'kaden' ? '#4a90e2' : '#e24a90';
+      const accentColor = selectedCharacter === 'kaden' ? '#2c5aa0' : '#a02c5a';
+      
+      // Main ship body - mini triangle (scaled down from player ship)
+      ctx.fillStyle = shipColor;
+      ctx.strokeStyle = accentColor;
       ctx.lineWidth = 1;
       
-      // Main body
       ctx.beginPath();
-      ctx.moveTo(0, -8);
-      ctx.lineTo(-6, 6);
-      ctx.lineTo(-2, 4);
-      ctx.lineTo(2, 4);
-      ctx.lineTo(6, 6);
+      ctx.moveTo(0, -10);  // Top point (scaled from -20)
+      ctx.lineTo(-9, 7.5); // Bottom left (scaled from -18, 15)
+      ctx.lineTo(-4, 9);  // Left wing connection (scaled from -8, 18)
+      ctx.lineTo(4, 9);   // Right wing connection (scaled from 8, 18)
+      ctx.lineTo(9, 7.5);  // Bottom right (scaled from 18, 15)
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
       
-      // Wings
+      // Wing extensions - mini version
+      ctx.fillStyle = shipColor;
+      ctx.strokeStyle = accentColor;
+      ctx.lineWidth = 0.5;
+      
+      // Left wing
       ctx.beginPath();
-      ctx.moveTo(-6, 2);
-      ctx.lineTo(-10, 0);
-      ctx.lineTo(-6, -2);
+      ctx.moveTo(-4, 9);
+      ctx.lineTo(-6, 10);
+      ctx.lineTo(-3, 11);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
       
+      // Right wing
       ctx.beginPath();
-      ctx.moveTo(6, 2);
-      ctx.lineTo(10, 0);
-      ctx.lineTo(6, -2);
+      ctx.moveTo(4, 9);
+      ctx.lineTo(6, 10);
+      ctx.lineTo(3, 11);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
       
-      // Glow effect
-      const glow = Math.sin(Date.now() * 0.005) * 0.3 + 0.7;
-      ctx.strokeStyle = `rgba(255, 170, 0, ${glow})`;
-      ctx.lineWidth = 2;
+      // Cockpit/canopy - mini version
+      ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(0, 0, 12, 0, Math.PI * 2);
+      ctx.arc(0, -4, 3, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Cockpit highlight
+      ctx.fillStyle = '#e0e0e0';
+      ctx.beginPath();
+      ctx.arc(0, -5, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Engine details - mini version
+      ctx.fillStyle = '#00ffff';
+      ctx.fillRect(-3, 9, 2, 3);
+      ctx.fillRect(1, 9, 2, 3);
+      
+      // Engine glow effect
+      const glow = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+      ctx.fillStyle = `rgba(0, 255, 255, ${glow * 0.8})`;
+      ctx.fillRect(-4, 10, 3, 4);
+      ctx.fillRect(1, 10, 3, 4);
+      
+      // Ship outline glow
+      ctx.strokeStyle = `rgba(255, 255, 255, ${glow * 0.5})`;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(0, -10);
+      ctx.lineTo(-9, 7.5);
+      ctx.lineTo(-4, 9);
+      ctx.lineTo(4, 9);
+      ctx.lineTo(9, 7.5);
+      ctx.closePath();
+      ctx.stroke();
+      
+      // Wing fighter identification glow (different from player)
+      const wingGlow = Math.sin(Date.now() * 0.008 + wingFighter.id.length) * 0.4 + 0.6;
+      ctx.strokeStyle = `rgba(255, 170, 0, ${wingGlow * 0.3})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(0, 0, 8, 0, Math.PI * 2);
       ctx.stroke();
       
       ctx.restore();
@@ -1803,8 +1948,36 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   
   const drawBullets = (ctx: CanvasRenderingContext2D) => {
     bullets.forEach(bullet => {
-      ctx.fillStyle = bullet.type === 'player' ? '#00ffff' : '#ff4444';
-      ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+      if (bullet.type === 'player') {
+        ctx.fillStyle = '#00ffff';
+        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+      } else if (bullet.type === 'wing_fighter') {
+        // Wing fighter bullets - smaller and different color
+        ctx.fillStyle = '#ffaa00';
+        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        
+        // Add glow effect for wing fighter bullets
+        ctx.fillStyle = 'rgba(255, 170, 0, 0.3)';
+        ctx.fillRect(bullet.x - 1, bullet.y - 1, bullet.width + 2, bullet.height + 2);
+      } else {
+        // Enemy bullets
+        ctx.fillStyle = '#ff4444';
+        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+      }
+    });
+  };
+  
+  // New 10/10 drawing functions
+  const drawBulletHellPatterns = (ctx: CanvasRenderingContext2D) => {
+    const activeBullets = bulletHellSystem.current.getActiveBullets();
+    activeBullets.forEach(bullet => {
+      ctx.save();
+      ctx.fillStyle = bullet.color;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     });
   };
   
@@ -2138,6 +2311,24 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
         wingFighter.y += (dy / distance) * wingFighter.speed;
       }
       
+      // Wing fighter shooting - shoot when player shoots
+      if (keys[' '] && Date.now() - (wingFighter.lastShot || 0) > 300) {
+        wingFighter.lastShot = Date.now();
+        
+        // Create wing fighter bullet
+        const wingBullet: Bullet = {
+          x: wingFighter.x + wingFighter.width / 2 - 2,
+          y: wingFighter.y - 5,
+          width: 3,
+          height: 8,
+          speed: 6,
+          direction: -1,
+          type: 'wing_fighter'
+        };
+        
+        setBullets(prev => [...prev, wingBullet]);
+      }
+      
       // Keep wing fighters within screen bounds
       const canvas = canvasRef.current;
       if (canvas) {
@@ -2378,9 +2569,9 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   
   // Collision detection
   const checkCollisions = () => {
-    // Player bullets vs enemies
+    // Player bullets and wing fighter bullets vs enemies
     setBullets(prev => prev.filter(bullet => {
-      if (bullet.type === 'player') {
+      if (bullet.type === 'player' || bullet.type === 'wing_fighter') {
         const hitEnemy = enemies.find(enemy => 
           bullet.x < enemy.x + enemy.width &&
           bullet.x + bullet.width > enemy.x &&
@@ -2391,9 +2582,13 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
         if (hitEnemy) {
           createExplosion(hitEnemy.x + hitEnemy.width / 2, hitEnemy.y + hitEnemy.height / 2);
           setEnemies(prev => prev.filter(e => e !== hitEnemy));
+          
+          // Different score for wing fighter kills vs player kills
+          const scoreBonus = bullet.type === 'wing_fighter' ? 50 : 100;
+          
           setGameState(prev => ({ 
             ...prev, 
-            score: prev.score + 100,
+            score: prev.score + scoreBonus,
             enemiesKilled: prev.enemiesKilled + 1,
             killStreak: prev.killStreak + 1,
             maxKillStreak: Math.max(prev.maxKillStreak, prev.killStreak + 1)
@@ -2401,7 +2596,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
           return false;
         }
         
-        // Player bullets vs bosses
+        // Player bullets and wing fighter bullets vs bosses
         const hitBoss = bosses.find(boss => 
           bullet.x < boss.x + boss.width &&
           bullet.x + bullet.width > boss.x &&
@@ -2410,10 +2605,12 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
         );
         
         if (hitBoss) {
-          // Boss takes damage
+          // Boss takes damage - different damage for wing fighters
+          const damage = bullet.type === 'wing_fighter' ? 5 : 10;
+          const scoreBonus = bullet.type === 'wing_fighter' ? 25 : 50;
+          
           setBosses(prev => prev.map(boss => {
             if (boss === hitBoss) {
-              const damage = 10;
               if (boss.shield > 0) {
                 boss.shield = Math.max(0, boss.shield - damage);
               } else {
@@ -2425,7 +2622,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
           
           setGameState(prev => ({ 
             ...prev, 
-            score: prev.score + 50
+            score: prev.score + scoreBonus
           }));
           return false;
         }
