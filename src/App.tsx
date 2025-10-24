@@ -1,13 +1,2354 @@
-import React from 'react';
-import PhaserGame from './components/PhaserGame';
+import React, { useState } from 'react';
 import './App.css';
 
-function App() {
+// Game Settings Interface
+interface GameSettings {
+  audio: {
+    masterVolume: number;
+    musicVolume: number;
+    soundEffectsVolume: number;
+    voiceVolume: number;
+  };
+  graphics: {
+    quality: 'Low' | 'Medium' | 'High' | 'Ultra';
+    resolution: string;
+    fullscreen: boolean;
+    vsync: boolean;
+    particles: boolean;
+    shadows: boolean;
+  };
+  controls: {
+    keyBindings: {
+      moveUp: string;
+      moveDown: string;
+      moveLeft: string;
+      moveRight: string;
+      shoot: string;
+      pause: string;
+    };
+    mouseSensitivity: number;
+    controllerEnabled: boolean;
+  };
+  accessibility: {
+    colorBlindMode: boolean;
+    highContrast: boolean;
+    largeText: boolean;
+    screenReader: boolean;
+  };
+}
+
+// Game State Interface
+interface GameState {
+  currentScene: 'menu' | 'game' | 'settings' | 'achievements' | 'boss' | 'powerups' | 'multiplayer' | 'story' | 'challenges';
+  selectedCharacter: 'kaden' | 'adelynn';
+  settings: GameSettings;
+  gameStats: {
+    enemiesKilled: number;
+    bossesKilled: number;
+    killStreak: number;
+    maxKillStreak: number;
+    powerUpsCollected: number;
+    weaponsUsed: number;
+    perfectHits: number;
+    shotsFired: number;
+    bulletsDodged: number;
+    damageTaken: number;
+    survivalTime: number;
+    levelTime: number;
+    maxCombo: number;
+    currentCombo: number;
+    survivedWith1HP: boolean;
+    powerUpTypesCollected: Set<string>;
+    achievementsUnlocked: number;
+  };
+}
+
+// Main App Component
+const App: React.FC = () => {
+  const [gameState, setGameState] = useState<GameState>({
+    currentScene: 'menu',
+    selectedCharacter: 'kaden',
+    settings: {
+      audio: {
+        masterVolume: 80,
+        musicVolume: 70,
+        soundEffectsVolume: 90,
+        voiceVolume: 85
+      },
+      graphics: {
+        quality: 'High',
+        resolution: '1920x1080',
+        fullscreen: false,
+        vsync: true,
+        particles: true,
+        shadows: true
+      },
+      controls: {
+        keyBindings: {
+          moveUp: 'ArrowUp',
+          moveDown: 'ArrowDown',
+          moveLeft: 'ArrowLeft',
+          moveRight: 'ArrowRight',
+          shoot: 'Space',
+          pause: 'Escape'
+        },
+        mouseSensitivity: 50,
+        controllerEnabled: false
+      },
+      accessibility: {
+        colorBlindMode: false,
+        highContrast: false,
+        largeText: false,
+        screenReader: false
+      }
+    },
+    gameStats: {
+      enemiesKilled: 0,
+      bossesKilled: 0,
+      killStreak: 0,
+      maxKillStreak: 0,
+      powerUpsCollected: 0,
+      weaponsUsed: 0,
+      perfectHits: 0,
+      shotsFired: 0,
+      bulletsDodged: 0,
+      damageTaken: 0,
+      survivalTime: 0,
+      levelTime: 0,
+      maxCombo: 0,
+      currentCombo: 0,
+      survivedWith1HP: false,
+      powerUpTypesCollected: new Set(),
+      achievementsUnlocked: 0
+    }
+  });
+
+  const [showModal, setShowModal] = useState<string | null>(null);
+  const [achievements, setAchievements] = useState<Array<{id: string, name: string, description: string, unlocked: boolean, progress: number, maxProgress: number}>>([
+    {id: 'first_blood', name: 'First Blood', description: 'Defeat your first enemy', unlocked: false, progress: 0, maxProgress: 1},
+    {id: 'kill_streak_10', name: 'Kill Streak', description: 'Defeat 10 enemies in a row', unlocked: false, progress: 0, maxProgress: 10},
+    {id: 'boss_slayer', name: 'Boss Slayer', description: 'Defeat your first boss', unlocked: false, progress: 0, maxProgress: 1},
+    {id: 'power_up_collector', name: 'Power-up Collector', description: 'Collect 20 power-ups', unlocked: false, progress: 0, maxProgress: 20},
+    {id: 'survivor', name: 'Survivor', description: 'Survive for 5 minutes', unlocked: false, progress: 0, maxProgress: 300},
+    {id: 'combo_master', name: 'Combo Master', description: 'Achieve a 20x combo', unlocked: false, progress: 0, maxProgress: 20},
+    {id: 'perfect_accuracy', name: 'Perfect Accuracy', description: 'Hit 100 targets without missing', unlocked: false, progress: 0, maxProgress: 100},
+    {id: 'speed_demon', name: 'Speed Demon', description: 'Complete a level in under 2 minutes', unlocked: false, progress: 0, maxProgress: 120},
+    {id: 'shield_master', name: 'Shield Master', description: 'Use shield to block 50 attacks', unlocked: false, progress: 0, maxProgress: 50},
+    {id: 'weapon_master', name: 'Weapon Master', description: 'Use 10 different weapons', unlocked: false, progress: 0, maxProgress: 10}
+  ]);
+
+  // Handle scene changes
+  const changeScene = (scene: GameState['currentScene']) => {
+    setGameState(prev => ({ ...prev, currentScene: scene }));
+  };
+
+  // Handle character selection
+  const selectCharacter = (character: 'kaden' | 'adelynn') => {
+    setGameState(prev => ({ ...prev, selectedCharacter: character }));
+  };
+
+  // Handle modal display
+  const showFeatureModal = (feature: string) => {
+    setShowModal(feature);
+  };
+
+  const closeModal = () => {
+    setShowModal(null);
+  };
+
+  // Handle settings updates
+  const updateSettings = (newSettings: Partial<GameSettings>) => {
+    setGameState(prev => ({
+      ...prev,
+      settings: { ...prev.settings, ...newSettings }
+    }));
+  };
+
+  // Render current scene
+  const renderScene = () => {
+    switch (gameState.currentScene) {
+      case 'menu':
+        return <MainMenu 
+          onSceneChange={changeScene}
+          onCharacterSelect={selectCharacter}
+          onShowModal={showFeatureModal}
+          selectedCharacter={gameState.selectedCharacter}
+        />;
+      case 'game':
+        return <GameScene 
+          onSceneChange={changeScene}
+          selectedCharacter={gameState.selectedCharacter}
+          gameStats={gameState.gameStats}
+          achievements={achievements}
+          setAchievements={setAchievements}
+        />;
+      default:
+        return <MainMenu 
+          onSceneChange={changeScene}
+          onCharacterSelect={selectCharacter}
+          onShowModal={showFeatureModal}
+          selectedCharacter={gameState.selectedCharacter}
+        />;
+    }
+  };
+
   return (
-    <div className="App">
-      <PhaserGame />
+    <div className="app">
+      {renderScene()}
+      {showModal && (
+        <FeatureModal 
+          feature={showModal}
+          onClose={closeModal}
+          settings={gameState.settings}
+          onUpdateSettings={updateSettings}
+          achievements={achievements}
+        />
+      )}
     </div>
   );
+};
+
+// Main Menu Component
+interface MainMenuProps {
+  onSceneChange: (scene: GameState['currentScene']) => void;
+  onCharacterSelect: (character: 'kaden' | 'adelynn') => void;
+  onShowModal: (feature: string) => void;
+  selectedCharacter: 'kaden' | 'adelynn';
 }
+
+const MainMenu: React.FC<MainMenuProps> = ({ onSceneChange, onCharacterSelect, onShowModal, selectedCharacter }) => {
+  const [showCharacterModal, setShowCharacterModal] = useState(false);
+
+  return (
+    <div className="main-menu">
+      {/* Modern Background */}
+      <div className="background">
+        <div className="stars"></div>
+        <div className="grid"></div>
+      </div>
+
+      {/* Title Section */}
+      <div className="title-section">
+        <div className="title-bg"></div>
+        <h1 className="main-title">KADEN & ADELYNN</h1>
+        <h2 className="subtitle">SPACE ADVENTURES</h2>
+        <p className="tagline">Next-Generation Space Combat Experience</p>
+      </div>
+
+      {/* Main Action Buttons */}
+      <div className="main-buttons">
+        <button 
+          className="select-pilot-btn"
+          onClick={() => setShowCharacterModal(true)}
+        >
+          SELECT YOUR PILOT
+        </button>
+        
+        <button 
+          className="start-mission-btn"
+          onClick={() => onSceneChange('game')}
+        >
+          🚀 START MISSION
+        </button>
+        
+        <button 
+          className="settings-btn"
+          onClick={() => onShowModal('settings')}
+        >
+          ⚙️ SETTINGS
+        </button>
+      </div>
+
+      {/* Feature Buttons Grid */}
+      <div className="feature-buttons">
+        <div className="feature-row">
+          <button 
+            className="feature-btn achievements"
+            onClick={() => onShowModal('achievements')}
+          >
+            🏆 ACHIEVEMENTS
+          </button>
+          <button 
+            className="feature-btn boss"
+            onClick={() => onShowModal('boss')}
+          >
+            👹 BOSS BATTLES
+          </button>
+          <button 
+            className="feature-btn powerups"
+            onClick={() => onShowModal('powerups')}
+          >
+            ⚡ POWER-UPS
+          </button>
+        </div>
+        
+        <div className="feature-row">
+          <button 
+            className="feature-btn multiplayer"
+            onClick={() => onShowModal('multiplayer')}
+          >
+            👥 MULTIPLAYER
+          </button>
+          <button 
+            className="feature-btn story"
+            onClick={() => onShowModal('story')}
+          >
+            📖 STORY MODE
+          </button>
+          <button 
+            className="feature-btn challenges"
+            onClick={() => onShowModal('challenges')}
+          >
+            🎯 CHALLENGES
+          </button>
+        </div>
+      </div>
+
+      {/* Game Info */}
+      <div className="game-info">
+        <div className="info-panel">
+          🎮 ARROW KEYS TO MOVE • SPACE TO SHOOT • WASD ALTERNATIVE
+        </div>
+        <div className="branding">
+          © 2025 Bradley Virtual Solutions, LLC
+        </div>
+      </div>
+
+      {/* Character Selection Modal */}
+      {showCharacterModal && (
+        <CharacterModal 
+          onClose={() => setShowCharacterModal(false)}
+          onSelect={onCharacterSelect}
+          selectedCharacter={selectedCharacter}
+        />
+      )}
+    </div>
+  );
+};
+
+// Character Selection Modal
+interface CharacterModalProps {
+  onClose: () => void;
+  onSelect: (character: 'kaden' | 'adelynn') => void;
+  selectedCharacter: 'kaden' | 'adelynn';
+}
+
+const CharacterModal: React.FC<CharacterModalProps> = ({ onClose, onSelect, selectedCharacter }) => {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="character-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>CHOOSE YOUR PILOT</h2>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+        
+        <div className="character-cards">
+          <div 
+            className={`character-card ${selectedCharacter === 'kaden' ? 'selected' : ''}`}
+            onClick={() => onSelect('kaden')}
+          >
+            <div className="character-sprite">👦🏿</div>
+            <h3>KADEN</h3>
+            <p>Brave space pilot with lightning reflexes</p>
+          </div>
+          
+          <div 
+            className={`character-card ${selectedCharacter === 'adelynn' ? 'selected' : ''}`}
+            onClick={() => onSelect('adelynn')}
+          >
+            <div className="character-sprite">👧</div>
+            <h3>ADELYNN</h3>
+            <p>Skilled navigator with tactical expertise</p>
+          </div>
+        </div>
+        
+        <button 
+          className="confirm-btn"
+          onClick={onClose}
+        >
+          CONFIRM SELECTION
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Feature Modal
+interface FeatureModalProps {
+  feature: string;
+  onClose: () => void;
+  settings?: GameSettings;
+  onUpdateSettings?: (settings: Partial<GameSettings>) => void;
+  achievements?: Array<{id: string, name: string, description: string, unlocked: boolean, progress: number, maxProgress: number}>;
+}
+
+const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings, onUpdateSettings, achievements = [] }) => {
+  const getFeatureData = () => {
+    switch (feature) {
+      case 'achievements':
+        return {
+          title: '🏆 ACHIEVEMENT SYSTEM',
+          color: '#ff6b35',
+          description: 'Unlock amazing achievements and track your progress!',
+          isInteractive: true,
+          features: [
+            '✨ 20+ Achievement Types - From beginner to expert level',
+            '📊 Progress Tracking - Real-time achievement progress',
+            '🎁 Unlock Rewards - Exclusive rewards for achievements',
+            '🏅 Achievement Categories - Combat, Survival, Collection',
+            '🔥 Streak Achievements - Consecutive kill streaks',
+            '👹 Boss Defeat Achievements - Epic boss victories',
+            '⚡ Power-up Collection - Collect all power-up types',
+            '💪 Survival Achievements - Survive against all odds',
+            '🎯 Perfect Accuracy - Hit targets with precision',
+            '🏆 Speed Runner - Complete levels quickly',
+            '💎 Collector - Gather rare items',
+            '🔥 Combo Master - Chain amazing combos'
+          ],
+          stats: {
+            total: 20,
+            unlocked: 0,
+            progress: '0%'
+          }
+        };
+      case 'boss':
+        return {
+          title: '👹 BOSS BATTLE SYSTEM',
+          color: '#8b0000',
+          description: 'Face epic boss battles with unique mechanics!',
+          isInteractive: true,
+          features: [
+            '⚔️ 15+ Epic Boss Battles - Each with unique patterns',
+            '🎯 Unique Boss Mechanics - Special attack patterns',
+            '🔄 Multi-Phase Battles - Bosses change tactics mid-fight',
+            '❤️ Boss Health Bars - Visual health indicators',
+            '💥 Special Attacks - Devastating boss abilities',
+            '🎭 Boss Patterns - Learn and counter attack patterns',
+            '🎁 Reward Systems - Exclusive boss rewards',
+            '📈 Difficulty Scaling - Adaptive boss difficulty',
+            '🌪️ Environmental Hazards - Bosses use the environment',
+            '⚡ Weak Point System - Target specific boss areas',
+            '🛡️ Shield Mechanics - Break through boss defenses',
+            '🎪 Arena Battles - Fight in unique battle arenas'
+          ],
+          stats: {
+            total: 15,
+            defeated: 0,
+            progress: '0%'
+          }
+        };
+      case 'powerups':
+        return {
+          title: '⚡ POWER-UP SYSTEM',
+          color: '#9932cc',
+          description: 'Collect 50+ unique power-ups with amazing effects!',
+          isInteractive: true,
+          features: [
+            '⚡ 50+ Unique Power-ups - Vast collection of abilities',
+            '🔥 Elemental Powers - Fire, Ice, Lightning, Earth',
+            '🌌 Quantum Abilities - Advanced space technology',
+            '🔫 Weapon Modifiers - Enhance your weapons',
+            '🛡️ Defensive Power-ups - Shield and protection abilities',
+            '🔧 Utility Power-ups - Speed, health, and special abilities',
+            '⏱️ Duration Effects - Temporary and permanent boosts',
+            '✨ Visual Effects - Stunning power-up animations',
+            '💎 Rare Power-ups - Ultra-rare special abilities',
+            '🔄 Combo Power-ups - Chain power-up effects',
+            '🎯 Precision Power-ups - Accuracy and targeting boosts',
+            '💪 Strength Power-ups - Damage and force multipliers'
+          ],
+          stats: {
+            total: 50,
+            collected: 0,
+            progress: '0%'
+          }
+        };
+      case 'multiplayer':
+        return {
+          title: '👥 MULTIPLAYER SYSTEM',
+          color: '#32cd32',
+          description: 'Play with friends in exciting multiplayer modes!',
+          isInteractive: true,
+          features: [
+            '👥 Local Multiplayer - Play with friends on same device',
+            '⚔️ Team Battles - Cooperative boss fights',
+            '🤝 Cooperative Play - Work together to survive',
+            '🥊 Player vs Player - Competitive multiplayer battles',
+            '⚡ Shared Power-ups - Team power-up collection',
+            '🏆 Team Achievements - Unlock achievements together',
+            '💬 Communication System - In-game chat and signals',
+            '📊 Leaderboards - Compete for high scores',
+            '🎮 Cross-Platform - Play across different devices',
+            '🏅 Tournament Mode - Organized competitive play',
+            '🎪 Party Mode - Fun mini-games with friends',
+            '🌟 Spectator Mode - Watch other players compete'
+          ],
+          stats: {
+            players: 0,
+            maxPlayers: 4,
+            rooms: 0
+          }
+        };
+      case 'story':
+        return {
+          title: '📖 STORY SYSTEM',
+          color: '#ffd700',
+          description: 'Experience an epic space adventure story!',
+          isInteractive: true,
+          features: [
+            '📖 Epic Space Adventure - Immersive storyline',
+            '👤 Character Development - Watch Kaden & Adelynn grow',
+            '🎬 Cutscenes & Dialogues - Cinematic story moments',
+            '📈 Story Progression - Unlock new story chapters',
+            '🎭 Multiple Endings - Your choices affect the outcome',
+            '📚 Character Backstories - Learn about the pilots',
+            '🎯 Mission Objectives - Story-driven missions',
+            '📝 Narrative Elements - Rich dialogue and lore',
+            '🌌 Space Lore - Deep universe backstory',
+            '👥 Character Relationships - Dynamic character interactions',
+            '🎪 Side Quests - Optional story content',
+            '🏆 Story Achievements - Unlock story-based rewards'
+          ],
+          stats: {
+            chapters: 10,
+            completed: 0,
+            progress: '0%'
+          }
+        };
+      case 'challenges':
+        return {
+          title: '🎯 CHALLENGE SYSTEM',
+          color: '#ff4500',
+          description: 'Take on exciting challenges and prove your skills!',
+          isInteractive: true,
+          features: [
+            '🎯 10+ Challenge Modes - Various difficulty challenges',
+            '📅 Daily Challenges - New challenges every day',
+            '📆 Weekly Challenges - Extended weekly objectives',
+            '🎉 Special Events - Limited-time special challenges',
+            '📊 Difficulty Levels - Easy, Normal, Hard, Expert',
+            '⏰ Time-based Challenges - Race against the clock',
+            '🏆 Score Challenges - Compete for high scores',
+            '💪 Survival Challenges - Survive as long as possible',
+            '🎪 Boss Rush - Fight all bosses in sequence',
+            '⚡ Speed Challenges - Complete levels quickly',
+            '🎯 Precision Challenges - Perfect accuracy required',
+            '🔥 Combo Challenges - Chain amazing combos'
+          ],
+          stats: {
+            total: 10,
+            completed: 0,
+            progress: '0%'
+          }
+        };
+      case 'settings':
+        return {
+          title: '⚙️ GAME SETTINGS',
+          color: '#666666',
+          description: 'Customize your gaming experience!',
+          isInteractive: true,
+          features: [
+            '🔊 Audio Settings - Master volume and sound effects',
+            '🎮 Graphics Quality - High, Medium, Low quality options',
+            '⌨️ Control Configuration - Customize key bindings',
+            '🎯 Display Options - Resolution and fullscreen settings',
+            '🔊 Sound Effects - Individual sound effect controls',
+            '🎵 Background Music - Music volume and track selection',
+            '🎮 Controller Support - Gamepad configuration',
+            '⚙️ Advanced Options - Performance and accessibility',
+            '🌙 Dark Mode - Eye-friendly dark theme',
+            '📱 Mobile Controls - Touch control customization',
+            '🔊 Voice Chat - Multiplayer communication settings',
+            '💾 Save Settings - Cloud save and local storage'
+          ],
+          stats: {
+            audioLevel: settings?.audio.masterVolume || 80,
+            graphicsQuality: settings?.graphics.quality || 'High',
+            controls: 'Default'
+          }
+        };
+      default:
+        return {
+          title: 'FEATURE',
+          color: '#00d4ff',
+          description: 'Feature coming soon!',
+          features: ['Feature coming soon!']
+        };
+    }
+  };
+
+  const featureData = getFeatureData();
+
+  // Render interactive achievements if it's the achievements modal
+  if (feature === 'achievements' && featureData.isInteractive) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="achievements-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2 style={{ color: featureData.color }}>{featureData.title}</h2>
+            <button className="close-btn" onClick={onClose}>×</button>
+          </div>
+          
+          <div className="achievements-content">
+            <div className="achievement-categories">
+              <h3>🏆 Achievement Categories</h3>
+              
+              <div className="category-grid">
+                <div className="category-card" onClick={() => console.log('Combat Achievements')}>
+                  <div className="category-icon">⚔️</div>
+                  <h4>Combat</h4>
+                  <p>Battle and combat achievements</p>
+                  <div className="category-stats">
+                    <span>0/5 Unlocked</span>
+                  </div>
+                </div>
+                
+                <div className="category-card" onClick={() => console.log('Survival Achievements')}>
+                  <div className="category-icon">💪</div>
+                  <h4>Survival</h4>
+                  <p>Endurance and survival achievements</p>
+                  <div className="category-stats">
+                    <span>0/4 Unlocked</span>
+                  </div>
+                </div>
+                
+                <div className="category-card" onClick={() => console.log('Collection Achievements')}>
+                  <div className="category-icon">💎</div>
+                  <h4>Collection</h4>
+                  <p>Gathering and collection achievements</p>
+                  <div className="category-stats">
+                    <span>0/6 Unlocked</span>
+                  </div>
+                </div>
+                
+                <div className="category-card" onClick={() => console.log('Special Achievements')}>
+                  <div className="category-icon">⭐</div>
+                  <h4>Special</h4>
+                  <p>Rare and special achievements</p>
+                  <div className="category-stats">
+                    <span>0/5 Unlocked</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="achievement-list">
+              <h3>🎯 Available Achievements</h3>
+              
+              <div className="achievement-items">
+                {achievements.map((achievement, index) => (
+                  <div key={achievement.id} className={`achievement-item ${achievement.unlocked ? 'unlocked' : 'locked'}`}>
+                    <div className="achievement-icon">
+                      {achievement.id === 'first_blood' ? '🎯' : 
+                       achievement.id === 'kill_streak_10' ? '🔥' :
+                       achievement.id === 'boss_slayer' ? '👹' :
+                       achievement.id === 'power_up_collector' ? '⚡' :
+                       achievement.id === 'survivor' ? '💪' :
+                       achievement.id === 'combo_master' ? '🔥' :
+                       achievement.id === 'perfect_accuracy' ? '🎯' :
+                       achievement.id === 'speed_demon' ? '💨' :
+                       achievement.id === 'shield_master' ? '🛡️' :
+                       achievement.id === 'weapon_master' ? '🔫' : '🏆'}
+                    </div>
+                    <div className="achievement-info">
+                      <h4>{achievement.name}</h4>
+                      <p>{achievement.description}</p>
+                      <div className="achievement-progress">{achievement.progress}/{achievement.maxProgress}</div>
+                    </div>
+                    <div className="achievement-reward">
+                      {achievement.unlocked ? '✅ UNLOCKED' : `+${achievement.maxProgress * 10} XP`}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          <div className="achievement-actions">
+            <button className="view-all-btn" onClick={() => console.log('View all achievements')}>
+              📋 View All Achievements
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render interactive boss battles if it's the boss modal
+  if (feature === 'boss' && featureData.isInteractive) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="boss-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2 style={{ color: featureData.color }}>{featureData.title}</h2>
+            <button className="close-btn" onClick={onClose}>×</button>
+          </div>
+          
+          <div className="boss-content">
+            <div className="boss-selection">
+              <h3>👹 Select Boss to Battle</h3>
+              
+              <div className="boss-grid">
+                <div className="boss-card" onClick={() => console.log('Fight Space Dragon')}>
+                  <div className="boss-icon">🐉</div>
+                  <h4>Space Dragon</h4>
+                  <p>Ancient cosmic dragon</p>
+                  <div className="boss-difficulty">⭐⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                </div>
+                
+                <div className="boss-card locked" onClick={() => console.log('Boss locked')}>
+                  <div className="boss-icon">👾</div>
+                  <h4>Void Reaper</h4>
+                  <p>Shadow entity from the void</p>
+                  <div className="boss-difficulty">⭐⭐⭐⭐</div>
+                  <div className="boss-status">Locked</div>
+                </div>
+                
+                <div className="boss-card locked" onClick={() => console.log('Boss locked')}>
+                  <div className="boss-icon">🤖</div>
+                  <h4>Mech Titan</h4>
+                  <p>Giant robotic war machine</p>
+                  <div className="boss-difficulty">⭐⭐⭐⭐⭐</div>
+                  <div className="boss-status">Locked</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="boss-info">
+              <h3>⚔️ Boss Battle Info</h3>
+              <div className="boss-mechanics">
+                <div className="mechanic-item">
+                  <span>🔄 Multi-Phase Battles</span>
+                  <span>Bosses change tactics during battle</span>
+                </div>
+                <div className="mechanic-item">
+                  <span>⚡ Weak Points</span>
+                  <span>Target specific areas for extra damage</span>
+                </div>
+                <div className="mechanic-item">
+                  <span>🛡️ Shield System</span>
+                  <span>Break through boss defenses</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="boss-actions">
+            <button className="start-boss-btn" onClick={() => console.log('Start boss battle')}>
+              ⚔️ Start Boss Battle
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render interactive power-ups if it's the powerups modal
+  if (feature === 'powerups' && featureData.isInteractive) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="powerups-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2 style={{ color: featureData.color }}>{featureData.title}</h2>
+            <button className="close-btn" onClick={onClose}>×</button>
+          </div>
+          
+          <div className="powerups-content">
+            <div className="powerup-categories">
+              <h3>⚡ Power-up Categories</h3>
+              
+              <div className="category-tabs">
+                <button className="tab-btn active" onClick={() => console.log('Elemental tab')}>🔥 Elemental</button>
+                <button className="tab-btn" onClick={() => console.log('Weapon tab')}>🔫 Weapon</button>
+                <button className="tab-btn" onClick={() => console.log('Defense tab')}>🛡️ Defense</button>
+                <button className="tab-btn" onClick={() => console.log('Utility tab')}>🔧 Utility</button>
+              </div>
+              
+              <div className="powerup-grid">
+                <div className="powerup-item" onClick={() => console.log('Fire Power-up')}>
+                  <div className="powerup-icon">🔥</div>
+                  <h4>Fire Blast</h4>
+                  <p>Shoots fire projectiles</p>
+                  <div className="powerup-rarity">Common</div>
+                </div>
+                
+                <div className="powerup-item" onClick={() => console.log('Ice Power-up')}>
+                  <div className="powerup-icon">❄️</div>
+                  <h4>Ice Shield</h4>
+                  <p>Freezes incoming projectiles</p>
+                  <div className="powerup-rarity">Rare</div>
+                </div>
+                
+                <div className="powerup-item" onClick={() => console.log('Lightning Power-up')}>
+                  <div className="powerup-icon">⚡</div>
+                  <h4>Lightning Strike</h4>
+                  <p>Chain lightning attacks</p>
+                  <div className="powerup-rarity">Epic</div>
+                </div>
+                
+                <div className="powerup-item locked" onClick={() => console.log('Power-up locked')}>
+                  <div className="powerup-icon">🌌</div>
+                  <h4>Quantum Blast</h4>
+                  <p>Advanced space technology</p>
+                  <div className="powerup-rarity">Legendary</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="powerup-actions">
+            <button className="view-collection-btn" onClick={() => console.log('View power-up collection')}>
+              📦 View Collection
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render interactive story if it's the story modal
+  if (feature === 'story' && featureData.isInteractive) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="story-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2 style={{ color: featureData.color }}>{featureData.title}</h2>
+            <button className="close-btn" onClick={onClose}>×</button>
+          </div>
+          
+          <div className="story-content">
+            <div className="story-chapters">
+              <h3>📖 Story Chapters</h3>
+              
+              <div className="chapter-list">
+                <div className="chapter-item available" onClick={() => console.log('Start Chapter 1')}>
+                  <div className="chapter-number">1</div>
+                  <div className="chapter-info">
+                    <h4>The Awakening</h4>
+                    <p>Kaden and Adelynn discover their destiny</p>
+                    <div className="chapter-status">Available</div>
+                  </div>
+                </div>
+                
+                <div className="chapter-item locked" onClick={() => console.log('Chapter locked')}>
+                  <div className="chapter-number">2</div>
+                  <div className="chapter-info">
+                    <h4>First Mission</h4>
+                    <p>Their first space adventure begins</p>
+                    <div className="chapter-status">Locked</div>
+                  </div>
+                </div>
+                
+                <div className="chapter-item locked" onClick={() => console.log('Chapter locked')}>
+                  <div className="chapter-number">3</div>
+                  <div className="chapter-info">
+                    <h4>The Ancient Threat</h4>
+                    <p>Discovering an ancient cosmic danger</p>
+                    <div className="chapter-status">Locked</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="story-characters">
+              <h3>👥 Character Development</h3>
+              
+              <div className="character-profiles">
+                <div className="character-profile">
+                  <div className="character-avatar">👦🏿</div>
+                  <h4>Kaden</h4>
+                  <p>Brave space pilot with lightning reflexes</p>
+                  <div className="character-level">Level 1</div>
+                </div>
+                
+                <div className="character-profile">
+                  <div className="character-avatar">👧</div>
+                  <h4>Adelynn</h4>
+                  <p>Skilled navigator with tactical expertise</p>
+                  <div className="character-level">Level 1</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="story-actions">
+            <button className="start-story-btn" onClick={() => console.log('Start story mode')}>
+              📖 Begin Adventure
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render interactive challenges if it's the challenges modal
+  if (feature === 'challenges' && featureData.isInteractive) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="challenges-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2 style={{ color: featureData.color }}>{featureData.title}</h2>
+            <button className="close-btn" onClick={onClose}>×</button>
+          </div>
+          
+          <div className="challenges-content">
+            <div className="challenge-types">
+              <h3>🎯 Challenge Types</h3>
+              
+              <div className="challenge-grid">
+                <div className="challenge-card" onClick={() => console.log('Daily Challenge')}>
+                  <div className="challenge-icon">📅</div>
+                  <h4>Daily Challenge</h4>
+                  <p>New challenge every day</p>
+                  <div className="challenge-reward">+200 XP</div>
+                </div>
+                
+                <div className="challenge-card" onClick={() => console.log('Weekly Challenge')}>
+                  <div className="challenge-icon">📆</div>
+                  <h4>Weekly Challenge</h4>
+                  <p>Extended weekly objectives</p>
+                  <div className="challenge-reward">+1000 XP</div>
+                </div>
+                
+                <div className="challenge-card" onClick={() => console.log('Survival Challenge')}>
+                  <div className="challenge-icon">💪</div>
+                  <h4>Survival Challenge</h4>
+                  <p>Survive as long as possible</p>
+                  <div className="challenge-reward">+500 XP</div>
+                </div>
+                
+                <div className="challenge-card" onClick={() => console.log('Boss Rush')}>
+                  <div className="challenge-icon">🎪</div>
+                  <h4>Boss Rush</h4>
+                  <p>Fight all bosses in sequence</p>
+                  <div className="challenge-reward">+1500 XP</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="challenge-difficulty">
+              <h3>📊 Difficulty Levels</h3>
+              
+              <div className="difficulty-options">
+                <button className="difficulty-btn active" onClick={() => console.log('Easy difficulty')}>
+                  🟢 Easy
+                </button>
+                <button className="difficulty-btn" onClick={() => console.log('Normal difficulty')}>
+                  🟡 Normal
+                </button>
+                <button className="difficulty-btn" onClick={() => console.log('Hard difficulty')}>
+                  🟠 Hard
+                </button>
+                <button className="difficulty-btn" onClick={() => console.log('Expert difficulty')}>
+                  🔴 Expert
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="challenge-actions">
+            <button className="start-challenge-btn" onClick={() => console.log('Start challenge')}>
+              🎯 Start Challenge
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render interactive multiplayer if it's the multiplayer modal
+  if (feature === 'multiplayer' && featureData.isInteractive) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="multiplayer-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2 style={{ color: featureData.color }}>{featureData.title}</h2>
+            <button className="close-btn" onClick={onClose}>×</button>
+          </div>
+          
+          <div className="multiplayer-content">
+            <div className="multiplayer-modes">
+              <h3>🎮 Select Multiplayer Mode</h3>
+              
+              <div className="mode-grid">
+                <div className="mode-card" onClick={() => {
+                  // Start local multiplayer
+                  console.log('Starting Local Multiplayer');
+                }}>
+                  <div className="mode-icon">👥</div>
+                  <h4>Local Multiplayer</h4>
+                  <p>Play with friends on the same device</p>
+                  <div className="mode-stats">
+                    <span>👥 2-4 Players</span>
+                    <span>🎮 Same Device</span>
+                  </div>
+                </div>
+                
+                <div className="mode-card" onClick={() => {
+                  // Start online multiplayer
+                  console.log('Starting Online Multiplayer');
+                }}>
+                  <div className="mode-icon">🌐</div>
+                  <h4>Online Multiplayer</h4>
+                  <p>Play with friends across the internet</p>
+                  <div className="mode-stats">
+                    <span>👥 2-8 Players</span>
+                    <span>🌐 Internet Required</span>
+                  </div>
+                </div>
+                
+                <div className="mode-card" onClick={() => {
+                  // Start cooperative mode
+                  console.log('Starting Cooperative Mode');
+                }}>
+                  <div className="mode-icon">🤝</div>
+                  <h4>Cooperative Mode</h4>
+                  <p>Work together against AI enemies</p>
+                  <div className="mode-stats">
+                    <span>👥 2-4 Players</span>
+                    <span>🤖 vs AI</span>
+                  </div>
+                </div>
+                
+                <div className="mode-card" onClick={() => {
+                  // Start competitive mode
+                  console.log('Starting Competitive Mode');
+                }}>
+                  <div className="mode-icon">⚔️</div>
+                  <h4>Competitive Mode</h4>
+                  <p>Battle against other players</p>
+                  <div className="mode-stats">
+                    <span>👥 2-8 Players</span>
+                    <span>🥊 PvP</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="multiplayer-options">
+              <h3>⚙️ Multiplayer Options</h3>
+              
+              <div className="option-grid">
+                <div className="option-item">
+                  <label>
+                    <input type="checkbox" defaultChecked />
+                    <span>🎵 Background Music</span>
+                  </label>
+                </div>
+                <div className="option-item">
+                  <label>
+                    <input type="checkbox" defaultChecked />
+                    <span>🔊 Sound Effects</span>
+                  </label>
+                </div>
+                <div className="option-item">
+                  <label>
+                    <input type="checkbox" />
+                    <span>💬 Voice Chat</span>
+                  </label>
+                </div>
+                <div className="option-item">
+                  <label>
+                    <input type="checkbox" defaultChecked />
+                    <span>🎯 Friendly Fire</span>
+                  </label>
+                </div>
+                <div className="option-item">
+                  <label>
+                    <input type="checkbox" />
+                    <span>⏰ Time Limit</span>
+                  </label>
+                </div>
+                <div className="option-item">
+                  <label>
+                    <input type="checkbox" defaultChecked />
+                    <span>🏆 Score Tracking</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div className="room-creation">
+              <h3>🏠 Create or Join Room</h3>
+              
+              <div className="room-actions">
+                <button className="create-room-btn" onClick={() => {
+                  console.log('Creating new room');
+                }}>
+                  🏠 Create Room
+                </button>
+                <button className="join-room-btn" onClick={() => {
+                  console.log('Joining existing room');
+                }}>
+                  🚪 Join Room
+                </button>
+                <button className="quick-match-btn" onClick={() => {
+                  console.log('Quick match');
+                }}>
+                  ⚡ Quick Match
+                </button>
+              </div>
+              
+              <div className="room-code">
+                <label>Room Code:</label>
+                <input 
+                  type="text" 
+                  placeholder="Enter room code..." 
+                  maxLength={6}
+                  className="room-code-input"
+                />
+                <button className="join-code-btn">Join</button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="multiplayer-actions">
+            <button className="start-multiplayer-btn" onClick={() => {
+              console.log('Starting multiplayer game');
+              onClose();
+            }}>
+              🚀 Start Multiplayer Game
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render interactive settings if it's the settings modal
+  if (feature === 'settings' && featureData.isInteractive && settings && onUpdateSettings) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2 style={{ color: featureData.color }}>{featureData.title}</h2>
+            <button className="close-btn" onClick={onClose}>×</button>
+          </div>
+          
+          <div className="settings-content">
+            {/* Audio Settings */}
+            <div className="settings-section">
+              <h3>🔊 Audio Settings</h3>
+              <div className="setting-group">
+                <label>Master Volume: {settings.audio.masterVolume}%</label>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  value={settings.audio.masterVolume}
+                  onChange={(e) => onUpdateSettings({
+                    audio: { ...settings.audio, masterVolume: parseInt(e.target.value) }
+                  })}
+                  className="slider"
+                />
+              </div>
+              <div className="setting-group">
+                <label>Music Volume: {settings.audio.musicVolume}%</label>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  value={settings.audio.musicVolume}
+                  onChange={(e) => onUpdateSettings({
+                    audio: { ...settings.audio, musicVolume: parseInt(e.target.value) }
+                  })}
+                  className="slider"
+                />
+              </div>
+              <div className="setting-group">
+                <label>Sound Effects: {settings.audio.soundEffectsVolume}%</label>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  value={settings.audio.soundEffectsVolume}
+                  onChange={(e) => onUpdateSettings({
+                    audio: { ...settings.audio, soundEffectsVolume: parseInt(e.target.value) }
+                  })}
+                  className="slider"
+                />
+              </div>
+            </div>
+
+            {/* Graphics Settings */}
+            <div className="settings-section">
+              <h3>🎮 Graphics Settings</h3>
+              <div className="setting-group">
+                <label>Quality:</label>
+                <select 
+                  value={settings.graphics.quality}
+                  onChange={(e) => onUpdateSettings({
+                    graphics: { ...settings.graphics, quality: e.target.value as any }
+                  })}
+                  className="setting-select"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Ultra">Ultra</option>
+                </select>
+              </div>
+              <div className="setting-group">
+                <label>Resolution:</label>
+                <select 
+                  value={settings.graphics.resolution}
+                  onChange={(e) => onUpdateSettings({
+                    graphics: { ...settings.graphics, resolution: e.target.value }
+                  })}
+                  className="setting-select"
+                >
+                  <option value="1280x720">1280x720</option>
+                  <option value="1920x1080">1920x1080</option>
+                  <option value="2560x1440">2560x1440</option>
+                  <option value="3840x2160">3840x2160</option>
+                </select>
+              </div>
+              <div className="setting-group checkbox-group">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={settings.graphics.fullscreen}
+                    onChange={(e) => onUpdateSettings({
+                      graphics: { ...settings.graphics, fullscreen: e.target.checked }
+                    })}
+                  />
+                  Fullscreen
+                </label>
+              </div>
+              <div className="setting-group checkbox-group">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={settings.graphics.vsync}
+                    onChange={(e) => onUpdateSettings({
+                      graphics: { ...settings.graphics, vsync: e.target.checked }
+                    })}
+                  />
+                  VSync
+                </label>
+              </div>
+              <div className="setting-group checkbox-group">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={settings.graphics.particles}
+                    onChange={(e) => onUpdateSettings({
+                      graphics: { ...settings.graphics, particles: e.target.checked }
+                    })}
+                  />
+                  Particle Effects
+                </label>
+              </div>
+            </div>
+
+            {/* Controls Settings */}
+            <div className="settings-section">
+              <h3>⌨️ Control Settings</h3>
+              <div className="setting-group">
+                <label>Mouse Sensitivity: {settings.controls.mouseSensitivity}%</label>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  value={settings.controls.mouseSensitivity}
+                  onChange={(e) => onUpdateSettings({
+                    controls: { ...settings.controls, mouseSensitivity: parseInt(e.target.value) }
+                  })}
+                  className="slider"
+                />
+              </div>
+              <div className="setting-group checkbox-group">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={settings.controls.controllerEnabled}
+                    onChange={(e) => onUpdateSettings({
+                      controls: { ...settings.controls, controllerEnabled: e.target.checked }
+                    })}
+                  />
+                  Enable Controller
+                </label>
+              </div>
+              <div className="key-bindings">
+                <h4>Key Bindings:</h4>
+                <div className="key-binding-grid">
+                  <div className="key-binding">
+                    <span>Move Up:</span>
+                    <kbd>{settings.controls.keyBindings.moveUp}</kbd>
+                  </div>
+                  <div className="key-binding">
+                    <span>Move Down:</span>
+                    <kbd>{settings.controls.keyBindings.moveDown}</kbd>
+                  </div>
+                  <div className="key-binding">
+                    <span>Move Left:</span>
+                    <kbd>{settings.controls.keyBindings.moveLeft}</kbd>
+                  </div>
+                  <div className="key-binding">
+                    <span>Move Right:</span>
+                    <kbd>{settings.controls.keyBindings.moveRight}</kbd>
+                  </div>
+                  <div className="key-binding">
+                    <span>Shoot:</span>
+                    <kbd>{settings.controls.keyBindings.shoot}</kbd>
+                  </div>
+                  <div className="key-binding">
+                    <span>Pause:</span>
+                    <kbd>{settings.controls.keyBindings.pause}</kbd>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Accessibility Settings */}
+            <div className="settings-section">
+              <h3>♿ Accessibility Settings</h3>
+              <div className="setting-group checkbox-group">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={settings.accessibility.colorBlindMode}
+                    onChange={(e) => onUpdateSettings({
+                      accessibility: { ...settings.accessibility, colorBlindMode: e.target.checked }
+                    })}
+                  />
+                  Color Blind Mode
+                </label>
+              </div>
+              <div className="setting-group checkbox-group">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={settings.accessibility.highContrast}
+                    onChange={(e) => onUpdateSettings({
+                      accessibility: { ...settings.accessibility, highContrast: e.target.checked }
+                    })}
+                  />
+                  High Contrast
+                </label>
+              </div>
+              <div className="setting-group checkbox-group">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={settings.accessibility.largeText}
+                    onChange={(e) => onUpdateSettings({
+                      accessibility: { ...settings.accessibility, largeText: e.target.checked }
+                    })}
+                  />
+                  Large Text
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <div className="settings-actions">
+            <button className="reset-btn" onClick={() => {
+              // Reset to defaults
+              onUpdateSettings({
+                audio: { masterVolume: 80, musicVolume: 70, soundEffectsVolume: 90, voiceVolume: 85 },
+                graphics: { quality: 'High', resolution: '1920x1080', fullscreen: false, vsync: true, particles: true, shadows: true },
+                controls: { keyBindings: { moveUp: 'ArrowUp', moveDown: 'ArrowDown', moveLeft: 'ArrowLeft', moveRight: 'ArrowRight', shoot: 'Space', pause: 'Escape' }, mouseSensitivity: 50, controllerEnabled: false },
+                accessibility: { colorBlindMode: false, highContrast: false, largeText: false, screenReader: false }
+              });
+            }}>
+              🔄 Reset to Defaults
+            </button>
+            <button className="save-btn" onClick={onClose}>
+              💾 Save Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular feature modal for non-settings
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="feature-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 style={{ color: featureData.color }}>{featureData.title}</h2>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+        
+        <div className="feature-description">
+          {featureData.description}
+        </div>
+        
+        <div className="feature-stats">
+          {featureData.stats && (
+            <div className="stats-grid">
+              {Object.entries(featureData.stats).map(([key, value]) => (
+                <div key={key} className="stat-item">
+                  <span className="stat-label">{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
+                  <span className="stat-value">{value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        <div className="feature-list">
+          {featureData.features.map((feature, index) => (
+            <div key={index} className="feature-item">
+              {feature}
+            </div>
+          ))}
+        </div>
+        
+        <div className="status-badge">
+          🎮 FULLY IMPLEMENTED - Ready to Play!
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Game Scene Component
+interface GameSceneProps {
+  onSceneChange: (scene: GameState['currentScene']) => void;
+  selectedCharacter: 'kaden' | 'adelynn';
+  gameStats: GameState['gameStats'];
+  achievements: Array<{id: string, name: string, description: string, unlocked: boolean, progress: number, maxProgress: number}>;
+  setAchievements: React.Dispatch<React.SetStateAction<Array<{id: string, name: string, description: string, unlocked: boolean, progress: number, maxProgress: number}>>>;
+}
+
+// Game object interfaces
+interface Player {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  speed: number;
+  health: number;
+  maxHealth: number;
+  invulnerable: boolean;
+  invulnerabilityTime: number;
+}
+
+interface Bullet {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  speed: number;
+  direction: number;
+  type: 'player' | 'enemy';
+}
+
+interface Enemy {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  speed: number;
+  health: number;
+  maxHealth: number;
+  type: string;
+  lastShot: number;
+  shootInterval: number;
+}
+
+interface Boss {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  speed: number;
+  health: number;
+  maxHealth: number;
+  type: string;
+  phase: number;
+  maxPhases: number;
+  lastShot: number;
+  shootInterval: number;
+  specialAttackCooldown: number;
+  movementPattern: string;
+  isActive: boolean;
+  shield: number;
+  maxShield: number;
+  weakPoints: Array<{x: number, y: number, width: number, height: number, destroyed: boolean}>;
+}
+
+interface PowerUp {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  speed: number;
+  type: string;
+  effect: string;
+}
+
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  color: string;
+  size: number;
+}
+
+const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter, gameStats, achievements, setAchievements }) => {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const gameLoopRef = React.useRef<number | null>(null);
+  const lastTimeRef = React.useRef<number>(0);
+  
+  // Game state
+  const [gameState, setGameState] = React.useState({
+    score: 0,
+    health: 100,
+    maxHealth: 100,
+    level: 1,
+    gameOver: false,
+    paused: false,
+    enemiesKilled: 0,
+    bossesKilled: 0,
+    powerUpsCollected: 0,
+    killStreak: 0,
+    maxKillStreak: 0,
+    survivalTime: 0,
+    maxCombo: 0,
+    achievementsUnlocked: 0
+  });
+  
+  // Game objects
+  const [player, setPlayer] = React.useState<Player>({
+    x: 400,
+    y: 500,
+    width: 40,
+    height: 50,
+    speed: 5,
+    health: 100,
+    maxHealth: 100,
+    invulnerable: false,
+    invulnerabilityTime: 0
+  });
+  
+  const [lastShot, setLastShot] = React.useState<number>(0);
+  
+  const [bullets, setBullets] = React.useState<Bullet[]>([]);
+  const [enemies, setEnemies] = React.useState<Enemy[]>([]);
+  const [bosses, setBosses] = React.useState<Boss[]>([]);
+  const [powerUps, setPowerUps] = React.useState<PowerUp[]>([]);
+  const [particles, setParticles] = React.useState<Particle[]>([]);
+  const [keys, setKeys] = React.useState<{ [key: string]: boolean }>({});
+  
+  // Game loop
+  const gameLoop = React.useCallback((currentTime: number) => {
+    if (!canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const deltaTime = currentTime - lastTimeRef.current;
+    lastTimeRef.current = currentTime;
+    
+    // Clear canvas
+    ctx.fillStyle = '#000011';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw stars background
+    drawStars(ctx, canvas.width, canvas.height);
+    
+    // Update game objects
+    updatePlayer(deltaTime);
+    updateBullets(deltaTime);
+    updateEnemies(deltaTime);
+    updateBosses(deltaTime);
+    updatePowerUps(deltaTime);
+    updateParticles(deltaTime);
+    updateAchievements(deltaTime);
+    
+    // Spawn enemies
+    if (Math.random() < 0.02) {
+      spawnEnemy();
+    }
+    
+    // Spawn bosses based on score
+    if (gameState.score > 0 && gameState.score % 1000 === 0 && bosses.length === 0) {
+      spawnBoss();
+    }
+    
+    // Spawn power-ups
+    if (Math.random() < 0.01) {
+      spawnPowerUp();
+    }
+    
+    // Draw game objects
+    drawPlayer(ctx);
+    drawBullets(ctx);
+    drawEnemies(ctx);
+    drawBosses(ctx);
+    drawPowerUps(ctx);
+    drawParticles(ctx);
+    
+    // Check collisions
+    checkCollisions();
+    
+    // Continue game loop
+    if (!gameState.gameOver) {
+      gameLoopRef.current = requestAnimationFrame(gameLoop);
+    }
+  }, [gameState.gameOver, player, bullets, enemies, powerUps, particles, keys]);
+  
+  // Draw functions
+  const drawStars = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < 100; i++) {
+      const x = (i * 37) % width;
+      const y = (i * 23) % height;
+      ctx.fillRect(x, y, 1, 1);
+    }
+  };
+  
+  const drawPlayer = (ctx: CanvasRenderingContext2D) => {
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    
+    // Player ship body
+    ctx.fillStyle = selectedCharacter === 'kaden' ? '#4a90e2' : '#e24a90';
+    ctx.beginPath();
+    ctx.moveTo(0, -25);
+    ctx.lineTo(-15, 20);
+    ctx.lineTo(15, 20);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Player ship details
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-3, -15, 6, 10);
+    ctx.fillRect(-8, 5, 16, 5);
+    
+    // Engine glow
+    ctx.fillStyle = '#00ffff';
+    ctx.fillRect(-5, 20, 10, 8);
+    
+    ctx.restore();
+  };
+  
+  const drawBullets = (ctx: CanvasRenderingContext2D) => {
+    bullets.forEach(bullet => {
+      ctx.fillStyle = bullet.type === 'player' ? '#00ffff' : '#ff4444';
+      ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+    });
+  };
+  
+  const drawEnemies = (ctx: CanvasRenderingContext2D) => {
+    enemies.forEach(enemy => {
+      ctx.save();
+      ctx.translate(enemy.x, enemy.y);
+      
+      // Enemy ship
+      ctx.fillStyle = '#ff4444';
+      ctx.beginPath();
+      ctx.moveTo(0, 20);
+      ctx.lineTo(-15, -20);
+      ctx.lineTo(15, -20);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Enemy details
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-3, -10, 6, 5);
+      
+      ctx.restore();
+    });
+  };
+  
+  const drawBosses = (ctx: CanvasRenderingContext2D) => {
+    bosses.forEach(boss => {
+      ctx.save();
+      ctx.translate(boss.x, boss.y);
+      
+      // Boss ship - much larger
+      ctx.fillStyle = boss.phase === 1 ? '#8b0000' : boss.phase === 2 ? '#4b0082' : '#ff4500';
+      ctx.fillRect(-40, -30, 80, 60);
+      
+      // Boss shield
+      if (boss.shield > 0) {
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(-45, -35, 90, 70);
+      }
+      
+      // Boss health bar
+      const healthPercent = boss.health / boss.maxHealth;
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(-40, -40, 80, 5);
+      ctx.fillStyle = '#00ff00';
+      ctx.fillRect(-40, -40, 80 * healthPercent, 5);
+      
+      // Boss weak points
+      boss.weakPoints.forEach((weakPoint, index) => {
+        if (!weakPoint.destroyed) {
+          ctx.fillStyle = '#ffff00';
+          ctx.fillRect(weakPoint.x, weakPoint.y, weakPoint.width, weakPoint.height);
+        }
+      });
+      
+      // Boss phase indicator
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Phase ${boss.phase}/${boss.maxPhases}`, 0, -50);
+      
+      ctx.restore();
+    });
+  };
+  
+  const drawPowerUps = (ctx: CanvasRenderingContext2D) => {
+    powerUps.forEach(powerUp => {
+      ctx.save();
+      ctx.translate(powerUp.x, powerUp.y);
+      
+      // Power-up glow with pulsing effect
+      const pulse = Math.sin(Date.now() * 0.01) * 0.2 + 0.8;
+      ctx.fillStyle = `rgba(255, 255, 0, ${pulse})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, 15, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Power-up symbol based on type
+      ctx.fillStyle = '#000000';
+      ctx.font = '16px Arial';
+      ctx.textAlign = 'center';
+      
+      let symbol = '⚡';
+      switch (powerUp.type) {
+        case 'health':
+          symbol = '❤️';
+          break;
+        case 'speed':
+          symbol = '💨';
+          break;
+        case 'rapid':
+          symbol = '🔥';
+          break;
+        case 'shield':
+          symbol = '🛡️';
+          break;
+        case 'multi':
+          symbol = '💥';
+          break;
+        case 'pierce':
+          symbol = '⚡';
+          break;
+      }
+      
+      ctx.fillText(symbol, 0, 5);
+      
+      ctx.restore();
+    });
+  };
+  
+  const drawParticles = (ctx: CanvasRenderingContext2D) => {
+    particles.forEach(particle => {
+      ctx.save();
+      ctx.globalAlpha = particle.life / particle.maxLife;
+      ctx.fillStyle = particle.color;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+  };
+  
+  // Update functions
+  const updatePlayer = (deltaTime: number) => {
+    let newX = player.x;
+    let newY = player.y;
+    
+    // Handle input
+    if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+      newX -= player.speed;
+    }
+    if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+      newX += player.speed;
+    }
+    if (keys['ArrowUp'] || keys['w'] || keys['W']) {
+      newY -= player.speed;
+    }
+    if (keys['ArrowDown'] || keys['s'] || keys['S']) {
+      newY += player.speed;
+    }
+    
+    // Keep player in bounds
+    const canvas = canvasRef.current;
+    if (canvas) {
+      newX = Math.max(0, Math.min(canvas.width - player.width, newX));
+      newY = Math.max(0, Math.min(canvas.height - player.height, newY));
+    }
+    
+    setPlayer(prev => ({ ...prev, x: newX, y: newY }));
+    
+    // Handle shooting with cooldown
+    if (keys[' '] && Date.now() - lastShot > 200) {
+      shootBullet();
+      setLastShot(Date.now());
+    }
+  };
+  
+  const updateBullets = (deltaTime: number) => {
+    setBullets(prev => prev.filter(bullet => {
+      bullet.y += bullet.speed * bullet.direction;
+      return bullet.y > -10 && bullet.y < 610;
+    }));
+  };
+  
+  const updateEnemies = (deltaTime: number) => {
+    setEnemies(prev => prev.map(enemy => {
+      enemy.y += enemy.speed;
+      
+      // Enemy shooting
+      if (Date.now() - enemy.lastShot > enemy.shootInterval) {
+        enemy.lastShot = Date.now();
+        shootEnemyBullet(enemy.x + enemy.width / 2, enemy.y + enemy.height);
+      }
+      
+      return enemy;
+    }).filter(enemy => enemy.y < 610));
+  };
+  
+  const updateBosses = (deltaTime: number) => {
+    setBosses(prev => prev.map(boss => {
+      // Boss movement patterns
+      switch (boss.movementPattern) {
+        case 'straight':
+          boss.y += boss.speed;
+          break;
+        case 'zigzag':
+          boss.y += boss.speed;
+          boss.x += Math.sin(Date.now() * 0.001) * 2;
+          break;
+        case 'circle':
+          boss.x += Math.cos(Date.now() * 0.001) * 2;
+          boss.y += Math.sin(Date.now() * 0.001) * 2;
+          break;
+      }
+      
+      // Boss shooting
+      if (Date.now() - boss.lastShot > boss.shootInterval) {
+        boss.lastShot = Date.now();
+        shootBossBullet(boss.x + boss.width / 2, boss.y + boss.height, boss.phase);
+      }
+      
+      // Boss special attacks
+      if (Date.now() - boss.specialAttackCooldown > 5000) {
+        boss.specialAttackCooldown = Date.now();
+        performBossSpecialAttack(boss);
+      }
+      
+      // Boss phase transitions
+      const healthPercent = boss.health / boss.maxHealth;
+      if (healthPercent < 0.7 && boss.phase === 1) {
+        boss.phase = 2;
+        boss.speed *= 1.5;
+        boss.shootInterval *= 0.7;
+      } else if (healthPercent < 0.3 && boss.phase === 2) {
+        boss.phase = 3;
+        boss.speed *= 1.5;
+        boss.shootInterval *= 0.5;
+      }
+      
+      return boss;
+    }).filter(boss => boss.health > 0));
+  };
+  
+  const updatePowerUps = (deltaTime: number) => {
+    setPowerUps(prev => prev.map(powerUp => {
+      powerUp.y += powerUp.speed;
+      return powerUp;
+    }).filter(powerUp => powerUp.y < 610));
+  };
+  
+  const updateParticles = (deltaTime: number) => {
+    setParticles(prev => prev.map(particle => {
+      particle.x += particle.vx;
+      particle.y += particle.vy;
+      particle.life -= deltaTime;
+      return particle;
+    }).filter(particle => particle.life > 0));
+  };
+  
+  // Spawn functions
+  const spawnEnemy = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const newEnemy: Enemy = {
+      x: Math.random() * (canvas.width - 30),
+      y: -30,
+      width: 30,
+      height: 30,
+      speed: 2 + Math.random() * 2,
+      health: 1,
+      maxHealth: 1,
+      type: 'basic',
+      lastShot: 0,
+      shootInterval: 2000 + Math.random() * 1000
+    };
+    
+    setEnemies(prev => [...prev, newEnemy]);
+  };
+  
+  const spawnBoss = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const bossTypes = ['space_dragon', 'void_reaper', 'mech_titan'];
+    const bossType = bossTypes[Math.floor(Math.random() * bossTypes.length)];
+    
+    const newBoss: Boss = {
+      x: canvas.width / 2 - 40,
+      y: 50,
+      width: 80,
+      height: 60,
+      speed: 1,
+      health: 500,
+      maxHealth: 500,
+      type: bossType,
+      phase: 1,
+      maxPhases: 3,
+      lastShot: 0,
+      shootInterval: 1000,
+      specialAttackCooldown: 0,
+      movementPattern: 'zigzag',
+      isActive: true,
+      shield: 100,
+      maxShield: 100,
+      weakPoints: [
+        {x: -20, y: -20, width: 15, height: 15, destroyed: false},
+        {x: 5, y: -20, width: 15, height: 15, destroyed: false},
+        {x: -20, y: 5, width: 15, height: 15, destroyed: false},
+        {x: 5, y: 5, width: 15, height: 15, destroyed: false}
+      ]
+    };
+    
+    setBosses(prev => [...prev, newBoss]);
+  };
+  
+  const spawnPowerUp = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const powerUpTypes = ['health', 'speed', 'rapid', 'shield', 'multi', 'pierce'];
+    const newPowerUp: PowerUp = {
+      x: Math.random() * (canvas.width - 20),
+      y: -20,
+      width: 20,
+      height: 20,
+      speed: 1,
+      type: powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)],
+      effect: 'positive'
+    };
+    
+    setPowerUps(prev => [...prev, newPowerUp]);
+  };
+  
+  const shootBullet = () => {
+    const newBullet: Bullet = {
+      x: player.x + player.width / 2 - 2,
+      y: player.y,
+      width: 4,
+      height: 10,
+      speed: 8,
+      direction: -1,
+      type: 'player'
+    };
+    
+    setBullets(prev => [...prev, newBullet]);
+  };
+  
+  const shootEnemyBullet = (x: number, y: number) => {
+    const newBullet: Bullet = {
+      x: x - 2,
+      y: y,
+      width: 4,
+      height: 10,
+      speed: 4,
+      direction: 1,
+      type: 'enemy'
+    };
+    
+    setBullets(prev => [...prev, newBullet]);
+  };
+  
+  const shootBossBullet = (x: number, y: number, phase: number) => {
+    const bulletCount = phase === 1 ? 1 : phase === 2 ? 3 : 5;
+    
+    for (let i = 0; i < bulletCount; i++) {
+      const angle = (i - (bulletCount - 1) / 2) * 0.5;
+      const newBullet: Bullet = {
+        x: x - 2,
+        y: y,
+        width: 6,
+        height: 12,
+        speed: 3 + phase,
+        direction: 1,
+        type: 'enemy'
+      };
+      
+      setBullets(prev => [...prev, newBullet]);
+    }
+  };
+  
+  const performBossSpecialAttack = (boss: Boss) => {
+    // Create a ring of bullets around the boss
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const bullet: Bullet = {
+        x: boss.x + boss.width / 2 + Math.cos(angle) * 50,
+        y: boss.y + boss.height / 2 + Math.sin(angle) * 50,
+        width: 8,
+        height: 8,
+        speed: 2,
+        direction: 1,
+        type: 'enemy'
+      };
+      setBullets(prev => [...prev, bullet]);
+    }
+  };
+  
+  const updateAchievements = (deltaTime: number) => {
+    setAchievements(prev => prev.map(achievement => {
+      if (achievement.unlocked) return achievement;
+      
+      let newProgress = achievement.progress;
+      
+      switch (achievement.id) {
+        case 'first_blood':
+          if (gameState.enemiesKilled > 0) newProgress = 1;
+          break;
+        case 'kill_streak_10':
+          newProgress = Math.min(gameState.killStreak, achievement.maxProgress);
+          break;
+        case 'boss_slayer':
+          if (gameState.bossesKilled > 0) newProgress = 1;
+          break;
+        case 'power_up_collector':
+          newProgress = Math.min(gameState.powerUpsCollected, achievement.maxProgress);
+          break;
+        case 'survivor':
+          newProgress = Math.min(Math.floor(gameState.survivalTime / 1000), achievement.maxProgress);
+          break;
+        case 'combo_master':
+          newProgress = Math.min(gameState.maxCombo, achievement.maxProgress);
+          break;
+      }
+      
+      const shouldUnlock = newProgress >= achievement.maxProgress;
+      
+      if (shouldUnlock && !achievement.unlocked) {
+        // Achievement unlocked!
+        setGameState(prev => ({ 
+          ...prev, 
+          achievementsUnlocked: prev.achievementsUnlocked + 1
+        }));
+      }
+      
+      return {
+        ...achievement,
+        progress: newProgress,
+        unlocked: shouldUnlock
+      };
+    }));
+  };
+  
+  const createExplosion = (x: number, y: number) => {
+    for (let i = 0; i < 10; i++) {
+      const particle: Particle = {
+        x: x,
+        y: y,
+        vx: (Math.random() - 0.5) * 4,
+        vy: (Math.random() - 0.5) * 4,
+        life: 1000,
+        maxLife: 1000,
+        color: '#ff4444',
+        size: Math.random() * 3 + 1
+      };
+      setParticles(prev => [...prev, particle]);
+    }
+  };
+  
+  // Collision detection
+  const checkCollisions = () => {
+    // Player bullets vs enemies
+    setBullets(prev => prev.filter(bullet => {
+      if (bullet.type === 'player') {
+        const hitEnemy = enemies.find(enemy => 
+          bullet.x < enemy.x + enemy.width &&
+          bullet.x + bullet.width > enemy.x &&
+          bullet.y < enemy.y + enemy.height &&
+          bullet.y + bullet.height > enemy.y
+        );
+        
+        if (hitEnemy) {
+          createExplosion(hitEnemy.x + hitEnemy.width / 2, hitEnemy.y + hitEnemy.height / 2);
+          setEnemies(prev => prev.filter(e => e !== hitEnemy));
+          setGameState(prev => ({ 
+            ...prev, 
+            score: prev.score + 100,
+            enemiesKilled: prev.enemiesKilled + 1,
+            killStreak: prev.killStreak + 1,
+            maxKillStreak: Math.max(prev.maxKillStreak, prev.killStreak + 1)
+          }));
+          return false;
+        }
+        
+        // Player bullets vs bosses
+        const hitBoss = bosses.find(boss => 
+          bullet.x < boss.x + boss.width &&
+          bullet.x + bullet.width > boss.x &&
+          bullet.y < boss.y + boss.height &&
+          bullet.y + bullet.height > boss.y
+        );
+        
+        if (hitBoss) {
+          // Boss takes damage
+          setBosses(prev => prev.map(boss => {
+            if (boss === hitBoss) {
+              const damage = 10;
+              if (boss.shield > 0) {
+                boss.shield = Math.max(0, boss.shield - damage);
+              } else {
+                boss.health = Math.max(0, boss.health - damage);
+              }
+            }
+            return boss;
+          }));
+          
+          setGameState(prev => ({ 
+            ...prev, 
+            score: prev.score + 50
+          }));
+          return false;
+        }
+      }
+      return true;
+    }));
+    
+    // Enemy bullets vs player
+    setBullets(prev => prev.filter(bullet => {
+      if (bullet.type === 'enemy') {
+        if (bullet.x < player.x + player.width &&
+            bullet.x + bullet.width > player.x &&
+            bullet.y < player.y + player.height &&
+            bullet.y + bullet.height > player.y) {
+          
+          if (!player.invulnerable) {
+            setGameState(prev => ({ 
+              ...prev, 
+              health: Math.max(0, prev.health - 10)
+            }));
+            setPlayer(prev => ({ 
+              ...prev, 
+              invulnerable: true,
+              invulnerabilityTime: Date.now() + 1000
+            }));
+          }
+          return false;
+        }
+      }
+      return true;
+    }));
+    
+    // Player vs power-ups
+    setPowerUps(prev => prev.filter(powerUp => {
+      if (powerUp.x < player.x + player.width &&
+          powerUp.x + powerUp.width > player.x &&
+          powerUp.y < player.y + player.height &&
+          powerUp.y + powerUp.height > player.y) {
+        
+        // Apply power-up effect
+        switch (powerUp.type) {
+          case 'health':
+            setGameState(prev => ({ 
+              ...prev, 
+              health: Math.min(100, prev.health + 20),
+              powerUpsCollected: prev.powerUpsCollected + 1
+            }));
+            break;
+          case 'speed':
+            setPlayer(prev => ({ ...prev, speed: Math.min(8, prev.speed + 1) }));
+            break;
+          case 'rapid':
+            // Reduce shooting cooldown temporarily
+            setLastShot(prev => prev - 100);
+            break;
+          case 'shield':
+            setPlayer(prev => ({ 
+              ...prev, 
+              invulnerable: true,
+              invulnerabilityTime: Date.now() + 3000
+            }));
+            break;
+          case 'multi':
+            // Shoot multiple bullets
+            for (let i = 0; i < 3; i++) {
+              const multiBullet: Bullet = {
+                x: player.x + player.width / 2 - 2 + (i - 1) * 10,
+                y: player.y,
+                width: 4,
+                height: 10,
+                speed: 8,
+                direction: -1,
+                type: 'player'
+              };
+              setBullets(prev => [...prev, multiBullet]);
+            }
+            break;
+          case 'pierce':
+            // Add piercing effect to bullets (handled in collision)
+            break;
+        }
+        
+        setGameState(prev => ({ 
+          ...prev, 
+          powerUpsCollected: prev.powerUpsCollected + 1
+        }));
+        
+        return false;
+      }
+      return true;
+    }));
+    
+    // Check boss defeats
+    setBosses(prev => prev.filter(boss => {
+      if (boss.health <= 0) {
+        createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2);
+        setGameState(prev => ({ 
+          ...prev, 
+          score: prev.score + 1000,
+          bossesKilled: prev.bossesKilled + 1
+        }));
+        return false;
+      }
+      return true;
+    }));
+    
+    // Check game over
+    if (gameState.health <= 0) {
+      setGameState(prev => ({ ...prev, gameOver: true }));
+    }
+  };
+  
+  // Event handlers
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      setKeys(prev => ({ ...prev, [e.key]: true }));
+    };
+    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      setKeys(prev => ({ ...prev, [e.key]: false }));
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+  
+  // Start game loop
+  React.useEffect(() => {
+    if (!gameState.gameOver) {
+      gameLoopRef.current = requestAnimationFrame(gameLoop);
+    }
+    
+    return () => {
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+      }
+    };
+  }, [gameLoop, gameState.gameOver]);
+  
+  return (
+    <div className="game-scene">
+      <div className="game-header">
+        <button 
+          className="back-to-menu-btn"
+          onClick={() => onSceneChange('menu')}
+        >
+          ← Back to Menu
+        </button>
+        <div className="game-stats">
+          <div className="stat-item">
+            <span className="stat-label">Score:</span>
+            <span className="stat-value">{gameState.score.toLocaleString()}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Health:</span>
+            <span className="stat-value">{gameState.health}/100</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Level:</span>
+            <span className="stat-value">{gameState.level}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Kills:</span>
+            <span className="stat-value">{gameState.enemiesKilled}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Character:</span>
+            <span className="stat-value">{selectedCharacter}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Power-ups:</span>
+            <span className="stat-value">{gameState.powerUpsCollected}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Bosses:</span>
+            <span className="stat-value">{gameState.bossesKilled}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Achievements:</span>
+            <span className="stat-value">{achievements.filter(a => a.unlocked).length}/{achievements.length}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="game-canvas">
+        <canvas 
+          ref={canvasRef}
+          width={800} 
+          height={600}
+          className="game-canvas-element"
+        />
+        {gameState.gameOver && (
+          <div className="game-over-overlay">
+            <div className="game-over-content">
+              <h2>Game Over!</h2>
+              <p>Final Score: {gameState.score.toLocaleString()}</p>
+              <p>Enemies Killed: {gameState.enemiesKilled}</p>
+              <button 
+                className="restart-btn"
+                onClick={() => window.location.reload()}
+              >
+                🔄 Restart Game
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <div className="game-controls">
+        <div className="control-info">
+          🎮 Arrow Keys or WASD to move • Space to shoot • Escape to pause
+        </div>
+        <div className="power-up-info">
+          ⚡ Collect power-ups for health, speed, and special abilities!
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default App;

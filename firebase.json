@@ -30,11 +30,11 @@
           },
           {
             "key": "Last-Modified",
-            "value": "Thu, 23 Oct 2025 20:05:00 GMT"
+            "value": "Thu, 23 Jan 2025 20:30:00 GMT"
           },
           {
             "key": "ETag",
-            "value": "\"fresh-build-$(date +%s)\""
+            "value": "\"react-build-1737663000\""
           }
         ]
       }
