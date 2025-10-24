@@ -1,5 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
+
+// Import all game systems
+import { CompleteGameSystem } from './systems/CompleteGameSystem';
+import { EnhancedAudioSystem } from './systems/EnhancedAudioSystem';
+import { EnhancedVisualEffects } from './systems/EnhancedVisualEffects';
+import { MultiplayerSystem } from './systems/MultiplayerSystem';
+import { StoryModeSystem } from './systems/StoryModeSystem';
+import { ChallengeSystem } from './systems/ChallengeSystem';
+import { FeatureTestingSystem } from './systems/FeatureTestingSystem';
+import { CompleteGameIntegration } from './systems/CompleteGameIntegration';
 
 // Game Settings Interface
 interface GameSettings {
@@ -65,6 +75,11 @@ interface GameState {
 
 // Main App Component
 const App: React.FC = () => {
+  // Initialize game integration
+  const gameIntegration = useRef<CompleteGameIntegration | null>(null);
+  const [gameInitialized, setGameInitialized] = useState(false);
+  const [gameReport, setGameReport] = useState<any>(null);
+  
   const [gameState, setGameState] = useState<GameState>({
     currentScene: 'menu',
     selectedCharacter: 'kaden',
@@ -137,6 +152,39 @@ const App: React.FC = () => {
     {id: 'weapon_master', name: 'Weapon Master', description: 'Use 10 different weapons', unlocked: false, progress: 0, maxProgress: 10}
   ]);
 
+  // Initialize game integration
+  useEffect(() => {
+    const initializeGame = async () => {
+      try {
+        console.log('🚀 Initializing complete game with all 300 features...');
+        
+        gameIntegration.current = new CompleteGameIntegration();
+        await gameIntegration.current.initialize();
+        
+        setGameInitialized(true);
+        console.log('✅ Game initialization complete');
+        
+        // Get initial game report
+        const report = gameIntegration.current.getGameReport();
+        setGameReport(report);
+        
+        // Start the game
+        gameIntegration.current.start();
+        
+      } catch (error) {
+        console.error('Failed to initialize game:', error);
+      }
+    };
+    
+    initializeGame();
+    
+    return () => {
+      if (gameIntegration.current) {
+        gameIntegration.current.destroy();
+      }
+    };
+  }, []);
+
   // Handle scene changes
   const changeScene = (scene: GameState['currentScene']) => {
     setGameState(prev => ({ ...prev, currentScene: scene }));
@@ -173,6 +221,7 @@ const App: React.FC = () => {
           onCharacterSelect={selectCharacter}
           onShowModal={showFeatureModal}
           selectedCharacter={gameState.selectedCharacter}
+          gameIntegration={gameIntegration.current}
         />;
       case 'game':
         return <GameScene 
@@ -188,6 +237,7 @@ const App: React.FC = () => {
           onCharacterSelect={selectCharacter}
           onShowModal={showFeatureModal}
           selectedCharacter={gameState.selectedCharacter}
+          gameIntegration={gameIntegration.current}
         />;
     }
   };
@@ -214,9 +264,10 @@ interface MainMenuProps {
   onCharacterSelect: (character: 'kaden' | 'adelynn') => void;
   onShowModal: (feature: string) => void;
   selectedCharacter: 'kaden' | 'adelynn';
+  gameIntegration: any;
 }
 
-const MainMenu: React.FC<MainMenuProps> = ({ onSceneChange, onCharacterSelect, onShowModal, selectedCharacter }) => {
+const MainMenu: React.FC<MainMenuProps> = ({ onSceneChange, onCharacterSelect, onShowModal, selectedCharacter, gameIntegration }) => {
   const [showCharacterModal, setShowCharacterModal] = useState(false);
 
   return (
@@ -295,14 +346,14 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSceneChange, onCharacterSelect, o
           >
             📖 STORY MODE
           </button>
-          <button 
-            className="feature-btn challenges"
-            onClick={() => onShowModal('challenges')}
-          >
-            🎯 CHALLENGES
-          </button>
-        </div>
+        <button 
+          className="feature-btn challenges"
+          onClick={() => onShowModal('challenges')}
+        >
+          🎯 CHALLENGES
+        </button>
       </div>
+    </div>
 
       {/* Game Info */}
       <div className="game-info">
