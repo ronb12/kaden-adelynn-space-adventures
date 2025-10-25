@@ -205,87 +205,211 @@ export const ShipDesigns = {
 
 // Ship Drawing Functions
 export const ShipRenderer = {
-  // Draw Kaden's Ship
+  // Draw Kaden's Ship - Star Trek Inspired Design
   drawKadenShip(ctx, x, y, width, height, angle = 0) {
     ctx.save();
     ctx.translate(x + width/2, y + height/2);
     ctx.rotate(angle);
     
-    // Ship body
-    ctx.fillStyle = "#0066ff";
-    ctx.strokeStyle = "#00aaff";
+    const time = Date.now() * 0.003;
+    const pulse = Math.sin(time) * 0.1 + 0.9;
+    
+    // Main saucer section (Star Trek style)
+    ctx.fillStyle = '#4A90E2';
+    ctx.strokeStyle = '#2E5BBA';
     ctx.lineWidth = 2;
     
-    // Main body
+    // Primary hull - saucer shape
     ctx.beginPath();
-    ctx.moveTo(0, -height/2);
-    ctx.lineTo(-width/3, height/4);
-    ctx.lineTo(0, height/2);
-    ctx.lineTo(width/3, height/4);
-    ctx.closePath();
+    ctx.ellipse(0, -height/4, width/2.5, height/6, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     
-    // Wings
+    // Secondary hull - cylindrical
+    ctx.fillStyle = '#5BA0F2';
     ctx.beginPath();
-    ctx.moveTo(-width/3, height/4);
-    ctx.lineTo(-width/2, height/6);
-    ctx.lineTo(-width/4, -height/4);
-    ctx.closePath();
+    ctx.ellipse(0, height/8, width/4, height/3, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     
+    // Warp nacelles (Star Trek signature)
+    ctx.fillStyle = '#6BB6FF';
+    ctx.strokeStyle = '#4A90E2';
+    ctx.lineWidth = 1.5;
+    
+    // Left nacelle
     ctx.beginPath();
-    ctx.moveTo(width/3, height/4);
-    ctx.lineTo(width/2, height/6);
-    ctx.lineTo(width/4, -height/4);
-    ctx.closePath();
+    ctx.ellipse(-width/2.2, height/6, width/8, height/4, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     
-    // Engine glow
-    ctx.fillStyle = "#0088ff";
+    // Right nacelle
     ctx.beginPath();
-    ctx.arc(0, height/3, width/6, 0, Math.PI * 2);
+    ctx.ellipse(width/2.2, height/6, width/8, height/4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Nacelle pylons
+    ctx.strokeStyle = '#2E5BBA';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-width/4, height/8);
+    ctx.lineTo(-width/2.2, height/6);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(width/4, height/8);
+    ctx.lineTo(width/2.2, height/6);
+    ctx.stroke();
+    
+    // Bridge module
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.ellipse(0, -height/3, width/8, height/12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Deflector dish
+    ctx.fillStyle = '#00BFFF';
+    ctx.beginPath();
+    ctx.ellipse(0, height/3, width/6, height/8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Warp core glow
+    ctx.fillStyle = `rgba(0, 191, 255, ${pulse * 0.6})`;
+    ctx.shadowColor = '#00BFFF';
+    ctx.shadowBlur = 10 * pulse;
+    ctx.beginPath();
+    ctx.ellipse(0, height/8, width/12, height/6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Navigation lights
+    ctx.fillStyle = '#FF0000';
+    ctx.beginPath();
+    ctx.arc(-width/3, -height/4, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#00FF00';
+    ctx.beginPath();
+    ctx.arc(width/3, -height/4, 2, 0, Math.PI * 2);
     ctx.fill();
     
     ctx.restore();
   },
 
-  // Draw Adelynn's Ship
+  // Draw Adelynn's Ship - Battlestar Galactica Inspired Design
   drawAdelynnShip(ctx, x, y, width, height, angle = 0) {
     ctx.save();
     ctx.translate(x + width/2, y + height/2);
     ctx.rotate(angle);
     
-    // Ship body
-    ctx.fillStyle = "#ff0066";
-    ctx.strokeStyle = "#ff44aa";
+    const time = Date.now() * 0.003;
+    const pulse = Math.sin(time) * 0.1 + 0.9;
+    
+    // Main hull - Battlestar style with flight pods
+    ctx.fillStyle = '#8B4513';
+    ctx.strokeStyle = '#654321';
+    ctx.lineWidth = 3;
+    
+    // Central hull
+    ctx.beginPath();
+    ctx.ellipse(0, 0, width/3, height/2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Left flight pod (Battlestar signature)
+    ctx.fillStyle = '#A0522D';
+    ctx.beginPath();
+    ctx.ellipse(-width/2.5, -height/6, width/4, height/3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Right flight pod
+    ctx.beginPath();
+    ctx.ellipse(width/2.5, -height/6, width/4, height/3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Flight pod connections
+    ctx.strokeStyle = '#654321';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-width/3, -height/8);
+    ctx.lineTo(-width/2.5, -height/6);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(width/3, -height/8);
+    ctx.lineTo(width/2.5, -height/6);
+    ctx.stroke();
+    
+    // Command tower
+    ctx.fillStyle = '#D2691E';
+    ctx.beginPath();
+    ctx.ellipse(0, -height/3, width/8, height/6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Heavy armor plating
+    ctx.fillStyle = '#696969';
+    ctx.strokeStyle = '#2F4F4F';
     ctx.lineWidth = 2;
     
-    // Main body (delta wing design)
+    // Top armor
     ctx.beginPath();
-    ctx.moveTo(0, -height/2);
-    ctx.lineTo(-width/2, height/2);
-    ctx.lineTo(width/2, height/2);
-    ctx.closePath();
+    ctx.ellipse(0, -height/2.5, width/2, height/8, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     
-    // Central body
+    // Side armor plates
+    for (let i = 0; i < 3; i++) {
+      const y = -height/4 + (i * height/6);
+      ctx.beginPath();
+      ctx.ellipse(-width/2.8, y, width/12, height/8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(width/2.8, y, width/12, height/8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    
+    // Heavy weapon mounts
+    ctx.fillStyle = '#2F4F4F';
+    ctx.strokeStyle = '#1C1C1C';
+    ctx.lineWidth = 2;
+    
+    // Forward cannons
     ctx.beginPath();
-    ctx.moveTo(0, -height/2);
-    ctx.lineTo(-width/4, height/4);
-    ctx.lineTo(0, height/2);
-    ctx.lineTo(width/4, height/4);
-    ctx.closePath();
+    ctx.rect(-width/6, -height/2 - 8, width/12, 16);
     ctx.fill();
     ctx.stroke();
+    ctx.beginPath();
+    ctx.rect(width/6 - width/12, -height/2 - 8, width/12, 16);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Side turrets
+    for (let i = 0; i < 2; i++) {
+      const side = i === 0 ? -1 : 1;
+      ctx.beginPath();
+      ctx.arc(side * width/2.2, -height/6 + (i * height/3), 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
     
     // Engine glow
-    ctx.fillStyle = "#ff0088";
+    ctx.fillStyle = `rgba(255, 100, 0, ${pulse * 0.8})`;
+    ctx.shadowColor = '#FF6400';
+    ctx.shadowBlur = 15 * pulse;
     ctx.beginPath();
-    ctx.arc(0, height/3, width/8, 0, Math.PI * 2);
+    ctx.ellipse(0, height/2.5, width/8, height/4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Navigation lights
+    ctx.fillStyle = '#FF0000';
+    ctx.beginPath();
+    ctx.arc(-width/3, -height/4, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#00FF00';
+    ctx.beginPath();
+    ctx.arc(width/3, -height/4, 2, 0, Math.PI * 2);
     ctx.fill();
     
     ctx.restore();
@@ -306,30 +430,66 @@ export const ShipRenderer = {
     
     switch (type) {
       case 'basic':
-        // Triangular design
+        // Cylon Raider inspired design
+        ctx.fillStyle = '#8B0000';
+        ctx.strokeStyle = '#DC143C';
+        ctx.lineWidth = 2;
+        
+        // Main body - angular Cylon design
         ctx.beginPath();
         ctx.moveTo(0, -height/2);
-        ctx.lineTo(-width/2, height/2);
-        ctx.lineTo(width/2, height/2);
+        ctx.lineTo(-width/3, -height/4);
+        ctx.lineTo(-width/2, 0);
+        ctx.lineTo(-width/3, height/4);
+        ctx.lineTo(0, height/2);
+        ctx.lineTo(width/3, height/4);
+        ctx.lineTo(width/2, 0);
+        ctx.lineTo(width/3, -height/4);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+        
+        // Cylon eye
+        ctx.fillStyle = '#FF0000';
+        ctx.beginPath();
+        ctx.arc(0, -height/4, width/8, 0, Math.PI * 2);
+        ctx.fill();
         break;
         
       case 'fast':
-        // Needle-like design
+        // Sleek alien interceptor
+        ctx.fillStyle = '#2F4F4F';
+        ctx.strokeStyle = '#00CED1';
+        ctx.lineWidth = 1.5;
+        
+        // Needle-like design with sci-fi elements
         ctx.beginPath();
         ctx.moveTo(0, -height/2);
-        ctx.lineTo(-width/4, height/2);
+        ctx.lineTo(-width/4, -height/6);
+        ctx.lineTo(-width/6, 0);
+        ctx.lineTo(-width/4, height/6);
         ctx.lineTo(0, height/2);
-        ctx.lineTo(width/4, height/2);
+        ctx.lineTo(width/4, height/6);
+        ctx.lineTo(width/6, 0);
+        ctx.lineTo(width/4, -height/6);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+        
+        // Engine glow
+        ctx.fillStyle = '#00CED1';
+        ctx.beginPath();
+        ctx.arc(0, height/3, width/8, 0, Math.PI * 2);
+        ctx.fill();
         break;
         
       case 'heavy':
-        // Bulky design
+        // Armored alien cruiser
+        ctx.fillStyle = '#696969';
+        ctx.strokeStyle = '#2F4F4F';
+        ctx.lineWidth = 3;
+        
+        // Bulky armored design
         ctx.beginPath();
         ctx.moveTo(0, -height/2);
         ctx.lineTo(-width/2, -height/4);
@@ -340,10 +500,21 @@ export const ShipRenderer = {
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+        
+        // Armor plating
+        ctx.fillStyle = '#2F4F4F';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, width/3, height/4, 0, 0, Math.PI * 2);
+        ctx.fill();
         break;
         
       case 'zigzag':
-        // Irregular design
+        // Organic alien vessel
+        ctx.fillStyle = '#8B4513';
+        ctx.strokeStyle = '#A0522D';
+        ctx.lineWidth = 2;
+        
+        // Irregular organic design
         ctx.beginPath();
         ctx.moveTo(0, -height/2);
         ctx.lineTo(-width/3, -height/4);
@@ -354,10 +525,24 @@ export const ShipRenderer = {
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+        
+        // Organic details
+        ctx.fillStyle = '#654321';
+        ctx.beginPath();
+        ctx.arc(-width/6, -height/6, width/12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(width/6, height/6, width/12, 0, Math.PI * 2);
+        ctx.fill();
         break;
         
       case 'kamikaze':
-        // Explosive design
+        // Explosive alien drone
+        ctx.fillStyle = '#FF4500';
+        ctx.strokeStyle = '#FF6347';
+        ctx.lineWidth = 2;
+        
+        // Angular explosive design
         ctx.beginPath();
         ctx.moveTo(0, -height/2);
         ctx.lineTo(-width/2, 0);
@@ -368,29 +553,42 @@ export const ShipRenderer = {
         ctx.stroke();
         
         // Explosive glow
-        ctx.fillStyle = "#ff0000";
+        ctx.fillStyle = '#FF0000';
+        ctx.shadowColor = '#FF0000';
+        ctx.shadowBlur = 10;
         ctx.beginPath();
         ctx.arc(0, 0, width/4, 0, Math.PI * 2);
         ctx.fill();
         break;
         
       case 'shooter':
-        // Weapon-heavy design
+        // Weapon-heavy alien gunship
+        ctx.fillStyle = '#4B0082';
+        ctx.strokeStyle = '#9370DB';
+        ctx.lineWidth = 2;
+        
+        // Weapon-heavy design with turrets
         ctx.beginPath();
         ctx.moveTo(0, -height/2);
-        ctx.lineTo(-width/2, -height/4);
-        ctx.lineTo(-width/2, height/4);
+        ctx.lineTo(-width/3, -height/4);
+        ctx.lineTo(-width/2, 0);
+        ctx.lineTo(-width/3, height/4);
         ctx.lineTo(0, height/2);
-        ctx.lineTo(width/2, height/4);
-        ctx.lineTo(width/2, -height/4);
+        ctx.lineTo(width/3, height/4);
+        ctx.lineTo(width/2, 0);
+        ctx.lineTo(width/3, -height/4);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
         
-        // Weapon barrels
-        ctx.fillStyle = shipData.accentColor;
-        ctx.fillRect(-width/2, -height/6, width/4, height/3);
-        ctx.fillRect(width/4, -height/6, width/4, height/3);
+        // Weapon turrets
+        ctx.fillStyle = '#9370DB';
+        ctx.beginPath();
+        ctx.arc(-width/4, -height/6, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(width/4, -height/6, 4, 0, Math.PI * 2);
+        ctx.fill();
         break;
         
       default:
@@ -427,6 +625,42 @@ export const ShipRenderer = {
         break;
       case 'mothership':
         this.drawMothershipBoss(ctx, width, height, healthRatio, time);
+        break;
+      case 'space_dragon':
+        this.drawSpaceDragonBoss(ctx, width, height, healthRatio, time);
+        break;
+      case 'void_reaper':
+        this.drawVoidReaperBoss(ctx, width, height, healthRatio, time);
+        break;
+      case 'mech_titan':
+        this.drawMechTitanBoss(ctx, width, height, healthRatio, time);
+        break;
+      case 'crystal_guardian':
+        this.drawCrystalGuardianBoss(ctx, width, height, healthRatio, time);
+        break;
+      case 'plasma_beast':
+        this.drawPlasmaBeastBoss(ctx, width, height, healthRatio, time);
+        break;
+      case 'quantum_entity':
+        this.drawQuantumEntityBoss(ctx, width, height, healthRatio, time);
+        break;
+      case 'cyber_dreadnought':
+        this.drawCyberDreadnoughtBoss(ctx, width, height, healthRatio, time);
+        break;
+      case 'neural_network':
+        this.drawNeuralNetworkBoss(ctx, width, height, healthRatio, time);
+        break;
+      case 'gravity_well':
+        this.drawGravityWellBoss(ctx, width, height, healthRatio, time);
+        break;
+      case 'solar_flare':
+        this.drawSolarFlareBoss(ctx, width, height, healthRatio, time);
+        break;
+      case 'ice_leviathan':
+        this.drawIceLeviathanBoss(ctx, width, height, healthRatio, time);
+        break;
+      case 'storm_king':
+        this.drawStormKingBoss(ctx, width, height, healthRatio, time);
         break;
       default:
         this.drawDestroyerBoss(ctx, width, height, healthRatio, time);
@@ -693,6 +927,146 @@ export const ShipRenderer = {
       ctx.fill();
       ctx.stroke();
     }
+  },
+
+  // Space Dragon Boss - Ancient cosmic dragon
+  drawSpaceDragonBoss(ctx, width, height, healthRatio, time) {
+    const pulse = Math.sin(time * 0.4) * 0.1 + 0.9;
+    const glowIntensity = healthRatio * pulse;
+    
+    // Dragon body - serpentine design
+    ctx.fillStyle = `rgba(139, 0, 0, ${0.8 + glowIntensity * 0.2})`;
+    ctx.strokeStyle = '#8B0000';
+    ctx.lineWidth = 4;
+    
+    // Main body - elongated serpentine shape
+    ctx.beginPath();
+    ctx.ellipse(0, 0, width/2, height/3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Dragon head
+    ctx.beginPath();
+    ctx.ellipse(0, -height/3, width/4, height/4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Dragon wings
+    ctx.fillStyle = `rgba(75, 0, 130, ${0.6 + glowIntensity * 0.3})`;
+    ctx.beginPath();
+    ctx.ellipse(-width/3, -height/6, width/6, height/4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(width/3, -height/6, width/6, height/4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Dragon eyes
+    ctx.fillStyle = '#FF0000';
+    ctx.beginPath();
+    ctx.arc(-width/8, -height/3, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(width/8, -height/3, 4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Dragon breath glow
+    ctx.fillStyle = `rgba(255, 100, 0, ${glowIntensity})`;
+    ctx.shadowColor = '#FF6400';
+    ctx.shadowBlur = 20 * glowIntensity;
+    ctx.beginPath();
+    ctx.ellipse(0, -height/2.5, width/8, height/6, 0, 0, Math.PI * 2);
+    ctx.fill();
+  },
+
+  // Void Reaper Boss - Shadow entity
+  drawVoidReaperBoss(ctx, width, height, healthRatio, time) {
+    const pulse = Math.sin(time * 0.6) * 0.1 + 0.9;
+    const glowIntensity = healthRatio * pulse;
+    
+    // Void entity - shadowy design
+    ctx.fillStyle = `rgba(75, 0, 130, ${0.7 + glowIntensity * 0.3})`;
+    ctx.strokeStyle = '#4B0082';
+    ctx.lineWidth = 3;
+    
+    // Main shadow body
+    ctx.beginPath();
+    ctx.ellipse(0, 0, width/2, height/2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Void tendrils
+    ctx.strokeStyle = `rgba(75, 0, 130, ${glowIntensity * 0.8})`;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI * 2) / 6;
+      const startX = Math.cos(angle) * (width/3);
+      const startY = Math.sin(angle) * (height/3);
+      const endX = Math.cos(angle) * (width/1.5);
+      const endY = Math.sin(angle) * (height/1.5);
+      
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+    }
+    
+    // Void core
+    ctx.fillStyle = `rgba(255, 255, 255, ${glowIntensity * 0.5})`;
+    ctx.beginPath();
+    ctx.arc(0, 0, width/8, 0, Math.PI * 2);
+    ctx.fill();
+  },
+
+  // Mech Titan Boss - Giant robotic war machine
+  drawMechTitanBoss(ctx, width, height, healthRatio, time) {
+    const pulse = Math.sin(time * 0.3) * 0.1 + 0.9;
+    const glowIntensity = healthRatio * pulse;
+    
+    // Mech body - massive robotic design
+    ctx.fillStyle = `rgba(47, 79, 79, ${0.8 + glowIntensity * 0.2})`;
+    ctx.strokeStyle = '#2F4F4F';
+    ctx.lineWidth = 4;
+    
+    // Main mech body
+    ctx.beginPath();
+    ctx.ellipse(0, 0, width/2, height/2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Mech head
+    ctx.fillStyle = '#696969';
+    ctx.beginPath();
+    ctx.ellipse(0, -height/3, width/4, height/6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Mech arms
+    ctx.fillStyle = '#2F4F4F';
+    ctx.beginPath();
+    ctx.ellipse(-width/2.5, 0, width/8, height/3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(width/2.5, 0, width/8, height/3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Mech weapons
+    ctx.fillStyle = '#1C1C1C';
+    ctx.beginPath();
+    ctx.rect(-width/2.5, -height/6, width/12, height/3);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.rect(width/2.5 - width/12, -height/6, width/12, height/3);
+    ctx.fill();
+    
+    // Power core
+    ctx.fillStyle = `rgba(0, 255, 255, ${glowIntensity})`;
+    ctx.shadowColor = '#00FFFF';
+    ctx.shadowBlur = 15 * glowIntensity;
+    ctx.beginPath();
+    ctx.arc(0, 0, width/10, 0, Math.PI * 2);
+    ctx.fill();
   }
 };
 
