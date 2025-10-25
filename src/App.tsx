@@ -28,8 +28,16 @@ import { MoneySystem } from './systems/MoneySystem';
 import { SaveLoadSystem } from './systems/SaveLoadSystem';
 import { StoreModal } from './components/StoreModal';
 import { SaveLoadModal } from './components/SaveLoadModal';
+import DynamicMultiplayerCombat from './components/DynamicMultiplayerCombat';
+import ShipCustomizationModal from './components/ShipCustomizationModal';
+import VoiceChatSystem from './components/VoiceChatSystem';
+import ProgressionSystemComponent from './components/ProgressionSystem';
+import MissionVarietySystem from './components/MissionVarietySystem';
+import { AdvancedMultiplayerSystem } from './systems/AdvancedMultiplayerSystem';
+import { RealMultiplayerGame } from './components/RealMultiplayerGame';
 import './components/StoreModal.css';
 import './components/SaveLoadModal.css';
+import './App-Advanced-Multiplayer.css';
 
 // Add styles for game buttons
 const gameButtonStyles = `
@@ -242,6 +250,44 @@ const App: React.FC = () => {
   });
 
   const [showModal, setShowModal] = useState<string | null>(null);
+  
+  // Advanced Multiplayer State
+  const [advancedMultiplayerSystem] = useState(() => new AdvancedMultiplayerSystem());
+  const [showDynamicCombat, setShowDynamicCombat] = useState(false);
+  const [showShipCustomization, setShowShipCustomization] = useState(false);
+  const [showProgression, setShowProgression] = useState(false);
+  const [showMissionVariety, setShowMissionVariety] = useState(false);
+  const [isSquadLeader, setIsSquadLeader] = useState(false);
+  const [playerRole, setPlayerRole] = useState('pilot');
+  const [voiceChatEnabled, setVoiceChatEnabled] = useState(false);
+  
+  // Real Multiplayer State
+  const [showRealMultiplayer, setShowRealMultiplayer] = useState(false);
+  const [currentShipCustomization, setCurrentShipCustomization] = useState({
+    hull: { type: 'fighter' as const, model: 'basic_fighter', health: 100, armor: 50, maneuverability: 80, cargo: 10 },
+    weapons: {
+      primary: { type: 'laser_cannon', damage: 25, range: 1000, fireRate: 2, energyCost: 10, ammunition: 1000 },
+      secondary: { type: 'plasma_gun', damage: 40, range: 800, fireRate: 1, energyCost: 20, ammunition: 500 },
+      special: { type: 'missile_launcher', damage: 100, range: 2000, fireRate: 0.5, energyCost: 50, ammunition: 50 },
+      missiles: { type: 'homing_missile', damage: 80, range: 1500, fireRate: 0.3, energyCost: 30, ammunition: 100, count: 10, tracking: true, speed: 200 }
+    },
+    engines: { type: 'ion_drive', thrust: 100, efficiency: 80, maneuverability: 70, fuelConsumption: 1 },
+    shields: { type: 'energy_shield', capacity: 100, recharge: 10, resistance: 50, coverage: 100 },
+    paint: { primary: '#00ff00', secondary: '#006600', accent: '#ffff00', finish: 'metallic' },
+    utilities: [] as any[],
+    decals: [] as any[]
+  } as any);
+  const [progressionSystem, setProgressionSystem] = useState({
+    playerLevel: 1,
+    experience: 0,
+    skillPoints: 5,
+    achievements: [],
+    reputation: [] as any[],
+    unlockedShips: [],
+    unlockedWeapons: [],
+    unlockedAbilities: []
+  });
+  
   const [achievements, setAchievements] = useState<Array<{id: string, name: string, description: string, unlocked: boolean, progress: number, maxProgress: number}>>([
     {id: 'first_blood', name: 'First Blood', description: 'Defeat your first enemy', unlocked: false, progress: 0, maxProgress: 1},
     {id: 'kill_streak_10', name: 'Kill Streak', description: 'Defeat 10 enemies in a row', unlocked: false, progress: 0, maxProgress: 10},
@@ -386,8 +432,104 @@ const App: React.FC = () => {
             gameState={gameState}
             setGameState={setGameState}
             toastContext={toastContext}
+            setShowDynamicCombat={setShowDynamicCombat}
+            setShowShipCustomization={setShowShipCustomization}
+            setShowProgression={setShowProgression}
+            setShowMissionVariety={setShowMissionVariety}
+            setVoiceChatEnabled={setVoiceChatEnabled}
+            voiceChatEnabled={voiceChatEnabled}
+            setShowRealMultiplayer={setShowRealMultiplayer}
           />
         )}
+        
+        {/* Advanced Multiplayer Components */}
+        {showDynamicCombat && (
+          <DynamicMultiplayerCombat
+            multiplayerSystem={advancedMultiplayerSystem}
+            isSquadLeader={isSquadLeader}
+            playerRole={playerRole}
+            onMissionComplete={(success) => {
+              console.log('Mission completed:', success);
+              setShowDynamicCombat(false);
+            }}
+          />
+        )}
+        
+        {showShipCustomization && (
+          <ShipCustomizationModal
+            isOpen={showShipCustomization}
+            onClose={() => setShowShipCustomization(false)}
+            currentCustomization={currentShipCustomization as any}
+            onSave={(customization) => {
+              setCurrentShipCustomization(customization as any);
+              setShowShipCustomization(false);
+            }}
+            availableShips={['basic_fighter', 'advanced_fighter', 'heavy_cruiser']}
+            availableWeapons={['laser_cannon', 'plasma_gun', 'missile_launcher']}
+            availableEngines={['ion_drive', 'plasma_drive', 'quantum_drive']}
+            availableShields={['energy_shield', 'plasma_shield', 'quantum_shield']}
+          />
+        )}
+        
+        {showProgression && (
+          <ProgressionSystemComponent
+            progression={progressionSystem}
+            onLevelUp={(newLevel) => {
+              setProgressionSystem(prev => ({ ...prev, playerLevel: newLevel }));
+            }}
+            onAchievementUnlock={(achievement) => {
+              console.log('Achievement unlocked:', achievement);
+            }}
+            onReputationChange={(faction, reputation) => {
+              setProgressionSystem(prev => ({
+                ...prev,
+                reputation: { ...prev.reputation, [faction]: reputation }
+              }));
+            }}
+          />
+        )}
+        
+        {showMissionVariety && (
+          <MissionVarietySystem
+            playerLevel={progressionSystem.playerLevel}
+            unlockedShips={['basic_fighter', 'advanced_fighter']}
+            unlockedAbilities={['basic_maneuver', 'evasive_maneuver']}
+            onMissionStart={(mission) => {
+              console.log('Starting mission:', mission);
+              setShowMissionVariety(false);
+              setShowDynamicCombat(true);
+            }}
+            onMissionComplete={(mission, success) => {
+              console.log('Mission completed:', mission, success);
+            }}
+          />
+        )}
+        
+          {voiceChatEnabled && (
+            <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}>
+              <VoiceChatSystem
+                isEnabled={voiceChatEnabled}
+                channel="squad-alpha"
+                participants={['Player 1', 'Player 2', 'Player 3', 'Player 4']}
+                onVoiceMessage={(message, playerId) => {
+                  console.log('Voice message:', message, 'from:', playerId);
+                }}
+                onToggleMute={(muted) => {
+                  console.log('Mute toggled:', muted);
+                }}
+                onToggleDeafen={(deafened) => {
+                  console.log('Deafen toggled:', deafened);
+                }}
+              />
+            </div>
+          )}
+          
+          {showRealMultiplayer && (
+            <RealMultiplayerGame
+              onClose={() => setShowRealMultiplayer(false)}
+              serverUrl="ws://localhost:8080"
+            />
+          )}
       </div>
     </ToastManager>
   );
@@ -570,9 +712,16 @@ interface FeatureModalProps {
   gameState?: GameState;
   setGameState?: React.Dispatch<React.SetStateAction<GameState>>;
   toastContext?: any;
+  setShowDynamicCombat?: (show: boolean) => void;
+  setShowShipCustomization?: (show: boolean) => void;
+  setShowProgression?: (show: boolean) => void;
+  setShowMissionVariety?: (show: boolean) => void;
+  setVoiceChatEnabled?: (enabled: boolean) => void;
+  voiceChatEnabled?: boolean;
+  setShowRealMultiplayer?: (show: boolean) => void;
 }
 
-const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings, onUpdateSettings, achievements = [], onSceneChange, gameState, setGameState, toastContext }) => {
+const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings, onUpdateSettings, achievements = [], onSceneChange, gameState, setGameState, toastContext, setShowDynamicCombat, setShowShipCustomization, setShowProgression, setShowMissionVariety, setVoiceChatEnabled, voiceChatEnabled, setShowRealMultiplayer }) => {
   const getFeatureData = () => {
     switch (feature) {
       case 'achievements':
@@ -1327,6 +1476,50 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
 
   // Render interactive power-ups if it's the powerups modal
   if (feature === 'powerups' && featureData.isInteractive) {
+    const [selectedCategory, setSelectedCategory] = React.useState('elemental');
+    const [showCollection, setShowCollection] = React.useState(false);
+    
+    const powerupCategories = {
+      elemental: {
+        name: '🔥 Elemental',
+        powerups: [
+          { name: 'Fire Blast', icon: '🔥', description: 'Shoots fire projectiles', rarity: 'Common', unlocked: true },
+          { name: 'Ice Shield', icon: '❄️', description: 'Freezes incoming projectiles', rarity: 'Rare', unlocked: true },
+          { name: 'Lightning Strike', icon: '⚡', description: 'Chain lightning attacks', rarity: 'Epic', unlocked: true },
+          { name: 'Earth Crush', icon: '🌍', description: 'Massive earth-based attack', rarity: 'Rare', unlocked: false }
+        ]
+      },
+      weapon: {
+        name: '🔫 Weapon',
+        powerups: [
+          { name: 'Multi-Shot', icon: '🎯', description: 'Temporary multi-shot mode', rarity: 'Rare', unlocked: true },
+          { name: 'Explosive Rounds', icon: '💥', description: 'Area-of-effect damage', rarity: 'Common', unlocked: true },
+          { name: 'Plasma Cannon', icon: '⚡', description: 'High-energy plasma weapon', rarity: 'Epic', unlocked: false },
+          { name: 'Quantum Blast', icon: '🌌', description: 'Advanced space technology', rarity: 'Legendary', unlocked: false }
+        ]
+      },
+      defense: {
+        name: '🛡️ Defense',
+        powerups: [
+          { name: 'Shield Power-up', icon: '🛡️', description: 'Temporary invincibility', rarity: 'Common', unlocked: true },
+          { name: 'Energy Barrier', icon: '🔮', description: 'Absorbs incoming damage', rarity: 'Rare', unlocked: true },
+          { name: 'Reflect Shield', icon: '🪞', description: 'Reflects enemy attacks', rarity: 'Epic', unlocked: false },
+          { name: 'Quantum Armor', icon: '⚔️', description: 'Ultimate protection', rarity: 'Legendary', unlocked: false }
+        ]
+      },
+      utility: {
+        name: '🔧 Utility',
+        powerups: [
+          { name: 'Speed Boost', icon: '🚀', description: 'Increases movement speed', rarity: 'Common', unlocked: true },
+          { name: 'Health Pack', icon: '❤️', description: 'Restores ship health', rarity: 'Common', unlocked: true },
+          { name: 'Time Slow', icon: '⏰', description: 'Slows down time', rarity: 'Epic', unlocked: false },
+          { name: 'Wing Fighters', icon: '✈️', description: 'Deploy AI wing fighters', rarity: 'Legendary', unlocked: false }
+        ]
+      }
+    };
+    
+    const currentCategory = powerupCategories[selectedCategory as keyof typeof powerupCategories];
+    
     return (
       <div className="modal-overlay" onClick={onClose}>
         <div className="powerups-modal" onClick={(e) => e.stopPropagation()}>
@@ -1340,53 +1533,131 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
               <h3>⚡ Power-up Categories</h3>
               
               <div className="category-tabs">
-                <button className="tab-btn active" onClick={() => console.log('Elemental tab')}>🔥 Elemental</button>
-                <button className="tab-btn" onClick={() => console.log('Weapon tab')}>🔫 Weapon</button>
-                <button className="tab-btn" onClick={() => console.log('Defense tab')}>🛡️ Defense</button>
-                <button className="tab-btn" onClick={() => console.log('Utility tab')}>🔧 Utility</button>
+                {Object.entries(powerupCategories).map(([key, category]) => (
+                  <button 
+                    key={key}
+                    className={`tab-btn ${selectedCategory === key ? 'active' : ''}`}
+                    onClick={() => setSelectedCategory(key)}
+                  >
+                    {category.name}
+                  </button>
+                ))}
               </div>
               
               <div className="powerup-grid">
-                <div className="powerup-item" onClick={() => console.log('Fire Power-up')}>
-                  <div className="powerup-icon">🔥</div>
-                  <h4>Fire Blast</h4>
-                  <p>Shoots fire projectiles</p>
-                  <div className="powerup-rarity">Common</div>
-                </div>
-                
-                <div className="powerup-item" onClick={() => console.log('Ice Power-up')}>
-                  <div className="powerup-icon">❄️</div>
-                  <h4>Ice Shield</h4>
-                  <p>Freezes incoming projectiles</p>
-                  <div className="powerup-rarity">Rare</div>
-                </div>
-                
-                <div className="powerup-item" onClick={() => console.log('Lightning Power-up')}>
-                  <div className="powerup-icon">⚡</div>
-                  <h4>Lightning Strike</h4>
-                  <p>Chain lightning attacks</p>
-                  <div className="powerup-rarity">Epic</div>
-                </div>
-                
-                <div className="powerup-item locked" onClick={() => console.log('Power-up locked')}>
-                  <div className="powerup-icon">🌌</div>
-                  <h4>Quantum Blast</h4>
-                  <p>Advanced space technology</p>
-                  <div className="powerup-rarity">Legendary</div>
-                </div>
+                {currentCategory.powerups.map((powerup, index) => (
+                  <div 
+                    key={index}
+                    className={`powerup-item ${!powerup.unlocked ? 'locked' : ''}`}
+                    onClick={() => {
+                      if (powerup.unlocked) {
+                        console.log(`${powerup.name} selected`);
+                        if (toastContext) {
+                          toastContext.showToast({
+                            type: 'success',
+                            title: `⚡ ${powerup.name} Selected!`,
+                            message: powerup.description,
+                            icon: powerup.icon,
+                            duration: 3000
+                          });
+                        }
+                      } else {
+                        console.log(`${powerup.name} is locked`);
+                        if (toastContext) {
+                          toastContext.showToast({
+                            type: 'warning',
+                            title: '🔒 Power-up Locked',
+                            message: `Complete more missions to unlock ${powerup.name}`,
+                            icon: '🔒',
+                            duration: 3000
+                          });
+                        }
+                      }
+                    }}
+                  >
+                    <div className="powerup-icon">{powerup.icon}</div>
+                    <h4>{powerup.name}</h4>
+                    <p>{powerup.description}</p>
+                    <div className={`powerup-rarity ${powerup.rarity.toLowerCase()}`}>
+                      {powerup.rarity}
+                    </div>
+                    {!powerup.unlocked && <div className="locked-indicator">🔒</div>}
+                  </div>
+                ))}
               </div>
+            </div>
+                </div>
+                
+          <div className="powerup-actions">
+            <button className="view-collection-btn" onClick={() => setShowCollection(true)}>
+              📦 View Collection ({Object.values(powerupCategories).flatMap(cat => cat.powerups).filter(p => p.unlocked).length}/{Object.values(powerupCategories).flatMap(cat => cat.powerups).length})
+            </button>
+                </div>
+                
+          {/* Collection Modal */}
+          {showCollection && (
+            <div className="modal-overlay" onClick={() => setShowCollection(false)}>
+              <div className="collection-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <h2 style={{ color: '#9932cc' }}>📦 Power-up Collection</h2>
+                  <button className="close-btn" onClick={() => setShowCollection(false)}>×</button>
+                </div>
+                
+                <div className="collection-content">
+                  <div className="collection-stats">
+                    <div className="stat-item">
+                      <span className="stat-label">Total Power-ups:</span>
+                      <span className="stat-value">{Object.values(powerupCategories).flatMap(cat => cat.powerups).length}</span>
+                </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Unlocked:</span>
+                      <span className="stat-value unlocked">{Object.values(powerupCategories).flatMap(cat => cat.powerups).filter(p => p.unlocked).length}</span>
+              </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Locked:</span>
+                      <span className="stat-value locked">{Object.values(powerupCategories).flatMap(cat => cat.powerups).filter(p => !p.unlocked).length}</span>
             </div>
           </div>
           
-          <div className="powerup-actions">
-            <button className="view-collection-btn" onClick={() => {
-              console.log('Viewing power-up collection...');
-              // Show detailed power-up collection
-              alert('📦 Power-up Collection:\n\n🔥 Fire Blast - Common - Shoots fire projectiles\n❄️ Ice Shield - Rare - Freezes incoming projectiles\n⚡ Lightning Strike - Epic - Chain lightning attacks\n🌌 Quantum Blast - Legendary - Advanced space technology\n💥 Explosive Rounds - Common - Area-of-effect damage\n🛡️ Shield Power-up - Common - Temporary invincibility\n🚀 Speed Boost - Common - Increases movement speed\n🎯 Multi-Shot - Rare - Temporary multi-shot mode\n\nCollect more power-ups during gameplay to unlock new abilities!');
-            }}>
-              📦 View Collection
+                  <div className="collection-categories">
+                    {Object.entries(powerupCategories).map(([key, category]) => (
+                      <div key={key} className="collection-category">
+                        <h3 className="category-title">{category.name}</h3>
+                        <div className="collection-grid">
+                          {category.powerups.map((powerup, index) => (
+                            <div 
+                              key={index}
+                              className={`collection-item ${!powerup.unlocked ? 'locked' : ''}`}
+                            >
+                              <div className="collection-icon">{powerup.icon}</div>
+                              <div className="collection-info">
+                                <h4>{powerup.name}</h4>
+                                <p>{powerup.description}</p>
+                                <div className={`collection-rarity ${powerup.rarity.toLowerCase()}`}>
+                                  {powerup.rarity}
+                                </div>
+                                {!powerup.unlocked && (
+                                  <div className="unlock-requirement">
+                                    🔒 Complete more missions to unlock
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="collection-actions">
+                  <button className="close-collection-btn" onClick={() => setShowCollection(false)}>
+                    Close Collection
             </button>
           </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -1711,6 +1982,103 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
                   <div className="mode-stats">
                     <span>👥 2-8 Players</span>
                     <span>🥊 PvP</span>
+                  </div>
+                </div>
+                
+                <div className="mode-card" onClick={() => {
+                  console.log('Starting Dynamic Combat');
+                  onClose();
+                  setTimeout(() => {
+                    setShowDynamicCombat?.(true);
+                  }, 100);
+                }}>
+                  <div className="mode-icon">🚀</div>
+                  <h4>Dynamic Combat</h4>
+                  <p>Real-time space battles with advanced features</p>
+                  <div className="mode-stats">
+                    <span>🎯 Real-time</span>
+                    <span>⚡ Advanced</span>
+                  </div>
+                </div>
+                
+                <div className="mode-card" onClick={() => {
+                  console.log('Opening Ship Customization');
+                  onClose();
+                  setTimeout(() => {
+                    setShowShipCustomization?.(true);
+                  }, 100);
+                }}>
+                  <div className="mode-icon">🛸</div>
+                  <h4>Ship Customization</h4>
+                  <p>Customize your ship's hull, weapons, and paint</p>
+                  <div className="mode-stats">
+                    <span>🔧 Customize</span>
+                    <span>🎨 Personalize</span>
+                  </div>
+                </div>
+                
+                <div className="mode-card" onClick={() => {
+                  console.log('Opening Progression System');
+                  onClose();
+                  setTimeout(() => {
+                    setShowProgression?.(true);
+                  }, 100);
+                }}>
+                  <div className="mode-icon">📊</div>
+                  <h4>Progression System</h4>
+                  <p>Track your achievements and reputation</p>
+                  <div className="mode-stats">
+                    <span>🏆 Achievements</span>
+                    <span>📈 Progress</span>
+                  </div>
+                </div>
+                
+                <div className="mode-card" onClick={() => {
+                  console.log('Opening Mission Variety');
+                  onClose();
+                  setTimeout(() => {
+                    setShowMissionVariety?.(true);
+                  }, 100);
+                }}>
+                  <div className="mode-icon">🎯</div>
+                  <h4>Mission Variety</h4>
+                  <p>Choose from different mission types and objectives</p>
+                  <div className="mode-stats">
+                    <span>🎮 Missions</span>
+                    <span>🌟 Variety</span>
+                  </div>
+                </div>
+                
+                <div className="mode-card" onClick={() => {
+                  console.log('Toggling Voice Chat');
+                  if (setVoiceChatEnabled && voiceChatEnabled !== undefined) {
+                    setVoiceChatEnabled(!voiceChatEnabled);
+                  }
+                }}>
+                  <div className="mode-icon">🎤</div>
+                  <h4>Voice Chat</h4>
+                  <p>Communicate with your squad in real-time</p>
+                  <div className="mode-stats">
+                    <span>🎤 Voice</span>
+                    <span>💬 Chat</span>
+                  </div>
+                </div>
+                
+                <div className="mode-card" onClick={() => {
+                  console.log('Starting Real Multiplayer');
+                  onClose();
+                  setTimeout(() => {
+                    if (setShowRealMultiplayer) {
+                      setShowRealMultiplayer(true);
+                    }
+                  }, 100);
+                }}>
+                  <div className="mode-icon">🌐</div>
+                  <h4>Real Multiplayer</h4>
+                  <p>Connect to real multiplayer servers</p>
+                  <div className="mode-stats">
+                    <span>🌐 Online</span>
+                    <span>💾 Persistent</span>
                   </div>
                 </div>
               </div>

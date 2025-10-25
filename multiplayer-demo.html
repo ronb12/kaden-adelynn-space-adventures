@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Demo - Kaden & Adelynn Space Adventures</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e);
+            color: #e0e0e0;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid rgba(153, 50, 204, 0.3);
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .demo-header h1 {
+            color: #9932cc;
+            font-size: 2.5em;
+            margin: 0;
+            text-shadow: 0 0 20px rgba(153, 50, 204, 0.5);
+        }
+        
+        .demo-header p {
+            color: #b0b0b0;
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+        
+        .demo-section {
+            margin-bottom: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(153, 50, 204, 0.2);
+        }
+        
+        .demo-section h2 {
+            color: #9932cc;
+            margin-top: 0;
+            border-bottom: 2px solid rgba(153, 50, 204, 0.3);
+            padding-bottom: 10px;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .multiplayer-modal {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(20, 20, 20, 0.95));
+            border: 2px solid rgba(153, 50, 204, 0.6);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 0 30px rgba(153, 50, 204, 0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(153, 50, 204, 0.3);
+            padding-bottom: 15px;
+        }
+        
+        .modal-header h2 {
+            color: #9932cc;
+            margin: 0;
+            font-size: 2em;
+        }
+        
+        .close-btn {
+            background: rgba(255, 107, 107, 0.2);
+            border: 2px solid #ff6b6b;
+            border-radius: 50%;
+            color: #ff6b6b;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255, 107, 107, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .multiplayer-content {
+            margin-bottom: 30px;
+        }
+        
+        .multiplayer-modes h3 {
+            color: #e0e0e0;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .mode-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(153, 50, 204, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .mode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(153, 50, 204, 0.2);
+            border-color: #9932cc;
+        }
+        
+        .mode-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .mode-card h4 {
+            color: #e0e0e0;
+            margin: 0 0 10px 0;
+            font-size: 1.3em;
+        }
+        
+        .mode-card p {
+            color: #b0b0b0;
+            margin: 0 0 15px 0;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .mode-stats {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+        }
+        
+        .mode-stats span {
+            background: rgba(153, 50, 204, 0.2);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            color: #e0e0e0;
+        }
+        
+        .multiplayer-options h3 {
+            color: #e0e0e0;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .option-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .option-item label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: #e0e0e0;
+            font-size: 0.9em;
+        }
+        
+        .option-item input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        
+        .room-creation h3 {
+            color: #e0e0e0;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .room-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .create-room-btn, .join-room-btn, .quick-match-btn {
+            background: rgba(153, 50, 204, 0.2);
+            border: 2px solid #9932cc;
+            border-radius: 8px;
+            color: #e0e0e0;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .create-room-btn:hover, .join-room-btn:hover, .quick-match-btn:hover {
+            background: rgba(153, 50, 204, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .room-code {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .room-code label {
+            color: #e0e0e0;
+            font-weight: bold;
+        }
+        
+        .room-code-input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(153, 50, 204, 0.3);
+            border-radius: 5px;
+            color: #e0e0e0;
+            padding: 8px 12px;
+            font-size: 14px;
+            width: 150px;
+        }
+        
+        .room-code-input:focus {
+            outline: none;
+            border-color: #9932cc;
+        }
+        
+        .join-code-btn {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+            color: #00ff00;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .join-code-btn:hover {
+            background: rgba(0, 255, 0, 0.3);
+        }
+        
+        .multiplayer-actions {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 2px solid rgba(153, 50, 204, 0.3);
+        }
+        
+        .start-multiplayer-btn {
+            background: linear-gradient(45deg, #9932cc, #8b008b);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(153, 50, 204, 0.3);
+        }
+        
+        .start-multiplayer-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(153, 50, 204, 0.4);
+        }
+        
+        .demo-button {
+            background: rgba(153, 50, 204, 0.2);
+            border: 2px solid #9932cc;
+            border-radius: 8px;
+            color: #e0e0e0;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+        
+        .demo-button:hover {
+            background: rgba(153, 50, 204, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .game-demo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .player-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(153, 50, 204, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .player-card h4 {
+            color: #9932cc;
+            margin: 0 0 10px 0;
+        }
+        
+        .player-stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+        
+        .player-stats span {
+            color: #b0b0b0;
+        }
+        
+        .health-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 0, 0, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00);
+            transition: width 0.3s ease;
+        }
+        
+        .chat-demo {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .chat-message {
+            margin: 5px 0;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: rgba(153, 50, 204, 0.1);
+        }
+        
+        .chat-message .player {
+            color: #9932cc;
+            font-weight: bold;
+        }
+        
+        .chat-message .message {
+            color: #e0e0e0;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .mode-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .room-actions {
+                flex-direction: column;
+            }
+            
+            .room-code {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>🎮 Multiplayer Demo</h1>
+            <p>Kaden & Adelynn Space Adventures - Multiplayer Interface</p>
+        </div>
+        
+        <div class="demo-section">
+            <h2>📱 Multiplayer Modal Interface</h2>
+            <p>Click the button below to see how the multiplayer modal looks and works:</p>
+            <button class="demo-button" onclick="showMultiplayerModal()">🎮 Open Multiplayer Modal</button>
+        </div>
+        
+        <div class="demo-section">
+            <h2>👥 Active Multiplayer Game</h2>
+            <p>Here's how the game looks when multiplayer is active:</p>
+            <div class="game-demo">
+                <div class="player-card">
+                    <h4>👨‍🚀 Kaden (You)</h4>
+                    <div class="player-stats">
+                        <span>Score: 15,420</span>
+                        <span>Kills: 23</span>
+                    </div>
+                    <div class="health-bar">
+                        <div class="health-fill" style="width: 85%"></div>
+                    </div>
+                    <p>Health: 85/100</p>
+                </div>
+                
+                <div class="player-card">
+                    <h4>👩‍🚀 Adelynn</h4>
+                    <div class="player-stats">
+                        <span>Score: 12,890</span>
+                        <span>Kills: 18</span>
+                    </div>
+                    <div class="health-bar">
+                        <div class="health-fill" style="width: 70%"></div>
+                    </div>
+                    <p>Health: 70/100</p>
+                </div>
+                
+                <div class="player-card">
+                    <h4>🛸 Space Pilot</h4>
+                    <div class="player-stats">
+                        <span>Score: 8,340</span>
+                        <span>Kills: 12</span>
+                    </div>
+                    <div class="health-bar">
+                        <div class="health-fill" style="width: 45%"></div>
+                    </div>
+                    <p>Health: 45/100</p>
+                </div>
+                
+                <div class="player-card">
+                    <h4>🚀 Captain</h4>
+                    <div class="player-stats">
+                        <span>Score: 20,150</span>
+                        <span>Kills: 31</span>
+                    </div>
+                    <div class="health-bar">
+                        <div class="health-fill" style="width: 100%"></div>
+                    </div>
+                    <p>Health: 100/100</p>
+                </div>
+            </div>
+            
+            <div class="chat-demo">
+                <h4>💬 Team Chat</h4>
+                <div class="chat-message">
+                    <span class="player">Kaden:</span> <span class="message">Boss incoming from the right!</span>
+                </div>
+                <div class="chat-message">
+                    <span class="player">Adelynn:</span> <span class="message">I'll cover you!</span>
+                </div>
+                <div class="chat-message">
+                    <span class="player">Space Pilot:</span> <span class="message">Need health pack!</span>
+                </div>
+                <div class="chat-message">
+                    <span class="player">Captain:</span> <span class="message">Great teamwork everyone!</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>🌐 Connection Status</h2>
+            <p>Real-time connection monitoring:</p>
+            <div style="display: flex; gap: 20px; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 12px; height: 12px; background: #00ff00; border-radius: 50%; animation: pulse 2s infinite;"></div>
+                    <span>Connected to Server</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span>Ping: 45ms</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span>Room: SPACE_BATTLE_001</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Multiplayer Modal -->
+    <div id="multiplayerModal" class="modal-overlay hidden" onclick="hideMultiplayerModal()">
+        <div class="multiplayer-modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>🎮 Multiplayer</h2>
+                <button class="close-btn" onclick="hideMultiplayerModal()">×</button>
+            </div>
+            
+            <div class="multiplayer-content">
+                <div class="multiplayer-modes">
+                    <h3>🎮 Select Multiplayer Mode</h3>
+                    
+                    <div class="mode-grid">
+                        <div class="mode-card" onclick="selectMode('local')">
+                            <div class="mode-icon">👥</div>
+                            <h4>Local Multiplayer</h4>
+                            <p>Play with friends on the same device</p>
+                            <div class="mode-stats">
+                                <span>👥 2-4 Players</span>
+                                <span>🎮 Same Device</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mode-card" onclick="selectMode('online')">
+                            <div class="mode-icon">🌐</div>
+                            <h4>Online Multiplayer</h4>
+                            <p>Play with friends across the internet</p>
+                            <div class="mode-stats">
+                                <span>👥 2-8 Players</span>
+                                <span>🌐 Internet Required</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mode-card" onclick="selectMode('cooperative')">
+                            <div class="mode-icon">🤝</div>
+                            <h4>Cooperative Mode</h4>
+                            <p>Work together against AI enemies</p>
+                            <div class="mode-stats">
+                                <span>👥 2-4 Players</span>
+                                <span>🤖 vs AI</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mode-card" onclick="selectMode('competitive')">
+                            <div class="mode-icon">⚔️</div>
+                            <h4>Competitive Mode</h4>
+                            <p>Battle against other players</p>
+                            <div class="mode-stats">
+                                <span>👥 2-8 Players</span>
+                                <span>🥊 PvP</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="multiplayer-options">
+                    <h3>⚙️ Multiplayer Options</h3>
+                    
+                    <div class="option-grid">
+                        <div class="option-item">
+                            <label>
+                                <input type="checkbox" checked>
+                                <span>🎵 Background Music</span>
+                            </label>
+                        </div>
+                        <div class="option-item">
+                            <label>
+                                <input type="checkbox" checked>
+                                <span>🔊 Sound Effects</span>
+                            </label>
+                        </div>
+                        <div class="option-item">
+                            <label>
+                                <input type="checkbox">
+                                <span>💬 Voice Chat</span>
+                            </label>
+                        </div>
+                        <div class="option-item">
+                            <label>
+                                <input type="checkbox" checked>
+                                <span>🎯 Friendly Fire</span>
+                            </label>
+                        </div>
+                        <div class="option-item">
+                            <label>
+                                <input type="checkbox">
+                                <span>⏰ Time Limit</span>
+                            </label>
+                        </div>
+                        <div class="option-item">
+                            <label>
+                                <input type="checkbox" checked>
+                                <span>🏆 Score Tracking</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="room-creation">
+                    <h3>🏠 Create or Join Room</h3>
+                    
+                    <div class="room-actions">
+                        <button class="create-room-btn" onclick="createRoom()">🏠 Create Room</button>
+                        <button class="join-room-btn" onclick="joinRoom()">🚪 Join Room</button>
+                        <button class="quick-match-btn" onclick="quickMatch()">⚡ Quick Match</button>
+                    </div>
+                    
+                    <div class="room-code">
+                        <label>Room Code:</label>
+                        <input type="text" placeholder="Enter room code..." maxlength="6" class="room-code-input">
+                        <button class="join-code-btn" onclick="joinByCode()">Join</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="multiplayer-actions">
+                <button class="start-multiplayer-btn" onclick="startMultiplayer()">
+                    🚀 Start Multiplayer Game
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+    
+    <script>
+        function showMultiplayerModal() {
+            document.getElementById('multiplayerModal').classList.remove('hidden');
+        }
+        
+        function hideMultiplayerModal() {
+            document.getElementById('multiplayerModal').classList.add('hidden');
+        }
+        
+        function selectMode(mode) {
+            console.log('Selected mode:', mode);
+            // Visual feedback
+            event.target.closest('.mode-card').style.borderColor = '#9932cc';
+            event.target.closest('.mode-card').style.background = 'rgba(153, 50, 204, 0.1)';
+        }
+        
+        function createRoom() {
+            alert('🏠 Creating new room...\n\nRoom Code: SPACE_001\nPlayers: 0/4\nStatus: Waiting for players');
+        }
+        
+        function joinRoom() {
+            alert('🚪 Joining room...\n\nSearching for available rooms...\nFound 3 rooms available');
+        }
+        
+        function quickMatch() {
+            alert('⚡ Quick Match!\n\nFinding players...\nMatched with 3 other players!\nStarting game in 3... 2... 1...');
+        }
+        
+        function joinByCode() {
+            const code = document.querySelector('.room-code-input').value;
+            if (code) {
+                alert(`🚪 Joining room: ${code}\n\nConnecting to room...\nRoom found! Joining game...`);
+            } else {
+                alert('Please enter a room code!');
+            }
+        }
+        
+        function startMultiplayer() {
+            alert('🚀 Starting Multiplayer Game!\n\n• Connecting to server...\n• Syncing with other players...\n• Loading game assets...\n• Starting in 3 seconds...\n\n🎮 Multiplayer mode activated!');
+            hideMultiplayerModal();
+        }
+        
+        // Simulate real-time updates
+        setInterval(() => {
+            const healthBars = document.querySelectorAll('.health-fill');
+            healthBars.forEach((bar, index) => {
+                const currentWidth = parseInt(bar.style.width);
+                const newWidth = Math.max(20, currentWidth + (Math.random() - 0.5) * 10);
+                bar.style.width = newWidth + '%';
+            });
+        }, 2000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Multiplayer Space Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(180deg, #000011 0%, #000033 50%, #000011 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-viewport {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(ellipse at center, #000033 0%, #000011 100%);
+            position: relative;
+        }
+
+        .game-canvas {
+            border: 2px solid rgba(0, 255, 255, 0.6);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            background: transparent;
+            cursor: crosshair;
+        }
+
+        .game-controls {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .game-controls button {
+            background: linear-gradient(45deg, #9932cc, #8b008b);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(153, 50, 204, 0.3);
+        }
+
+        .game-controls button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(153, 50, 204, 0.4);
+        }
+
+        .game-controls button:disabled {
+            background: linear-gradient(45deg, #666666, #444444);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .main-menu-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24) !important;
+        }
+
+        .team-hud {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(0, 255, 255, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+            width: 200px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .team-hud h3 {
+            color: #00ffff;
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .team-member {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            padding: 8px;
+            margin-bottom: 5px;
+        }
+
+        .player-name {
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .player-health {
+            color: #ff6666;
+            font-size: 11px;
+        }
+
+        .player-shield {
+            color: #00ffff;
+            font-size: 11px;
+        }
+
+        .player-level {
+            color: #ffff00;
+            font-size: 11px;
+        }
+
+        .objectives-panel {
+            position: absolute;
+            top: 320px;
+            left: 20px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(255, 165, 0, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+            width: 200px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .objectives-panel h3 {
+            color: #ffa500;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .objective-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            padding: 5px;
+            margin-bottom: 5px;
+        }
+
+        .objective-text {
+            font-size: 12px;
+            color: #e0e0e0;
+        }
+
+        .objective-progress {
+            color: #00ff00;
+            font-size: 11px;
+        }
+
+        .chat-system {
+            position: absolute;
+            top: 320px;
+            right: 20px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(153, 50, 204, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+            width: 200px;
+            max-height: 180px;
+        }
+
+        .chat-system h3 {
+            color: #9932cc;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .chat-messages {
+            max-height: 120px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        .chat-message {
+            font-size: 11px;
+            margin-bottom: 3px;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .chat-message.team {
+            background: rgba(0, 255, 255, 0.2);
+        }
+
+        .chat-message.system {
+            background: rgba(255, 165, 0, 0.2);
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #333;
+            border-radius: 3px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #e0e0e0;
+            font-size: 12px;
+        }
+
+        .minimap {
+            display: none; /* Removed minimap */
+        }
+
+        .minimap h3 {
+            color: #00ff00;
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+
+        .minimap-canvas {
+            width: 180px;
+            height: 120px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+
+        .progression-panel {
+            position: absolute;
+            top: 100px;
+            left: 20px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(255, 255, 0, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+            width: 200px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .progression-panel h3 {
+            color: #ffff00;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .level-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .xp-bar {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #ffff00);
+            transition: width 0.3s ease;
+        }
+
+        .achievement {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            padding: 5px;
+            margin-bottom: 5px;
+            font-size: 11px;
+        }
+
+        .achievement.unlocked {
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .game-modes {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            max-width: 600px;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            background: linear-gradient(45deg, #32cd32, #228b22);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        }
+
+        .mode-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .spectator-mode {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid rgba(255, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            display: none;
+        }
+
+        .spectator-mode h2 {
+            color: #ff0000;
+            margin-bottom: 20px;
+        }
+
+        .spectator-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .spectator-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Responsive design to prevent overlapping */
+        @media (max-width: 1200px) {
+            .team-hud {
+                top: 100px;
+                width: 180px;
+                max-height: 180px;
+            }
+            
+            .objectives-panel {
+                top: 300px;
+                width: 180px;
+                max-height: 160px;
+            }
+            
+            .chat-system {
+                top: 300px;
+                width: 180px;
+                max-height: 160px;
+            }
+            
+            .progression-panel {
+                top: 100px;
+                width: 180px;
+                max-height: 180px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .team-hud {
+                top: 100px;
+                width: 160px;
+                max-height: 160px;
+            }
+            
+            .objectives-panel {
+                top: 280px;
+                width: 160px;
+                max-height: 140px;
+            }
+            
+            .chat-system {
+                top: 280px;
+                width: 160px;
+                max-height: 140px;
+            }
+            
+            .progression-panel {
+                top: 100px;
+                width: 160px;
+                max-height: 160px;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .team-hud {
+                top: 100px;
+                width: 140px;
+                max-height: 140px;
+            }
+            
+            .objectives-panel {
+                top: 260px;
+                width: 140px;
+                max-height: 120px;
+            }
+            
+            .chat-system {
+                top: 260px;
+                width: 140px;
+                max-height: 120px;
+            }
+            
+            .progression-panel {
+                top: 100px;
+                width: 140px;
+                max-height: 140px;
+            }
+            
+            .game-controls {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            
+            .game-controls button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            
+            .game-modes {
+                max-width: 400px;
+                gap: 5px;
+            }
+            
+            .mode-btn {
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Game Viewport -->
+        <div class="game-viewport">
+            <canvas class="game-canvas" id="gameCanvas" width="800" height="600"></canvas>
+        </div>
+
+        <!-- Game Controls -->
+        <div class="game-controls">
+            <button id="startBtn" onclick="startGame()">🚀 Start Game</button>
+            <button id="pauseBtn" onclick="pauseGame()">⏸️ Pause</button>
+            <button onclick="restartGame()">🔄 Restart</button>
+            <button onclick="returnToMainMenu()" class="main-menu-btn">🏠 Main Menu</button>
+        </div>
+
+        <!-- Game Modes -->
+        <div class="game-modes">
+            <button class="mode-btn active" onclick="setGameMode('cooperative')">🤝 Cooperative</button>
+            <button class="mode-btn" onclick="setGameMode('survival')">💀 Survival</button>
+            <button class="mode-btn" onclick="setGameMode('boss_rush')">👹 Boss Rush</button>
+            <button class="mode-btn" onclick="setGameMode('pvp')">⚔️ PvP</button>
+        </div>
+
+        <!-- Team HUD -->
+        <div class="team-hud">
+            <h3>👥 Team Status</h3>
+            <div id="teamMembers">
+                <!-- Team members will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Objectives Panel -->
+        <div class="objectives-panel">
+            <h3>🎯 Mission Objectives</h3>
+            <div id="objectivesList">
+                <!-- Objectives will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Chat System -->
+        <div class="chat-system">
+            <h3>💬 Team Chat</h3>
+            <div class="chat-messages" id="chatMessages">
+                <!-- Chat messages will be populated by JavaScript -->
+            </div>
+            <input type="text" class="chat-input" id="chatInput" placeholder="Type message..." onkeypress="handleChatKeyPress(event)">
+        </div>
+
+        <!-- Mini-map -->
+        <div class="minimap">
+            <h3>🗺️ Mini-map</h3>
+            <canvas class="minimap-canvas" id="minimapCanvas" width="180" height="120"></canvas>
+        </div>
+
+        <!-- Progression Panel -->
+        <div class="progression-panel">
+            <h3>📊 Progression</h3>
+            <div class="level-info">
+                <span>Level: <span id="playerLevel">1</span></span>
+                <span>XP: <span id="playerXP">0</span>/<span id="nextLevelXP">100</span></span>
+            </div>
+            <div class="xp-bar">
+                <div class="xp-fill" id="xpBar" style="width: 0%"></div>
+            </div>
+            <div id="achievementsList">
+                <!-- Achievements will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Spectator Mode -->
+        <div class="spectator-mode" id="spectatorMode">
+            <h2>👁️ Spectator Mode</h2>
+            <p>You have been eliminated. Watch your teammates continue the battle!</p>
+            <div class="spectator-controls">
+                <button class="spectator-btn" onclick="spectatePlayer(0)">Watch Player 1</button>
+                <button class="spectator-btn" onclick="spectatePlayer(1)">Watch Player 2</button>
+                <button class="spectator-btn" onclick="spectatePlayer(2)">Watch Player 3</button>
+                <button class="spectator-btn" onclick="spectatePlayer(3)">Watch Player 4</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Advanced game state
+        let gameState = 'paused';
+        let gameTime = 0;
+        let gameLoopId = null;
+        let enemySpawnTimer = 0;
+        let powerUpSpawnTimer = 0;
+        let currentGameMode = 'cooperative';
+        let currentSpectator = 0;
+        let isSpectating = false;
+
+        // WebSocket connection (simulated)
+        let socket = null;
+        let isConnected = false;
+        let roomId = null;
+
+        // Game objects
+        let players = [
+            { 
+                id: 'player1', name: 'Kaden', x: 100, y: 200, width: 40, height: 30, color: '#00ff00', 
+                health: 200, maxHealth: 200, shield: 50, maxShield: 50, score: 0, isAlive: true, 
+                invulnerable: 0, level: 1, xp: 0, achievements: [], isHuman: true
+            },
+            { 
+                id: 'player2', name: 'Adelynn', x: 100, y: 300, width: 40, height: 30, color: '#ff6b6b', 
+                health: 200, maxHealth: 200, shield: 50, maxShield: 50, score: 0, isAlive: true, 
+                invulnerable: 0, level: 1, xp: 0, achievements: [], isHuman: true
+            },
+            { 
+                id: 'player3', name: 'Engineer', x: 100, y: 400, width: 40, height: 30, color: '#4ecdc4', 
+                health: 200, maxHealth: 200, shield: 50, maxShield: 50, score: 0, isAlive: true, 
+                invulnerable: 0, level: 1, xp: 0, achievements: [], isHuman: false
+            },
+            { 
+                id: 'player4', name: 'Navigator', x: 100, y: 500, width: 40, height: 30, color: '#ffe66d', 
+                health: 200, maxHealth: 200, shield: 50, maxShield: 50, score: 0, isAlive: true, 
+                invulnerable: 0, level: 1, xp: 0, achievements: [], isHuman: false
+            }
+        ];
+
+        let enemies = [];
+        let bullets = [];
+        let enemyBullets = [];
+        let powerUps = [];
+        let objectives = [];
+        let chatMessages = [];
+        let achievements = [
+            { id: 'first_kill', name: 'First Blood', description: 'Get your first kill', unlocked: false },
+            { id: 'team_player', name: 'Team Player', description: 'Revive a teammate', unlocked: false },
+            { id: 'survivor', name: 'Survivor', description: 'Survive 5 minutes', unlocked: false },
+            { id: 'sharpshooter', name: 'Sharpshooter', description: 'Get 10 kills', unlocked: false }
+        ];
+
+        // Performance optimization
+        let lastFrameTime = 0;
+        const targetFPS = 60;
+        const frameInterval = 1000 / targetFPS;
+
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const minimapCanvas = document.getElementById('minimapCanvas');
+        const minimapCtx = minimapCanvas.getContext('2d');
+
+        // Initialize WebSocket connection (simulated)
+        function initializeConnection() {
+            // Simulate WebSocket connection
+            isConnected = true;
+            roomId = 'room_' + Math.random().toString(36).substr(2, 9);
+            addChatMessage('system', 'Connected to multiplayer room: ' + roomId);
+        }
+
+        // Game mode functions
+        function setGameMode(mode) {
+            currentGameMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update objectives based on mode
+            updateObjectives();
+            addChatMessage('system', `Game mode changed to: ${mode}`);
+        }
+
+        function updateObjectives() {
+            // Clear existing objectives
+            objectives = [];
+            
+            switch (currentGameMode) {
+                case 'cooperative':
+                    objectives = [
+                        { id: 'survive', text: 'Survive for 5 minutes', progress: 0, max: 5, completed: false },
+                        { id: 'kills', text: 'Eliminate 50 enemies', progress: 0, max: 50, completed: false },
+                        { id: 'teamwork', text: 'Revive teammates 3 times', progress: 0, max: 3, completed: false }
+                    ];
+                    break;
+                case 'survival':
+                    objectives = [
+                        { id: 'waves', text: 'Survive 10 waves', progress: 0, max: 10, completed: false },
+                        { id: 'no_deaths', text: 'No team deaths', progress: 0, max: 1, completed: false }
+                    ];
+                    break;
+                case 'boss_rush':
+                    objectives = [
+                        { id: 'bosses', text: 'Defeat 5 bosses', progress: 0, max: 5, completed: false },
+                        { id: 'time_limit', text: 'Complete in under 10 minutes', progress: 0, max: 10, completed: false }
+                    ];
+                    break;
+                case 'pvp':
+                    objectives = [
+                        { id: 'eliminations', text: 'Get 10 eliminations', progress: 0, max: 10, completed: false },
+                        { id: 'survival', text: 'Be the last team standing', progress: 0, max: 1, completed: false }
+                    ];
+                    break;
+                default:
+                    objectives = [
+                        { id: 'survive', text: 'Survive for 5 minutes', progress: 0, max: 5, completed: false },
+                        { id: 'kills', text: 'Eliminate 50 enemies', progress: 0, max: 50, completed: false }
+                    ];
+            }
+            
+            // Force re-render after clearing
+            setTimeout(() => {
+                renderObjectives();
+            }, 100);
+        }
+
+        // Chat system
+        function addChatMessage(type, message, playerName = '') {
+            const timestamp = new Date().toLocaleTimeString();
+            const chatMessage = {
+                type: type,
+                message: message,
+                playerName: playerName,
+                timestamp: timestamp
+            };
+            chatMessages.push(chatMessage);
+            
+            // Keep only last 50 messages
+            if (chatMessages.length > 50) {
+                chatMessages = chatMessages.slice(-50);
+            }
+            
+            renderChatMessages();
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                const input = document.getElementById('chatInput');
+                const message = input.value.trim();
+                if (message) {
+                    addChatMessage('team', message, 'You');
+                    input.value = '';
+                    // Simulate team responses
+                    setTimeout(() => {
+                        const responses = [
+                            'Roger that!',
+                            'Copy that!',
+                            'On it!',
+                            'Got it!',
+                            'Affirmative!'
+                        ];
+                        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                        addChatMessage('team', randomResponse, 'Teammate');
+                    }, 1000);
+                }
+            }
+        }
+
+        function renderChatMessages() {
+            const chatContainer = document.getElementById('chatMessages');
+            chatContainer.innerHTML = '';
+            
+            chatMessages.slice(-20).forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-message ${msg.type}`;
+                messageDiv.innerHTML = `
+                    <span style="color: #999;">[${msg.timestamp}]</span>
+                    ${msg.playerName ? `<span style="color: #00ffff;">${msg.playerName}:</span> ` : ''}
+                    ${msg.message}
+                `;
+                chatContainer.appendChild(messageDiv);
+            });
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Team coordination
+        function updateTeamHUD() {
+            const teamContainer = document.getElementById('teamMembers');
+            teamContainer.innerHTML = '';
+            
+            players.forEach(player => {
+                const memberDiv = document.createElement('div');
+                memberDiv.className = 'team-member';
+                memberDiv.innerHTML = `
+                    <span class="player-name" style="color: ${player.color}">${player.name}</span>
+                    <div>
+                        <span class="player-health">❤️ ${player.health}/${player.maxHealth}</span>
+                        <span class="player-shield">🛡️ ${player.shield}/${player.maxShield}</span>
+                        <span class="player-level">⭐ Lv.${player.level}</span>
+                    </div>
+                `;
+                teamContainer.appendChild(memberDiv);
+            });
+        }
+
+        function renderObjectives() {
+            const objectivesContainer = document.getElementById('objectivesList');
+            if (!objectivesContainer) return; // Safety check
+            
+            objectivesContainer.innerHTML = '';
+            
+            objectives.forEach(objective => {
+                const objectiveDiv = document.createElement('div');
+                objectiveDiv.className = 'objective-item';
+                
+                // Add visual indicator for completed objectives
+                const statusIcon = objective.completed ? '✅' : '⏳';
+                const progressColor = objective.completed ? '#00ff00' : '#ffff00';
+                
+                objectiveDiv.innerHTML = `
+                    <span class="objective-text">${statusIcon} ${objective.text}</span>
+                    <span class="objective-progress" style="color: ${progressColor}">${objective.progress}/${objective.max}</span>
+                `;
+                
+                // Add completed styling
+                if (objective.completed) {
+                    objectiveDiv.style.background = 'rgba(0, 255, 0, 0.2)';
+                    objectiveDiv.style.border = '1px solid #00ff00';
+                }
+                
+                objectivesContainer.appendChild(objectiveDiv);
+            });
+        }
+
+        // Progression system
+        function addXP(playerId, amount) {
+            const player = players.find(p => p.id === playerId);
+            if (player) {
+                player.xp += amount;
+                const nextLevelXP = player.level * 100;
+                
+                if (player.xp >= nextLevelXP) {
+                    player.level++;
+                    player.xp -= nextLevelXP;
+                    player.maxHealth += 20;
+                    player.health = player.maxHealth;
+                    player.maxShield += 10;
+                    player.shield = player.maxShield;
+                    addChatMessage('system', `${player.name} leveled up to level ${player.level}!`);
+                    checkAchievements(player);
+                }
+                
+                updateProgressionUI();
+            }
+        }
+
+        function checkAchievements(player) {
+            achievements.forEach(achievement => {
+                if (!achievement.unlocked) {
+                    let shouldUnlock = false;
+                    
+                    switch (achievement.id) {
+                        case 'first_kill':
+                            shouldUnlock = player.score > 0;
+                            break;
+                        case 'survivor':
+                            shouldUnlock = gameTime > 300; // 5 minutes
+                            break;
+                        case 'sharpshooter':
+                            shouldUnlock = player.score >= 10;
+                            break;
+                    }
+                    
+                    if (shouldUnlock) {
+                        achievement.unlocked = true;
+                        player.achievements.push(achievement.id);
+                        addChatMessage('system', `${player.name} unlocked achievement: ${achievement.name}!`);
+                        addXP(player.id, 50);
+                    }
+                }
+            });
+        }
+
+        function updateProgressionUI() {
+            const player = players[0]; // Main player
+            document.getElementById('playerLevel').textContent = player.level;
+            document.getElementById('playerXP').textContent = player.xp;
+            document.getElementById('nextLevelXP').textContent = player.level * 100;
+            
+            const xpPercentage = (player.xp / (player.level * 100)) * 100;
+            document.getElementById('xpBar').style.width = xpPercentage + '%';
+            
+            // Update achievements
+            const achievementsContainer = document.getElementById('achievementsList');
+            achievementsContainer.innerHTML = '';
+            
+            achievements.forEach(achievement => {
+                const achievementDiv = document.createElement('div');
+                achievementDiv.className = `achievement ${achievement.unlocked ? 'unlocked' : ''}`;
+                achievementDiv.innerHTML = `
+                    <span>${achievement.name}</span>
+                    <span>${achievement.unlocked ? '✅' : '🔒'}</span>
+                `;
+                achievementsContainer.appendChild(achievementDiv);
+            });
+        }
+
+        // Mini-map
+        function renderMinimap() {
+            minimapCtx.fillStyle = '#000011';
+            minimapCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+            
+            // Draw players
+            players.forEach(player => {
+                if (player.isAlive) {
+                    const x = (player.x / 800) * minimapCanvas.width;
+                    const y = (player.y / 600) * minimapCanvas.height;
+                    
+                    minimapCtx.fillStyle = player.color;
+                    minimapCtx.fillRect(x - 2, y - 2, 4, 4);
+                }
+            });
+            
+            // Draw enemies
+            enemies.forEach(enemy => {
+                if (enemy.isAlive) {
+                    const x = (enemy.x / 800) * minimapCanvas.width;
+                    const y = (enemy.y / 600) * minimapCanvas.height;
+                    
+                    minimapCtx.fillStyle = '#ff0000';
+                    minimapCtx.fillRect(x - 1, y - 1, 2, 2);
+                }
+            });
+        }
+
+        // Spectator mode
+        function enterSpectatorMode() {
+            isSpectating = true;
+            document.getElementById('spectatorMode').style.display = 'block';
+            addChatMessage('system', 'You are now in spectator mode. Watch your teammates!');
+        }
+
+        function spectatePlayer(playerIndex) {
+            currentSpectator = playerIndex;
+            addChatMessage('system', `Now spectating ${players[playerIndex].name}`);
+        }
+
+        // Enhanced AI with team coordination
+        function updateAIPlayers() {
+            players.forEach((player, index) => {
+                if (!player.isAlive) return;
+
+                // Team coordination AI
+                const nearbyTeammates = players.filter(p => 
+                    p.id !== player.id && p.isAlive && 
+                    Math.abs(p.x - player.x) < 100 && Math.abs(p.y - player.y) < 100
+                );
+
+                // Move towards teammates if isolated
+                if (nearbyTeammates.length === 0) {
+                    const closestTeammate = players.reduce((closest, p) => {
+                        if (p.id === player.id || !p.isAlive) return closest;
+                        const distance = Math.sqrt((p.x - player.x) ** 2 + (p.y - player.y) ** 2);
+                        return !closest || distance < closest.distance ? { player: p, distance } : closest;
+                    }, null);
+
+                    if (closestTeammate) {
+                        const dx = closestTeammate.player.x - player.x;
+                        const dy = closestTeammate.player.y - player.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance > 50) {
+                            player.x += (dx / distance) * 2;
+                            player.y += (dy / distance) * 2;
+                        }
+                    }
+                }
+
+                // Enhanced movement and shooting
+                const moveChance = 0.15;
+                const shootChance = 0.25;
+
+                if (Math.random() < moveChance) {
+                    const direction = Math.floor(Math.random() * 8);
+                    const speed = 8 + Math.random() * 4;
+                    switch (direction) {
+                        case 0: if (player.y > 30) player.y -= speed; break;
+                        case 1: if (player.y < 570) player.y += speed; break;
+                        case 2: if (player.x > 30) player.x -= speed; break;
+                        case 3: if (player.x < 770) player.x += speed; break;
+                        case 4: if (player.y > 30 && player.x > 30) { player.y -= speed/2; player.x -= speed/2; } break;
+                        case 5: if (player.y > 30 && player.x < 770) { player.y -= speed/2; player.x += speed/2; } break;
+                        case 6: if (player.y < 570 && player.x > 30) { player.y += speed/2; player.x -= speed/2; } break;
+                        case 7: if (player.y < 570 && player.x < 770) { player.y += speed/2; player.x += speed/2; } break;
+                    }
+                }
+
+                if (Math.random() < shootChance) {
+                    const bulletTypes = [
+                        { width: 8, height: 3, speedX: 12, speedY: 0, damage: 15 },
+                        { width: 6, height: 6, speedX: 10, speedY: (Math.random() - 0.5) * 4, damage: 12 },
+                        { width: 4, height: 2, speedX: 15, speedY: 0, damage: 8 }
+                    ];
+                    
+                    const bulletType = bulletTypes[Math.floor(Math.random() * bulletTypes.length)];
+                    bullets.push({
+                        id: `bullet_${Date.now()}_${Math.random()}`,
+                        x: player.x + player.width,
+                        y: player.y + player.height / 2,
+                        width: bulletType.width,
+                        height: bulletType.height,
+                        speedX: bulletType.speedX,
+                        speedY: bulletType.speedY,
+                        ownerId: player.id,
+                        damage: bulletType.damage,
+                        color: player.color,
+                        isAlive: true
+                    });
+                }
+            });
+        }
+
+        // Game functions
+        function startGame() {
+            console.log('Starting advanced multiplayer game...');
+            gameState = 'playing';
+            gameTime = 0;
+            enemySpawnTimer = 30;
+            powerUpSpawnTimer = 150;
+            document.getElementById('startBtn').disabled = true;
+            
+            if (gameLoopId) {
+                cancelAnimationFrame(gameLoopId);
+            }
+            
+            initializeConnection();
+            updateObjectives();
+            gameLoop();
+        }
+
+        function pauseGame() {
+            if (gameState === 'playing') {
+                gameState = 'paused';
+                if (gameLoopId) {
+                    cancelAnimationFrame(gameLoopId);
+                    gameLoopId = null;
+                }
+            } else if (gameState === 'paused') {
+                gameState = 'playing';
+                gameLoop();
+            }
+        }
+
+        function restartGame() {
+            gameState = 'paused';
+            gameTime = 0;
+            enemies = [];
+            bullets = [];
+            enemyBullets = [];
+            powerUps = [];
+            isSpectating = false;
+            document.getElementById('spectatorMode').style.display = 'none';
+            
+            // Reset objectives
+            objectives.forEach(objective => {
+                objective.progress = 0;
+                objective.completed = false;
+            });
+            
+            players.forEach(player => {
+                player.x = 100;
+                player.y = 200 + (players.indexOf(player) * 100);
+                player.health = 200;
+                player.shield = 50;
+                player.score = 0;
+                player.isAlive = true;
+                player.invulnerable = 0;
+            });
+            
+            if (gameLoopId) {
+                cancelAnimationFrame(gameLoopId);
+                gameLoopId = null;
+            }
+            
+            document.getElementById('startBtn').disabled = false;
+            updateUI();
+            renderObjectives(); // Re-render objectives after reset
+        }
+
+        function returnToMainMenu() {
+            if (confirm('Are you sure you want to return to the main menu? Your progress will be lost.')) {
+                gameState = 'paused';
+                if (gameLoopId) {
+                    cancelAnimationFrame(gameLoopId);
+                    gameLoopId = null;
+                }
+                window.location.href = 'http://localhost:3000';
+            }
+        }
+
+        function gameLoop(currentTime = 0) {
+            if (gameState !== 'playing') return;
+            
+            if (currentTime - lastFrameTime < frameInterval) {
+                gameLoopId = requestAnimationFrame(gameLoop);
+                return;
+            }
+            lastFrameTime = currentTime;
+            
+            try {
+                updateGame();
+                renderGame();
+                updateUI();
+                
+                gameLoopId = requestAnimationFrame(gameLoop);
+            } catch (error) {
+                console.error('Game loop error:', error);
+                gameState = 'paused';
+                if (gameLoopId) {
+                    cancelAnimationFrame(gameLoopId);
+                    gameLoopId = null;
+                }
+            }
+        }
+
+        function updateGame() {
+            gameTime++;
+            
+            // Update player systems
+            players.forEach(player => {
+                if (player.invulnerable > 0) {
+                    player.invulnerable--;
+                }
+                if (player.shield < player.maxShield && gameTime % 60 === 0) {
+                    player.shield = Math.min(player.maxShield, player.shield + 1);
+                }
+            });
+            
+            // Update AI players
+            updateAIPlayers();
+            
+            // Update bullets
+            bullets = bullets.filter(bullet => {
+                bullet.x += bullet.speedX;
+                bullet.y += bullet.speedY;
+                return bullet.x < 800 && bullet.x > 0 && bullet.isAlive;
+            });
+            
+            enemyBullets = enemyBullets.filter(bullet => {
+                bullet.x += bullet.speedX;
+                bullet.y += bullet.speedY;
+                return bullet.x > -50 && bullet.x < 850 && bullet.isAlive;
+            });
+            
+            // Update enemies
+            enemies = enemies.filter(enemy => {
+                enemy.x += enemy.speedX;
+                enemy.y += enemy.speedY;
+                
+                if (enemy.isAlive && Math.random() < 0.02) {
+                    enemyBullets.push({
+                        id: `enemy_bullet_${Date.now()}_${Math.random()}`,
+                        x: enemy.x,
+                        y: enemy.y + enemy.height / 2,
+                        width: 8,
+                        height: 4,
+                        speedX: -4,
+                        speedY: (Math.random() - 0.5) * 2,
+                        damage: 15,
+                        color: '#ff0000',
+                        isAlive: true
+                    });
+                }
+                
+                return enemy.x > -50 && enemy.isAlive;
+            });
+            
+            // Spawn enemies based on game mode
+            if (enemySpawnTimer <= 0) {
+                spawnEnemiesForMode();
+                enemySpawnTimer = getEnemySpawnInterval();
+            } else {
+                enemySpawnTimer--;
+            }
+            
+            // Spawn power-ups
+            if (powerUpSpawnTimer <= 0) {
+                spawnPowerUps();
+                powerUpSpawnTimer = 120 + Math.random() * 120;
+            } else {
+                powerUpSpawnTimer--;
+            }
+            
+            // Update objectives (only if game is running)
+            if (gameState === 'playing') {
+                updateObjectivesProgress();
+            }
+            
+            // Limit objects
+            if (bullets.length > 100) bullets = bullets.slice(-50);
+            if (enemyBullets.length > 50) enemyBullets = enemyBullets.slice(-25);
+            if (enemies.length > 20) enemies = enemies.slice(-15);
+            if (powerUps.length > 10) powerUps = powerUps.slice(-8);
+            
+            checkCollisions();
+        }
+
+        function spawnEnemiesForMode() {
+            const enemyCount = getEnemyCountForMode();
+            for (let i = 0; i < enemyCount; i++) {
+                const enemyTypes = [
+                    { width: 25, height: 25, speedX: -3, health: 15, color: '#ff0000', type: 'fast' },
+                    { width: 35, height: 35, speedX: -1.5, health: 30, color: '#ff6600', type: 'heavy' },
+                    { width: 20, height: 20, speedX: -4, health: 10, color: '#ff0066', type: 'swift' }
+                ];
+                const enemyType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+                
+                enemies.push({
+                    id: `enemy_${Date.now()}_${Math.random()}`,
+                    x: 800 + (i * 50),
+                    y: Math.random() * (600 - enemyType.height),
+                    width: enemyType.width,
+                    height: enemyType.height,
+                    speedX: enemyType.speedX,
+                    speedY: (Math.random() - 0.5) * 3,
+                    health: enemyType.health,
+                    maxHealth: enemyType.health,
+                    type: enemyType.type,
+                    color: enemyType.color,
+                    isAlive: true
+                });
+            }
+        }
+
+        function getEnemyCountForMode() {
+            switch (currentGameMode) {
+                case 'survival': return 2 + Math.floor(Math.random() * 4);
+                case 'boss_rush': return 1;
+                case 'pvp': return 1 + Math.floor(Math.random() * 2);
+                default: return 1 + Math.floor(Math.random() * 3);
+            }
+        }
+
+        function getEnemySpawnInterval() {
+            switch (currentGameMode) {
+                case 'survival': return 15 + Math.random() * 20;
+                case 'boss_rush': return 60;
+                case 'pvp': return 30 + Math.random() * 30;
+                default: return 20 + Math.random() * 30;
+            }
+        }
+
+        function spawnPowerUps() {
+            const powerUpTypes = [
+                { type: 'health', color: '#00ff00', size: 20 },
+                { type: 'shield', color: '#00ffff', size: 18 },
+                { type: 'damage', color: '#ffff00', size: 22 },
+                { type: 'speed', color: '#ff00ff', size: 16 }
+            ];
+            const powerUpType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+            
+            powerUps.push({
+                id: `powerup_${Date.now()}_${Math.random()}`,
+                x: Math.random() * (800 - powerUpType.size),
+                y: Math.random() * (600 - powerUpType.size),
+                width: powerUpType.size,
+                height: powerUpType.size,
+                type: powerUpType.type,
+                color: powerUpType.color,
+                isAlive: true
+            });
+        }
+
+        function updateObjectivesProgress() {
+            objectives.forEach(objective => {
+                if (objective.completed) return; // Don't update completed objectives
+                
+                let newProgress = 0;
+                switch (objective.id) {
+                    case 'survive':
+                        newProgress = Math.min(Math.floor(gameTime / 60), objective.max);
+                        break;
+                    case 'kills':
+                        newProgress = Math.min(players.reduce((total, p) => total + p.score, 0), objective.max);
+                        break;
+                    case 'waves':
+                        newProgress = Math.min(Math.floor(gameTime / 300), objective.max);
+                        break;
+                    case 'teamwork':
+                        // This would be tracked separately in a real implementation
+                        newProgress = Math.min(0, objective.max);
+                        break;
+                    case 'bosses':
+                        newProgress = Math.min(0, objective.max);
+                        break;
+                    case 'time_limit':
+                        newProgress = Math.min(Math.floor(gameTime / 60), objective.max);
+                        break;
+                    case 'eliminations':
+                        newProgress = Math.min(players.reduce((total, p) => total + p.score, 0), objective.max);
+                        break;
+                    case 'no_deaths':
+                        const aliveCount = players.filter(p => p.isAlive).length;
+                        newProgress = aliveCount === players.length ? 1 : 0;
+                        break;
+                }
+                
+                // Only update if progress actually changed
+                if (newProgress !== objective.progress) {
+                    objective.progress = newProgress;
+                    
+                    if (objective.progress >= objective.max && !objective.completed) {
+                        objective.completed = true;
+                        addChatMessage('system', `Objective completed: ${objective.text}`);
+                        players.forEach(player => addXP(player.id, 100));
+                    }
+                }
+            });
+            
+            // Only re-render if something changed
+            renderObjectives();
+        }
+
+        function checkCollisions() {
+            // Bullet vs Enemy collisions
+            bullets.forEach(bullet => {
+                enemies.forEach(enemy => {
+                    if (enemy.isAlive && bullet.isAlive &&
+                        bullet.x < enemy.x + enemy.width &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemy.height &&
+                        bullet.y + bullet.height > enemy.y) {
+                        
+                        bullet.isAlive = false;
+                        enemy.health -= bullet.damage;
+                        if (enemy.health <= 0) {
+                            enemy.isAlive = false;
+                        }
+                        
+                        const player = players.find(p => p.id === bullet.ownerId);
+                        if (player) {
+                            player.score += 10;
+                            addXP(player.id, 10);
+                            checkAchievements(player);
+                        }
+                    }
+                });
+            });
+            
+            // Enemy vs Player collisions
+            players.forEach(player => {
+                if (!player.isAlive || player.invulnerable > 0) return;
+                
+                const hitEnemy = enemies.find(enemy => 
+                    enemy.isAlive &&
+                    player.x < enemy.x + enemy.width &&
+                    player.x + player.width > enemy.x &&
+                    player.y < enemy.y + enemy.height &&
+                    player.y + player.height > enemy.y
+                );
+                
+                if (hitEnemy) {
+                    let damage = 10;
+                    if (player.shield > 0) {
+                        const shieldDamage = Math.min(damage, player.shield);
+                        player.shield -= shieldDamage;
+                        damage -= shieldDamage;
+                    }
+                    if (damage > 0) {
+                        player.health -= damage;
+                    }
+                    player.invulnerable = 30;
+                    if (player.health <= 0) {
+                        player.isAlive = false;
+                        if (player.isHuman) {
+                            enterSpectatorMode();
+                        }
+                    }
+                }
+            });
+            
+            // Enemy bullets vs Player collisions
+            players.forEach(player => {
+                if (!player.isAlive || player.invulnerable > 0) return;
+                
+                const hitBullet = enemyBullets.find(bullet => 
+                    bullet.isAlive &&
+                    player.x < bullet.x + bullet.width &&
+                    player.x + player.width > bullet.x &&
+                    player.y < bullet.y + bullet.height &&
+                    player.y + player.height > bullet.y
+                );
+                
+                if (hitBullet) {
+                    let damage = Math.max(5, hitBullet.damage - 5);
+                    if (player.shield > 0) {
+                        const shieldDamage = Math.min(damage, player.shield);
+                        player.shield -= shieldDamage;
+                        damage -= shieldDamage;
+                    }
+                    if (damage > 0) {
+                        player.health -= damage;
+                    }
+                    hitBullet.isAlive = false;
+                    player.invulnerable = 20;
+                    if (player.health <= 0) {
+                        player.isAlive = false;
+                        if (player.isHuman) {
+                            enterSpectatorMode();
+                        }
+                    }
+                }
+            });
+            
+            // Power-up vs Player collisions
+            players.forEach(player => {
+                if (!player.isAlive) return;
+                
+                const hitPowerUp = powerUps.find(powerUp => 
+                    powerUp.isAlive &&
+                    player.x < powerUp.x + powerUp.width &&
+                    player.x + player.width > powerUp.x &&
+                    player.y < powerUp.y + powerUp.height &&
+                    player.y + player.height > powerUp.y
+                );
+                
+                if (hitPowerUp) {
+                    if (powerUp.type === 'health') {
+                        player.health = Math.min(player.maxHealth, player.health + 50);
+                    } else if (powerUp.type === 'shield') {
+                        player.shield = Math.min(player.maxShield, player.shield + 30);
+                    } else if (powerUp.type === 'speed') {
+                        player.health = Math.min(player.maxHealth, player.health + 25);
+                    } else if (powerUp.type === 'damage') {
+                        player.health = Math.min(player.maxHealth, player.health + 25);
+                    }
+                    powerUp.isAlive = false;
+                    addChatMessage('team', `${player.name} collected ${powerUp.type} power-up!`);
+                }
+            });
+            
+            // Check game over
+            const alivePlayers = players.filter(p => p.isAlive);
+            if (alivePlayers.length === 0) {
+                gameState = 'paused';
+                document.getElementById('startBtn').disabled = false;
+                addChatMessage('system', 'Game Over! All players eliminated.');
+            }
+        }
+
+        function renderGame() {
+            // Clear canvas
+            ctx.fillStyle = '#000011';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw starfield
+            ctx.fillStyle = '#ffffff';
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 37) % 800;
+                const y = (i * 23) % 600;
+                const size = Math.random() * 2;
+                ctx.fillRect(x, y, size, size);
+            }
+            
+            // Draw power-ups
+            powerUps.forEach(powerUp => {
+                if (powerUp.isAlive) {
+                    const centerX = powerUp.x + powerUp.width / 2;
+                    const centerY = powerUp.y + powerUp.height / 2;
+                    
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    
+                    ctx.fillStyle = powerUp.color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -powerUp.height / 2);
+                    ctx.lineTo(powerUp.width / 2, 0);
+                    ctx.lineTo(0, powerUp.height / 2);
+                    ctx.lineTo(-powerUp.width / 2, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.moveTo(0, -powerUp.height / 4);
+                    ctx.lineTo(powerUp.width / 4, 0);
+                    ctx.lineTo(0, powerUp.height / 4);
+                    ctx.lineTo(-powerUp.width / 4, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.restore();
+                }
+            });
+            
+            // Draw enemies
+            enemies.forEach(enemy => {
+                if (enemy.isAlive) {
+                    const centerX = enemy.x + enemy.width / 2;
+                    const centerY = enemy.y + enemy.height / 2;
+                    
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    
+                    ctx.fillStyle = enemy.color;
+                    ctx.beginPath();
+                    ctx.moveTo(-enemy.width / 2, 0);
+                    ctx.lineTo(enemy.width / 2, -enemy.height / 2);
+                    ctx.lineTo(enemy.width / 2, enemy.height / 2);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#ff0000';
+                    ctx.beginPath();
+                    ctx.moveTo(-enemy.width / 4, 0);
+                    ctx.lineTo(enemy.width / 4, -enemy.height / 4);
+                    ctx.lineTo(enemy.width / 4, enemy.height / 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.restore();
+                }
+            });
+            
+            // Draw bullets
+            bullets.forEach(bullet => {
+                if (bullet.isAlive) {
+                    const gradient = ctx.createLinearGradient(bullet.x, bullet.y, bullet.x + bullet.width, bullet.y);
+                    gradient.addColorStop(0, bullet.color);
+                    gradient.addColorStop(0.5, '#ffffff');
+                    gradient.addColorStop(1, bullet.color);
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                    
+                    ctx.shadowColor = bullet.color;
+                    ctx.shadowBlur = 10;
+                    ctx.fillStyle = bullet.color;
+                    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                    ctx.shadowBlur = 0;
+                }
+            });
+            
+            // Draw enemy bullets
+            enemyBullets.forEach(bullet => {
+                if (bullet.isAlive) {
+                    const gradient = ctx.createLinearGradient(bullet.x, bullet.y, bullet.x + bullet.width, bullet.y);
+                    gradient.addColorStop(0, '#ff0000');
+                    gradient.addColorStop(0.5, '#ff6666');
+                    gradient.addColorStop(1, '#ff0000');
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                    
+                    ctx.shadowColor = '#ff0000';
+                    ctx.shadowBlur = 8;
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                    ctx.shadowBlur = 0;
+                }
+            });
+            
+            // Draw players
+            players.forEach(player => {
+                if (player.isAlive) {
+                    const centerX = player.x + player.width / 2;
+                    const centerY = player.y + player.height / 2;
+                    
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    
+                    ctx.fillStyle = player.color;
+                    ctx.beginPath();
+                    ctx.moveTo(player.width / 2, 0);
+                    ctx.lineTo(-player.width / 2, -player.height / 2);
+                    ctx.lineTo(-player.width / 2, player.height / 2);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.moveTo(player.width / 4, 0);
+                    ctx.lineTo(-player.width / 4, -player.height / 4);
+                    ctx.lineTo(-player.width / 4, player.height / 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#00ffff';
+                    ctx.beginPath();
+                    ctx.moveTo(-player.width / 2, -player.height / 4);
+                    ctx.lineTo(-player.width / 2 - 5, -player.height / 8);
+                    ctx.lineTo(-player.width / 2, 0);
+                    ctx.lineTo(-player.width / 2 - 5, player.height / 8);
+                    ctx.lineTo(-player.width / 2, player.height / 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.restore();
+                    
+                    // Health bar
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(player.x, player.y - 10, player.width, 4);
+                    ctx.fillStyle = '#00ff00';
+                    ctx.fillRect(player.x, player.y - 10, (player.health / player.maxHealth) * player.width, 4);
+                    
+                    // Shield bar
+                    if (player.shield > 0) {
+                        ctx.fillStyle = '#444444';
+                        ctx.fillRect(player.x, player.y - 16, player.width, 3);
+                        ctx.fillStyle = '#00ffff';
+                        ctx.fillRect(player.x, player.y - 16, (player.shield / player.maxShield) * player.width, 3);
+                    }
+                    
+                    // Invulnerability effect
+                    if (player.invulnerable > 0) {
+                        ctx.strokeStyle = '#ffff00';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(player.x - 2, player.y - 2, player.width + 4, player.height + 4);
+                    }
+                    
+                    // Player name and level
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '12px Arial';
+                    ctx.fillText(`${player.name} (Lv.${player.level})`, player.x, player.y - 20);
+                }
+            });
+        }
+
+        function updateUI() {
+            updateTeamHUD();
+            renderMinimap();
+            updateProgressionUI();
+        }
+
+        // Initialize UI
+        updateUI();
+        updateObjectives();
+        
+        // Auto-start after 1 second
+        setTimeout(() => {
+            startGame();
+        }, 1000);
+    </script>
+</body>
+</html>

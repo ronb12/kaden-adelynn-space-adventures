@@ -1094,6 +1094,284 @@ kbd {
   color: #9932cc;
 }
 
+/* Power-up Category Tabs */
+.category-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(153, 50, 204, 0.3);
+  border-radius: 10px;
+  padding: 10px 15px;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.tab-btn:hover {
+  background: rgba(153, 50, 204, 0.1);
+  border-color: #9932cc;
+  transform: scale(1.05);
+}
+
+.tab-btn.active {
+  background: rgba(153, 50, 204, 0.2);
+  border-color: #9932cc;
+  box-shadow: 0 0 15px rgba(153, 50, 204, 0.3);
+}
+
+/* Power-up Rarity Colors */
+.powerup-rarity.common {
+  color: #ffffff;
+}
+
+.powerup-rarity.rare {
+  color: #00ff00;
+}
+
+.powerup-rarity.epic {
+  color: #9932cc;
+}
+
+.powerup-rarity.legendary {
+  color: #ffd700;
+}
+
+/* Locked Power-up Indicator */
+.locked-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 20px;
+  opacity: 0.7;
+}
+
+.powerup-item.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.powerup-item.locked:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Collection Modal Styles */
+.collection-modal {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(20, 20, 20, 0.95));
+  border: 2px solid rgba(153, 50, 204, 0.6);
+  border-radius: 15px;
+  padding: 20px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 0 30px rgba(153, 50, 204, 0.3);
+}
+
+.collection-content {
+  margin-bottom: 20px;
+}
+
+.collection-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  border: 1px solid rgba(153, 50, 204, 0.3);
+}
+
+.stat-item {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stat-label {
+  color: #e0e0e0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #9932cc;
+}
+
+.stat-value.unlocked {
+  color: #00ff00;
+}
+
+.stat-value.locked {
+  color: #ff6b6b;
+}
+
+.collection-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.collection-category {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid rgba(153, 50, 204, 0.2);
+}
+
+.category-title {
+  color: #9932cc;
+  margin-bottom: 20px;
+  font-size: 20px;
+  text-align: center;
+  border-bottom: 2px solid rgba(153, 50, 204, 0.3);
+  padding-bottom: 10px;
+}
+
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.collection-item {
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(153, 50, 204, 0.3);
+  border-radius: 10px;
+  padding: 15px;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.collection-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(153, 50, 204, 0.2);
+  border-color: #9932cc;
+}
+
+.collection-item.locked {
+  opacity: 0.6;
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
+.collection-icon {
+  font-size: 30px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.collection-info {
+  flex: 1;
+}
+
+.collection-info h4 {
+  color: #e0e0e0;
+  margin: 0 0 5px 0;
+  font-size: 16px;
+}
+
+.collection-info p {
+  color: #b0b0b0;
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.collection-rarity {
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.collection-rarity.common {
+  color: #ffffff;
+}
+
+.collection-rarity.rare {
+  color: #00ff00;
+}
+
+.collection-rarity.epic {
+  color: #9932cc;
+}
+
+.collection-rarity.legendary {
+  color: #ffd700;
+}
+
+.unlock-requirement {
+  color: #ff6b6b;
+  font-size: 11px;
+  font-style: italic;
+  margin-top: 5px;
+}
+
+.collection-actions {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid rgba(153, 50, 204, 0.3);
+}
+
+.close-collection-btn {
+  background: rgba(153, 50, 204, 0.2);
+  border: 2px solid #9932cc;
+  border-radius: 8px;
+  color: #e0e0e0;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.close-collection-btn:hover {
+  background: rgba(153, 50, 204, 0.3);
+  transform: scale(1.05);
+}
+
+/* Responsive Collection Modal */
+@media (max-width: 768px) {
+  .collection-modal {
+    max-width: 95vw;
+    max-height: 95vh;
+    padding: 15px;
+  }
+  
+  .collection-stats {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .collection-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .collection-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+  
+  .collection-icon {
+    font-size: 25px;
+  }
+}
+
 .challenge-card h4 {
   color: #ff4500;
 }
