@@ -21,9 +21,17 @@ export interface RealGameRoom {
 }
 
 export interface RealMultiplayerMessage {
-  type: 'join_room' | 'leave_room' | 'player_move' | 'player_shoot' | 'player_hit' | 'chat_message' | 'game_state_update' | 'ping' | 'pong';
+  type: 'join_room' | 'leave_room' | 'player_move' | 'player_shoot' | 'player_hit' | 'chat_message' | 'game_state_update' | 'ping' | 'pong' | 'room_state' | 'player_joined' | 'player_left' | 'player_moved' | 'player_shot' | 'game_state_updated' | 'error';
   roomId?: string;
   playerId?: string;
+  playerName?: string;
+  position?: { x: number; y: number };
+  bullet?: any;
+  attackerId?: string;
+  targetId?: string;
+  damage?: number;
+  message?: string;
+  gameState?: any;
   data?: any;
   timestamp: number;
 }
@@ -466,9 +474,6 @@ export class RealMultiplayerSystem {
     return this.players;
   }
 
-  getRooms(): RealGameRoom[] {
-    return this.rooms;
-  }
 
   isConnectedToServer(): boolean {
     return this.isConnected;

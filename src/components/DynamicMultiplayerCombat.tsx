@@ -72,7 +72,7 @@ export const DynamicMultiplayerCombat: React.FC<DynamicMultiplayerCombatProps> =
   onMissionComplete
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameLoopRef = useRef<number>();
+  const gameLoopRef = useRef<number | undefined>(undefined);
   const [ships, setShips] = useState<CombatShip[]>([]);
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
   const [explosions, setExplosions] = useState<Explosion[]>([]);

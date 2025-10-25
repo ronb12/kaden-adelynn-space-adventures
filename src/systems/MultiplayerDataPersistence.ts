@@ -197,10 +197,10 @@ export class MultiplayerDataPersistence {
       let sessions = data.sessions || [];
       
       if (playerId) {
-        sessions = sessions.filter(session => session.players.includes(playerId));
+        sessions = sessions.filter((session: GameSession) => session.players.includes(playerId));
       }
       
-      return sessions.sort((a, b) => b.startTime - a.startTime);
+      return sessions.sort((a: GameSession, b: GameSession) => b.startTime - a.startTime);
     } catch (error) {
       console.error('❌ Failed to load game sessions:', error);
       return [];
@@ -215,15 +215,15 @@ export class MultiplayerDataPersistence {
       
       // Remove existing entry for this player and game mode
       existingData.leaderboards = existingData.leaderboards.filter(
-        e => !(e.playerId === entry.playerId && e.gameMode === entry.gameMode)
+        (e: LeaderboardEntry) => !(e.playerId === entry.playerId && e.gameMode === entry.gameMode)
       );
       
       // Add new entry
       existingData.leaderboards.push(entry);
       
       // Sort by score and update ranks
-      existingData.leaderboards.sort((a, b) => b.score - a.score);
-      existingData.leaderboards.forEach((e, index) => {
+      existingData.leaderboards.sort((a: LeaderboardEntry, b: LeaderboardEntry) => b.score - a.score);
+      existingData.leaderboards.forEach((e: LeaderboardEntry, index: number) => {
         e.rank = index + 1;
       });
       
@@ -249,7 +249,7 @@ export class MultiplayerDataPersistence {
       let leaderboard = data.leaderboards || [];
       
       if (gameMode) {
-        leaderboard = leaderboard.filter(entry => entry.gameMode === gameMode);
+        leaderboard = leaderboard.filter((entry: LeaderboardEntry) => entry.gameMode === gameMode);
       }
       
       return leaderboard.slice(0, limit);

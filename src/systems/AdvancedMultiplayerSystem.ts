@@ -63,7 +63,7 @@ export interface ThreatData {
 
 export interface MissionObjective {
   id: string;
-  type: 'eliminate' | 'escort' | 'defend' | 'explore' | 'collect';
+  type: 'eliminate' | 'escort' | 'defend' | 'explore' | 'collect' | 'survive' | 'race';
   description: string;
   progress: number;
   maxProgress: number;

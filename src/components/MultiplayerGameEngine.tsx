@@ -73,7 +73,7 @@ export const MultiplayerGameEngine: React.FC<MultiplayerGameEngineProps> = ({
   onScoreUpdate
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameLoopRef = useRef<number>();
+  const gameLoopRef = useRef<number | undefined>(undefined);
   const [gameState, setGameState] = useState<'playing' | 'paused' | 'gameOver'>('playing');
   const [players, setPlayers] = useState<Player[]>([]);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
