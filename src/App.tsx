@@ -23,6 +23,7 @@ import { BulletHellSystem } from './systems/BulletHellSystem';
 import { ProceduralGenerationSystem } from './systems/ProceduralGenerationSystem';
 import { spriteLoader } from './systems/SpriteLoader';
 import { ShipRenderer } from './graphics/ShipDesigns';
+import { EnhancedBossSystem } from './systems/EnhancedBossSystem';
 // import { SocialFeaturesSystem } from './systems/SocialFeaturesSystem';
 // import { MonetizationSystem } from './systems/MonetizationSystem';
 
@@ -1831,6 +1832,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   const enhanced3DGraphics = React.useRef<Enhanced3DGraphics | null>(null);
   const bulletHellSystem = React.useRef<BulletHellSystem>(new BulletHellSystem());
   const proceduralGeneration = React.useRef<ProceduralGenerationSystem>(new ProceduralGenerationSystem());
+  const enhancedBossSystem = React.useRef<EnhancedBossSystem>(new EnhancedBossSystem());
   // const socialFeatures = React.useRef<SocialFeaturesSystem>(new SocialFeaturesSystem());
   // const monetizationSystem = React.useRef<MonetizationSystem>(new MonetizationSystem());
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -2185,9 +2187,12 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
       spawnEnemy();
     }
     
-    // Spawn bosses based on score
-    if (gameState.score > 0 && gameState.score % 1000 === 0 && bosses.length === 0) {
-      spawnBoss();
+    // Spawn bosses using EnhancedBossSystem
+    if (canvasRef.current) {
+      const newBoss = enhancedBossSystem.current.spawnBoss(canvasRef.current, gameState.score);
+      if (newBoss) {
+        setBosses(prev => [...prev, newBoss]);
+      }
     }
     
     // Spawn power-ups
@@ -2308,42 +2313,21 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   
   const drawBosses = (ctx: CanvasRenderingContext2D) => {
     bosses.forEach(boss => {
-      ctx.save();
-      ctx.translate(boss.x, boss.y);
-      
-      // Boss ship - much larger
-      ctx.fillStyle = boss.phase === 1 ? '#8b0000' : boss.phase === 2 ? '#4b0082' : '#ff4500';
-      ctx.fillRect(-40, -30, 80, 60);
-      
-      // Boss shield
-      if (boss.shield > 0) {
-        ctx.strokeStyle = '#00ffff';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(-45, -35, 90, 70);
-      }
+      // Use the new sci-fi boss designs
+      ShipRenderer.drawBossShip(ctx, boss.x, boss.y, boss.width, boss.height, boss.health, boss.maxHealth, boss.type);
       
       // Boss health bar
       const healthPercent = boss.health / boss.maxHealth;
       ctx.fillStyle = '#ff0000';
-      ctx.fillRect(-40, -40, 80, 5);
+      ctx.fillRect(boss.x - boss.width/2, boss.y - boss.height/2 - 10, boss.width, 5);
       ctx.fillStyle = '#00ff00';
-      ctx.fillRect(-40, -40, 80 * healthPercent, 5);
-      
-      // Boss weak points
-      boss.weakPoints.forEach((weakPoint, index) => {
-        if (!weakPoint.destroyed) {
-          ctx.fillStyle = '#ffff00';
-          ctx.fillRect(weakPoint.x, weakPoint.y, weakPoint.width, weakPoint.height);
-        }
-      });
+      ctx.fillRect(boss.x - boss.width/2, boss.y - boss.height/2 - 10, boss.width * healthPercent, 5);
       
       // Boss phase indicator
       ctx.fillStyle = '#ffffff';
       ctx.font = '12px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(`Phase ${boss.phase}/${boss.maxPhases}`, 0, -50);
-      
-      ctx.restore();
+      ctx.fillText(`Phase ${boss.phase}/${boss.maxPhases}`, boss.x, boss.y - boss.height/2 - 20);
     });
   };
   
@@ -2461,32 +2445,17 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   };
   
   const updateBosses = (deltaTime: number) => {
+    // Use EnhancedBossSystem for boss updates
+    enhancedBossSystem.current.updateBosses(deltaTime);
+    
     setBosses(prev => prev.map(boss => {
-      // Boss movement patterns
-      switch (boss.movementPattern) {
-        case 'straight':
-          boss.y += boss.speed;
-          break;
-        case 'zigzag':
-          boss.y += boss.speed;
-          boss.x += Math.sin(Date.now() * 0.001) * 2;
-          break;
-        case 'circle':
-          boss.x += Math.cos(Date.now() * 0.001) * 2;
-          boss.y += Math.sin(Date.now() * 0.001) * 2;
-          break;
-      }
+      // Basic boss movement and health updates
+      boss.y += boss.speed;
       
       // Boss shooting
       if (Date.now() - boss.lastShot > boss.shootInterval) {
         boss.lastShot = Date.now();
         shootBossBullet(boss.x + boss.width / 2, boss.y + boss.height, boss.phase);
-      }
-      
-      // Boss special attacks
-      if (Date.now() - boss.specialAttackCooldown > 5000) {
-        boss.specialAttackCooldown = Date.now();
-        performBossSpecialAttack(boss);
       }
       
       // Boss phase transitions
@@ -2673,41 +2642,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     setEnemies(prev => [...prev, newEnemy]);
   };
   
-  const spawnBoss = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const bossTypes = ['space_dragon', 'void_reaper', 'mech_titan'];
-    const bossType = bossTypes[Math.floor(Math.random() * bossTypes.length)];
-    
-    const newBoss: Boss = {
-      x: canvas.width / 2 - 40,
-      y: 50,
-      width: 80,
-      height: 60,
-      speed: 1,
-      health: 500,
-      maxHealth: 500,
-      type: bossType,
-      phase: 1,
-      maxPhases: 3,
-      lastShot: 0,
-      shootInterval: 1000,
-      specialAttackCooldown: 0,
-      movementPattern: 'zigzag',
-      isActive: true,
-      shield: 100,
-      maxShield: 100,
-      weakPoints: [
-        {x: -20, y: -20, width: 15, height: 15, destroyed: false},
-        {x: 5, y: -20, width: 15, height: 15, destroyed: false},
-        {x: -20, y: 5, width: 15, height: 15, destroyed: false},
-        {x: 5, y: 5, width: 15, height: 15, destroyed: false}
-      ]
-    };
-    
-    setBosses(prev => [...prev, newBoss]);
-  };
+  // Boss spawning is now handled by EnhancedBossSystem
   
   const spawnPowerUp = () => {
     const canvas = canvasRef.current;
