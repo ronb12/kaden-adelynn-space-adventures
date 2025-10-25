@@ -189,8 +189,8 @@ export class EnhancedBossSystem {
 
   drawBosses(ctx: CanvasRenderingContext2D): void {
     this.bosses.forEach(boss => {
-      // Draw enhanced boss ship using ShipRenderer
-      ShipRenderer.drawBossShip(ctx, boss.x, boss.y, boss.width, boss.height, boss.health, boss.maxHealth);
+      // Draw enhanced boss ship using ShipRenderer with boss type
+      ShipRenderer.drawBossShip(ctx, boss.x, boss.y, boss.width, boss.height, boss.health, boss.maxHealth, boss.type);
       
       // Draw boss health bar
       const barWidth = boss.width;

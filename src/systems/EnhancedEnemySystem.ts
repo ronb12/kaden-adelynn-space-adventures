@@ -1,5 +1,6 @@
 import { Enemy, Bullet } from '../types/GameTypes';
 import { ShipRenderer } from '../graphics/ShipDesigns';
+import { spriteLoader } from './SpriteLoader';
 
 export class EnhancedEnemySystem {
   private enemies: Enemy[] = [];
@@ -218,8 +219,15 @@ export class EnhancedEnemySystem {
 
   drawEnemies(ctx: CanvasRenderingContext2D): void {
     this.enemies.forEach(enemy => {
-      // Draw enhanced enemy ship using ShipRenderer
-      ShipRenderer.drawEnemyShip(ctx, enemy.x, enemy.y, enemy.width, enemy.height, enemy.type, 0);
+      // Try to use sprite first, fallback to ShipRenderer
+      const sprite = spriteLoader.getSpriteByType(enemy.type);
+      if (sprite && sprite.loaded) {
+        // Draw sprite-based enemy
+        spriteLoader.renderSprite(ctx, sprite.name, enemy.x, enemy.y, enemy.width, enemy.height);
+      } else {
+        // Fallback to enhanced enemy ship using ShipRenderer
+        ShipRenderer.drawEnemyShip(ctx, enemy.x, enemy.y, enemy.width, enemy.height, enemy.type, 0);
+      }
       
       // Draw health bar for enemies with more than 1 health
       if (enemy.maxHealth > 1) {

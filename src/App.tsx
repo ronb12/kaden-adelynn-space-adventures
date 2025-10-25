@@ -21,6 +21,7 @@ import { MobileResponsiveSystem } from './systems/MobileResponsiveSystem';
 import { Enhanced3DGraphics } from './systems/Enhanced3DGraphics';
 import { BulletHellSystem } from './systems/BulletHellSystem';
 import { ProceduralGenerationSystem } from './systems/ProceduralGenerationSystem';
+import { spriteLoader } from './systems/SpriteLoader';
 // import { SocialFeaturesSystem } from './systems/SocialFeaturesSystem';
 // import { MonetizationSystem } from './systems/MonetizationSystem';
 
@@ -68,6 +69,9 @@ interface GameState {
   multiplayerMode?: 'local' | 'online' | 'cooperative';
   maxPlayers?: number;
   vsAI?: boolean;
+  selectedBoss?: string;
+  selectedChallenge?: string;
+  selectedPowerUp?: string;
   gameStats: {
     enemiesKilled: number;
     bossesKilled: number;
@@ -95,6 +99,7 @@ const App: React.FC = () => {
   const gameIntegration = useRef<CompleteGameIntegration | null>(null);
   // const [gameInitialized, setGameInitialized] = useState(false);
   // const [gameReport, setGameReport] = useState<any>(null);
+  const toastContext = React.useContext(ToastContext);
   
   // Initialize input and device systems
   const inputSystem = useRef<InputSystem | null>(null);
@@ -105,6 +110,9 @@ const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>({
     currentScene: 'menu',
     selectedCharacter: 'kaden',
+    selectedBoss: undefined,
+    selectedChallenge: undefined,
+    selectedPowerUp: undefined,
     settings: {
       audio: {
         masterVolume: 80,
@@ -182,6 +190,11 @@ const App: React.FC = () => {
         
         gameIntegration.current = new CompleteGameIntegration();
         await gameIntegration.current.initialize();
+        
+        // Load enemy sprites
+        console.log('📥 Loading enemy sprites...');
+        await spriteLoader.loadAllSprites();
+        console.log('✅ Enemy sprites loaded successfully');
         
         // setGameInitialized(true);
         console.log('✅ Game initialization complete');
@@ -297,6 +310,9 @@ const App: React.FC = () => {
             onUpdateSettings={updateSettings}
             achievements={achievements}
             onSceneChange={changeScene}
+            gameState={gameState}
+            setGameState={setGameState}
+            toastContext={toastContext}
           />
         )}
       </div>
@@ -478,9 +494,12 @@ interface FeatureModalProps {
   onUpdateSettings?: (settings: Partial<GameSettings>) => void;
   achievements?: Array<{id: string, name: string, description: string, unlocked: boolean, progress: number, maxProgress: number}>;
   onSceneChange?: (scene: GameState['currentScene']) => void;
+  gameState?: GameState;
+  setGameState?: React.Dispatch<React.SetStateAction<GameState>>;
+  toastContext?: any;
 }
 
-const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings, onUpdateSettings, achievements = [], onSceneChange }) => {
+const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings, onUpdateSettings, achievements = [], onSceneChange, gameState, setGameState, toastContext }) => {
   const getFeatureData = () => {
     switch (feature) {
       case 'achievements':
@@ -803,15 +822,48 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
               <h3>👹 Select Boss to Battle</h3>
               
               <div className="boss-grid">
-                <div className="boss-card" onClick={() => console.log('Fight Space Dragon')}>
+                <div 
+                  className={`boss-card ${gameState?.selectedBoss === 'space-dragon' ? 'selected' : ''}`} 
+                  onClick={() => {
+                    console.log('Fight Space Dragon');
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'space-dragon' }));
+                    }
+                    // Show selection confirmation
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'success',
+                        title: '🐉 Space Dragon Selected!',
+                        message: 'Ready to battle the ancient cosmic dragon!',
+                        icon: '🐉',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
                   <div className="boss-icon">🐉</div>
                   <h4>Space Dragon</h4>
                   <p>Ancient cosmic dragon</p>
                   <div className="boss-difficulty">⭐⭐⭐</div>
                   <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'space-dragon' && <div className="selection-indicator">✓ Selected</div>}
                 </div>
                 
-                <div className="boss-card locked" onClick={() => console.log('Boss locked')}>
+                <div 
+                  className="boss-card locked" 
+                  onClick={() => {
+                    console.log('Boss locked');
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'info',
+                        title: '🔒 Boss Locked',
+                        message: 'Defeat Space Dragon to unlock Void Reaper!',
+                        icon: '🔒',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
                   <div className="boss-icon">👾</div>
                   <h4>Void Reaper</h4>
                   <p>Shadow entity from the void</p>
@@ -819,7 +871,21 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
                   <div className="boss-status">Locked</div>
                 </div>
                 
-                <div className="boss-card locked" onClick={() => console.log('Boss locked')}>
+                <div 
+                  className="boss-card locked" 
+                  onClick={() => {
+                    console.log('Boss locked');
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'info',
+                        title: '🔒 Boss Locked',
+                        message: 'Defeat Void Reaper to unlock Mech Titan!',
+                        icon: '🔒',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
                   <div className="boss-icon">🤖</div>
                   <h4>Mech Titan</h4>
                   <p>Giant robotic war machine</p>

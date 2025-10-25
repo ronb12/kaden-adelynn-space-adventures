@@ -1,0 +1,7 @@
+
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" fill="#333333"/>
+  <polygon points="32,8 48,24 32,40 16,24" fill="#ff0000"/>
+  <circle cx="32" cy="24" r="4" fill="#ffff00"/>
+  <text x="32" y="56" text-anchor="middle" fill="#ffffff" font-size="8">enemy-bomber</text>
+</svg>

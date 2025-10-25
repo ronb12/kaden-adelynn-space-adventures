@@ -734,6 +734,33 @@ kbd {
   border: 2px solid rgba(139, 0, 0, 0.6);
 }
 
+/* Boss Selection Styles */
+.boss-card.selected {
+  border: 3px solid #00ff00;
+  background: linear-gradient(135deg, rgba(0, 255, 0, 0.2), rgba(0, 200, 0, 0.3));
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+  transform: scale(1.05);
+}
+
+.selection-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #00ff00;
+  color: #000;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
 .powerups-modal {
   border: 2px solid rgba(153, 50, 204, 0.6);
 }
