@@ -1858,10 +1858,6 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
       setTimeout(resizeCanvas, 100); // Delay for orientation change
     });
     
-    return () => {
-      window.removeEventListener('resize', resizeCanvas);
-      window.removeEventListener('orientationchange', resizeCanvas);
-    };
     if (canvas) {
       // Type guard to ensure canvas is not null
       const canvasElement = canvas as HTMLCanvasElement;
