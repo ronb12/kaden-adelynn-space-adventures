@@ -65,6 +65,9 @@ interface GameState {
   currentScene: 'menu' | 'game' | 'settings' | 'achievements' | 'boss' | 'powerups' | 'multiplayer' | 'story' | 'challenges';
   selectedCharacter: 'kaden' | 'adelynn';
   settings: GameSettings;
+  multiplayerMode?: 'local' | 'online' | 'cooperative';
+  maxPlayers?: number;
+  vsAI?: boolean;
   gameStats: {
     enemiesKilled: number;
     bossesKilled: number;
@@ -293,6 +296,7 @@ const App: React.FC = () => {
             settings={gameState.settings}
             onUpdateSettings={updateSettings}
             achievements={achievements}
+            onSceneChange={changeScene}
           />
         )}
       </div>
@@ -473,9 +477,10 @@ interface FeatureModalProps {
   settings?: GameSettings;
   onUpdateSettings?: (settings: Partial<GameSettings>) => void;
   achievements?: Array<{id: string, name: string, description: string, unlocked: boolean, progress: number, maxProgress: number}>;
+  onSceneChange?: (scene: GameState['currentScene']) => void;
 }
 
-const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings, onUpdateSettings, achievements = [] }) => {
+const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings, onUpdateSettings, achievements = [], onSceneChange }) => {
   const getFeatureData = () => {
     switch (feature) {
       case 'achievements':
@@ -687,7 +692,10 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
               <h3>🏆 Achievement Categories</h3>
               
               <div className="category-grid">
-                <div className="category-card" onClick={() => console.log('Combat Achievements')}>
+                <div className="category-card" onClick={() => {
+                  console.log('Viewing Combat Achievements');
+                  alert('Combat Achievements:\n\n⚔️ First Blood - Defeat your first enemy\n⚔️ Kill Streak - Defeat 10 enemies in a row\n⚔️ Boss Slayer - Defeat your first boss\n⚔️ Weapon Master - Use 10 different weapons\n⚔️ Sharpshooter - 90% accuracy with 100+ shots');
+                }}>
                   <div className="category-icon">⚔️</div>
                   <h4>Combat</h4>
                   <p>Battle and combat achievements</p>
@@ -696,7 +704,10 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
                   </div>
                 </div>
                 
-                <div className="category-card" onClick={() => console.log('Survival Achievements')}>
+                <div className="category-card" onClick={() => {
+                  console.log('Viewing Survival Achievements');
+                  alert('Survival Achievements:\n\n💪 Survivor - Survive for 5 minutes\n💪 Survival Master - Survive for 10 minutes\n💪 Shield Master - Use shield to block 50 attacks\n💪 Perfect Run - Complete level without taking damage');
+                }}>
                   <div className="category-icon">💪</div>
                   <h4>Survival</h4>
                   <p>Endurance and survival achievements</p>
@@ -705,7 +716,10 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
                   </div>
                 </div>
                 
-                <div className="category-card" onClick={() => console.log('Collection Achievements')}>
+                <div className="category-card" onClick={() => {
+                  console.log('Viewing Collection Achievements');
+                  alert('Collection Achievements:\n\n💎 Power-up Collector - Collect 20 power-ups\n💎 Power-up Master - Collect all power-up types\n💎 Power-up Legend - Collect 100 power-ups\n💎 Weapon Expert - Master all weapon types\n💎 Boss Hunter - Defeat 5 different bosses\n💎 Ultimate Master - Complete all achievements');
+                }}>
                   <div className="category-icon">💎</div>
                   <h4>Collection</h4>
                   <p>Gathering and collection achievements</p>
@@ -714,7 +728,10 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
                   </div>
                 </div>
                 
-                <div className="category-card" onClick={() => console.log('Special Achievements')}>
+                <div className="category-card" onClick={() => {
+                  console.log('Viewing Special Achievements');
+                  alert('Special Achievements:\n\n🌟 Score Master - Reach 10,000 points\n🌟 Score Legend - Reach 50,000 points\n🌟 Combo Master - Achieve a 20x combo\n🌟 Combo Legend - Achieve 50x combo\n🌟 Speed Demon - Complete a level in under 2 minutes\n🌟 Speed Legend - Complete all speed challenges');
+                }}>
                   <div className="category-icon">⭐</div>
                   <h4>Special</h4>
                   <p>Rare and special achievements</p>
@@ -836,12 +853,20 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
               console.log('Starting boss battle...');
               // Close the modal and start the game with boss battle mode
               onClose();
-              // Trigger boss battle mode
+              // Navigate to game scene and trigger boss battle
               setTimeout(() => {
-                // This would typically start a boss battle
-                console.log('Boss battle initiated!');
-                // You could add boss battle logic here
-                alert('Boss Battle Started! Defeat the boss to continue!');
+                // Change to game scene using the onSceneChange prop
+                if (typeof onSceneChange === 'function') {
+                  onSceneChange('game');
+                }
+                // Trigger boss battle after a short delay
+                setTimeout(() => {
+                  console.log('Boss battle initiated!');
+                  // Dispatch a custom event to trigger boss spawn
+                  window.dispatchEvent(new CustomEvent('startBossBattle', { 
+                    detail: { bossType: 'space_dragon', difficulty: 'normal' } 
+                  }));
+                }, 1000);
               }, 100);
             }}>
               ⚔️ Start Boss Battle
@@ -908,8 +933,8 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
           <div className="powerup-actions">
             <button className="view-collection-btn" onClick={() => {
               console.log('Viewing power-up collection...');
-              // Show power-up collection
-              alert('Power-up Collection:\n\n🔥 Fire Blast - Common\n❄️ Ice Shield - Rare\n⚡ Lightning Strike - Epic\n🌌 Quantum Blast - Legendary\n\nCollect more power-ups during gameplay!');
+              // Show detailed power-up collection
+              alert('📦 Power-up Collection:\n\n🔥 Fire Blast - Common - Shoots fire projectiles\n❄️ Ice Shield - Rare - Freezes incoming projectiles\n⚡ Lightning Strike - Epic - Chain lightning attacks\n🌌 Quantum Blast - Legendary - Advanced space technology\n💥 Explosive Rounds - Common - Area-of-effect damage\n🛡️ Shield Power-up - Common - Temporary invincibility\n🚀 Speed Boost - Common - Increases movement speed\n🎯 Multi-Shot - Rare - Temporary multi-shot mode\n\nCollect more power-ups during gameplay to unlock new abilities!');
             }}>
               📦 View Collection
             </button>
@@ -989,9 +1014,18 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
               console.log('Starting story mode...');
               // Close modal and start story
               onClose();
+              // Navigate to game scene and trigger story mode
               setTimeout(() => {
-                console.log('Story mode initiated!');
-                alert('Story Mode Started!\n\n📖 Chapter 1: The Awakening\n\nKaden and Adelynn discover their destiny as space pilots. Complete the training mission to begin your adventure!');
+                if (typeof onSceneChange === 'function') {
+                  onSceneChange('game');
+                }
+                setTimeout(() => {
+                  console.log('Story mode initiated!');
+                  // Dispatch custom event for story mode
+                  window.dispatchEvent(new CustomEvent('startStoryMode', { 
+                    detail: { chapter: 1, title: 'The Awakening' } 
+                  }));
+                }, 1000);
               }, 100);
             }}>
               📖 Begin Adventure
@@ -1017,28 +1051,72 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
               <h3>🎯 Challenge Types</h3>
               
               <div className="challenge-grid">
-                <div className="challenge-card" onClick={() => console.log('Daily Challenge')}>
+                <div className="challenge-card" onClick={() => {
+                  console.log('Daily Challenge Selected');
+                  // Close modal and start daily challenge
+                  onClose();
+                  setTimeout(() => {
+                    console.log('Daily challenge initiated!');
+                    // Dispatch custom event for daily challenge
+                    window.dispatchEvent(new CustomEvent('startDailyChallenge', {
+                      detail: { type: 'daily', reward: 200, objectives: ['Survive for 60 seconds', 'Kill 25 enemies', 'Collect 5 power-ups'] }
+                    }));
+                  }, 100);
+                }}>
                   <div className="challenge-icon">📅</div>
                   <h4>Daily Challenge</h4>
                   <p>New challenge every day</p>
                   <div className="challenge-reward">+200 XP</div>
                 </div>
                 
-                <div className="challenge-card" onClick={() => console.log('Weekly Challenge')}>
+                <div className="challenge-card" onClick={() => {
+                  console.log('Weekly Challenge Selected');
+                  // Close modal and start weekly challenge
+                  onClose();
+                  setTimeout(() => {
+                    console.log('Weekly challenge initiated!');
+                    // Dispatch custom event for weekly challenge
+                    window.dispatchEvent(new CustomEvent('startWeeklyChallenge', {
+                      detail: { type: 'weekly', reward: 1000, objectives: ['Survive for 5 minutes', 'Kill 100 enemies', 'Defeat 3 bosses', 'Collect 20 power-ups'] }
+                    }));
+                  }, 100);
+                }}>
                   <div className="challenge-icon">📆</div>
                   <h4>Weekly Challenge</h4>
                   <p>Extended weekly objectives</p>
                   <div className="challenge-reward">+1000 XP</div>
                 </div>
                 
-                <div className="challenge-card" onClick={() => console.log('Survival Challenge')}>
+                <div className="challenge-card" onClick={() => {
+                  console.log('Survival Challenge Selected');
+                  // Close modal and start survival challenge
+                  onClose();
+                  setTimeout(() => {
+                    console.log('Survival challenge initiated!');
+                    // Dispatch custom event for survival challenge
+                    window.dispatchEvent(new CustomEvent('startSurvivalChallenge', {
+                      detail: { type: 'survival', reward: 500, objectives: ['Survive as long as possible', 'Endless enemy waves', 'No power-ups', 'Maximum difficulty'] }
+                    }));
+                  }, 100);
+                }}>
                   <div className="challenge-icon">💪</div>
                   <h4>Survival Challenge</h4>
                   <p>Survive as long as possible</p>
                   <div className="challenge-reward">+500 XP</div>
                 </div>
                 
-                <div className="challenge-card" onClick={() => console.log('Boss Rush')}>
+                <div className="challenge-card" onClick={() => {
+                  console.log('Boss Rush Selected');
+                  // Close modal and start boss rush challenge
+                  onClose();
+                  setTimeout(() => {
+                    console.log('Boss rush challenge initiated!');
+                    // Dispatch custom event for boss rush challenge
+                    window.dispatchEvent(new CustomEvent('startBossRushChallenge', {
+                      detail: { type: 'bossRush', reward: 1500, objectives: ['Defeat all 5 bosses', 'No healing between bosses', 'Maximum difficulty', 'Time limit: 10 minutes'] }
+                    }));
+                  }, 100);
+                }}>
                   <div className="challenge-icon">🎪</div>
                   <h4>Boss Rush</h4>
                   <p>Fight all bosses in sequence</p>
@@ -1051,16 +1129,28 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
               <h3>📊 Difficulty Levels</h3>
               
               <div className="difficulty-options">
-                <button className="difficulty-btn active" onClick={() => console.log('Easy difficulty')}>
+                <button className="difficulty-btn active" onClick={() => {
+                  console.log('Easy difficulty selected');
+                  alert('🟢 Easy Difficulty Selected!\n\n🎯 Perfect for beginners\n⚡ Slower enemies, more health\n🏆 Great for learning the game!');
+                }}>
                   🟢 Easy
                 </button>
-                <button className="difficulty-btn" onClick={() => console.log('Normal difficulty')}>
+                <button className="difficulty-btn" onClick={() => {
+                  console.log('Normal difficulty selected');
+                  alert('🟡 Normal Difficulty Selected!\n\n🎯 Balanced gameplay\n⚡ Standard enemy speed and health\n🏆 Perfect for most players!');
+                }}>
                   🟡 Normal
                 </button>
-                <button className="difficulty-btn" onClick={() => console.log('Hard difficulty')}>
+                <button className="difficulty-btn" onClick={() => {
+                  console.log('Hard difficulty selected');
+                  alert('🟠 Hard Difficulty Selected!\n\n🎯 Challenging gameplay\n⚡ Faster enemies, less health\n🏆 For experienced players!');
+                }}>
                   🟠 Hard
                 </button>
-                <button className="difficulty-btn" onClick={() => console.log('Expert difficulty')}>
+                <button className="difficulty-btn" onClick={() => {
+                  console.log('Expert difficulty selected');
+                  alert('🔴 Expert Difficulty Selected!\n\n🎯 Very challenging gameplay\n⚡ Much faster enemies, minimal health\n🏆 For expert players only!');
+                }}>
                   🔴 Expert
                 </button>
               </div>
@@ -1101,8 +1191,16 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
               
               <div className="mode-grid">
                 <div className="mode-card" onClick={() => {
-                  // Start local multiplayer
                   console.log('Starting Local Multiplayer');
+                  // Close modal and start local multiplayer
+                  onClose();
+                  setTimeout(() => {
+                    console.log('Local multiplayer mode initiated!');
+                    // Dispatch custom event for local multiplayer mode
+                    window.dispatchEvent(new CustomEvent('startLocalMultiplayer', {
+                      detail: { mode: 'local', maxPlayers: 4 }
+                    }));
+                  }, 100);
                 }}>
                   <div className="mode-icon">👥</div>
                   <h4>Local Multiplayer</h4>
@@ -1114,8 +1212,16 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
                 </div>
                 
                 <div className="mode-card" onClick={() => {
-                  // Start online multiplayer
                   console.log('Starting Online Multiplayer');
+                  // Close modal and start online multiplayer
+                  onClose();
+                  setTimeout(() => {
+                    console.log('Online multiplayer mode initiated!');
+                    // Dispatch custom event for online multiplayer mode
+                    window.dispatchEvent(new CustomEvent('startOnlineMultiplayer', {
+                      detail: { mode: 'online', maxPlayers: 8 }
+                    }));
+                  }, 100);
                 }}>
                   <div className="mode-icon">🌐</div>
                   <h4>Online Multiplayer</h4>
@@ -1127,8 +1233,16 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
                 </div>
                 
                 <div className="mode-card" onClick={() => {
-                  // Start cooperative mode
                   console.log('Starting Cooperative Mode');
+                  // Close modal and start cooperative mode
+                  onClose();
+                  setTimeout(() => {
+                    console.log('Cooperative mode initiated!');
+                    // Dispatch custom event for cooperative mode
+                    window.dispatchEvent(new CustomEvent('startCooperativeMode', {
+                      detail: { mode: 'cooperative', maxPlayers: 4, vsAI: true }
+                    }));
+                  }, 100);
                 }}>
                   <div className="mode-icon">🤝</div>
                   <h4>Cooperative Mode</h4>
@@ -1233,8 +1347,22 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
           
           <div className="multiplayer-actions">
             <button className="start-multiplayer-btn" onClick={() => {
-              console.log('Starting multiplayer game');
+              console.log('Starting multiplayer game...');
+              // Close modal and start multiplayer
               onClose();
+              // Navigate to game scene and trigger multiplayer mode
+              setTimeout(() => {
+                if (typeof onSceneChange === 'function') {
+                  onSceneChange('game');
+                }
+                setTimeout(() => {
+                  console.log('Multiplayer mode initiated!');
+                  // Dispatch custom event for multiplayer mode
+                  window.dispatchEvent(new CustomEvent('startMultiplayerMode', { 
+                    detail: { mode: 'coop', players: 2 } 
+                  }));
+                }, 1000);
+              }, 100);
             }}>
               🚀 Start Multiplayer Game
             </button>
@@ -1657,7 +1785,13 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     maxKillStreak: 0,
     survivalTime: 0,
     maxCombo: 0,
-    achievementsUnlocked: 0
+    achievementsUnlocked: 0,
+    multiplayerMode: undefined as 'local' | 'online' | 'cooperative' | undefined,
+    maxPlayers: undefined as number | undefined,
+    vsAI: undefined as boolean | undefined,
+    challengeMode: undefined as 'daily' | 'weekly' | 'survival' | 'bossRush' | undefined,
+    challengeReward: undefined as number | undefined,
+    challengeObjectives: undefined as string[] | undefined
   });
   
   // Game objects
@@ -1683,17 +1817,58 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   const [keys, setKeys] = React.useState<{ [key: string]: boolean }>({});
   const [wingFighters, setWingFighters] = React.useState<Array<{id: string, x: number, y: number, width: number, height: number, speed: number, targetX: number, targetY: number, offset: number, lastShot?: number}>>([]);
   
-  // Initialize mobile responsiveness
+  // Initialize mobile responsiveness and responsive canvas
   React.useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
     // Initialize mobile responsive system
     mobileResponsive.current.initializeCanvas(canvas);
-    mobileResponsive.current.applyResponsiveStyles(canvas);
+    
+    // Set responsive canvas dimensions
+    const resizeCanvas = () => {
+      const container = canvas.parentElement;
+      if (!container) return;
+      
+      const containerRect = container.getBoundingClientRect();
+      const aspectRatio = 800 / 600; // Original game aspect ratio
+      
+      let canvasWidth = containerRect.width;
+      let canvasHeight = containerRect.width / aspectRatio;
+      
+      // If height exceeds container, scale by height instead
+      if (canvasHeight > containerRect.height) {
+        canvasHeight = containerRect.height;
+        canvasWidth = containerRect.height * aspectRatio;
+      }
+      
+      // Set canvas dimensions
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      
+      console.log(`Canvas resized to: ${canvasWidth}x${canvasHeight}`);
+    };
+    
+    // Initial resize
+    resizeCanvas();
+    
+    // Add resize listener
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(resizeCanvas, 100); // Delay for orientation change
+    });
+    
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('orientationchange', resizeCanvas);
+    };
+    if (canvas) {
+      // Type guard to ensure canvas is not null
+      const canvasElement = canvas as HTMLCanvasElement;
+      mobileResponsive.current.applyResponsiveStyles(canvasElement);
     
     // Initialize 3D graphics system
-    enhanced3DGraphics.current = new Enhanced3DGraphics(canvas, {
+      enhanced3DGraphics.current = new Enhanced3DGraphics(canvasElement, {
       quality: 'high',
       shadows: true,
       particles: true,
@@ -1704,20 +1879,208 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
       textureQuality: 'high',
       renderDistance: 1000
     });
+    }
     
     // Handle orientation changes
     const handleOrientationChange = () => {
       mobileResponsive.current.handleOrientationChange();
     };
     
+    // Handle boss battle trigger
+    const handleBossBattle = (event: CustomEvent) => {
+      console.log('Boss battle triggered:', event.detail);
+      // Spawn a boss immediately
+      spawnBoss();
+      // Show boss battle notification
+      if (toastContext) {
+        toastContext.showToast({
+          type: 'achievement',
+          title: '👹 Boss Battle Started!',
+          message: 'Defeat the boss to continue!',
+          icon: '👹',
+          duration: 5000
+        });
+      }
+    };
+    
+    // Handle multiplayer mode triggers
+    const handleLocalMultiplayer = (event: CustomEvent) => {
+      console.log('Local multiplayer triggered:', event.detail);
+      // Enable local multiplayer features
+      setGameState(prev => ({ 
+        ...prev, 
+        currentScene: 'game',
+        multiplayerMode: 'local',
+        maxPlayers: event.detail.maxPlayers
+      }));
+      // Show multiplayer UI elements
+      if (toastContext) {
+        toastContext.showToast({
+          type: 'success',
+          title: '🎮 Local Multiplayer Active!',
+          message: 'Connect additional controllers or use touch controls!',
+          icon: '👥',
+          duration: 3000
+        });
+      }
+    };
+    
+    const handleOnlineMultiplayer = (event: CustomEvent) => {
+      console.log('Online multiplayer triggered:', event.detail);
+      // Enable online multiplayer features
+      setGameState(prev => ({ 
+        ...prev, 
+        currentScene: 'game',
+        multiplayerMode: 'online',
+        maxPlayers: event.detail.maxPlayers
+      }));
+      // Show online multiplayer UI elements
+      if (toastContext) {
+        toastContext.showToast({
+          type: 'success',
+          title: '🌐 Online Multiplayer Active!',
+          message: 'Creating room... Connect with friends worldwide!',
+          icon: '🌐',
+          duration: 3000
+        });
+      }
+    };
+    
+    const handleCooperativeMode = (event: CustomEvent) => {
+      console.log('Cooperative mode triggered:', event.detail);
+      // Enable cooperative mode features
+      setGameState(prev => ({ 
+        ...prev, 
+        currentScene: 'game',
+        multiplayerMode: 'cooperative',
+        maxPlayers: event.detail.maxPlayers,
+        vsAI: event.detail.vsAI
+      }));
+      // Show cooperative mode UI elements
+      if (toastContext) {
+        toastContext.showToast({
+          type: 'success',
+          title: '🤝 Cooperative Mode Active!',
+          message: 'Work together to defeat AI enemies!',
+          icon: '🤝',
+          duration: 3000
+        });
+      }
+    };
+    
+    // Handle challenge mode triggers
+    const handleDailyChallenge = (event: CustomEvent) => {
+      console.log('Daily challenge triggered:', event.detail);
+      // Enable daily challenge features
+      setGameState(prev => ({ 
+        ...prev, 
+        currentScene: 'game',
+        challengeMode: 'daily',
+        challengeReward: event.detail.reward,
+        challengeObjectives: event.detail.objectives
+      }));
+      // Show daily challenge UI elements
+      if (toastContext) {
+        toastContext.showToast({
+          type: 'success',
+          title: '📅 Daily Challenge Active!',
+          message: `Complete objectives for ${event.detail.reward} XP!`,
+          icon: '📅',
+          duration: 3000
+        });
+      }
+    };
+    
+    const handleWeeklyChallenge = (event: CustomEvent) => {
+      console.log('Weekly challenge triggered:', event.detail);
+      // Enable weekly challenge features
+      setGameState(prev => ({ 
+        ...prev, 
+        currentScene: 'game',
+        challengeMode: 'weekly',
+        challengeReward: event.detail.reward,
+        challengeObjectives: event.detail.objectives
+      }));
+      // Show weekly challenge UI elements
+      if (toastContext) {
+        toastContext.showToast({
+          type: 'success',
+          title: '📆 Weekly Challenge Active!',
+          message: `Extended objectives for ${event.detail.reward} XP!`,
+          icon: '📆',
+          duration: 3000
+        });
+      }
+    };
+    
+    const handleSurvivalChallenge = (event: CustomEvent) => {
+      console.log('Survival challenge triggered:', event.detail);
+      // Enable survival challenge features
+      setGameState(prev => ({ 
+        ...prev, 
+        currentScene: 'game',
+        challengeMode: 'survival',
+        challengeReward: event.detail.reward,
+        challengeObjectives: event.detail.objectives
+      }));
+      // Show survival challenge UI elements
+      if (toastContext) {
+        toastContext.showToast({
+          type: 'success',
+          title: '💪 Survival Challenge Active!',
+          message: `Endless waves for ${event.detail.reward} XP!`,
+          icon: '💪',
+          duration: 3000
+        });
+      }
+    };
+    
+    const handleBossRushChallenge = (event: CustomEvent) => {
+      console.log('Boss rush challenge triggered:', event.detail);
+      // Enable boss rush challenge features
+      setGameState(prev => ({ 
+        ...prev, 
+        currentScene: 'game',
+        challengeMode: 'bossRush',
+        challengeReward: event.detail.reward,
+        challengeObjectives: event.detail.objectives
+      }));
+      // Show boss rush challenge UI elements
+      if (toastContext) {
+        toastContext.showToast({
+          type: 'success',
+          title: '🎪 Boss Rush Challenge Active!',
+          message: `Defeat all bosses for ${event.detail.reward} XP!`,
+          icon: '🎪',
+          duration: 3000
+        });
+      }
+    };
+    
     window.addEventListener('orientationchange', handleOrientationChange);
     window.addEventListener('resize', handleOrientationChange);
+    window.addEventListener('startBossBattle', handleBossBattle as EventListener);
+    window.addEventListener('startLocalMultiplayer', handleLocalMultiplayer as EventListener);
+    window.addEventListener('startOnlineMultiplayer', handleOnlineMultiplayer as EventListener);
+    window.addEventListener('startCooperativeMode', handleCooperativeMode as EventListener);
+    window.addEventListener('startDailyChallenge', handleDailyChallenge as EventListener);
+    window.addEventListener('startWeeklyChallenge', handleWeeklyChallenge as EventListener);
+    window.addEventListener('startSurvivalChallenge', handleSurvivalChallenge as EventListener);
+    window.addEventListener('startBossRushChallenge', handleBossRushChallenge as EventListener);
     
     return () => {
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('resize', handleOrientationChange);
+      window.removeEventListener('startBossBattle', handleBossBattle as EventListener);
+      window.removeEventListener('startLocalMultiplayer', handleLocalMultiplayer as EventListener);
+      window.removeEventListener('startOnlineMultiplayer', handleOnlineMultiplayer as EventListener);
+      window.removeEventListener('startCooperativeMode', handleCooperativeMode as EventListener);
+      window.removeEventListener('startDailyChallenge', handleDailyChallenge as EventListener);
+      window.removeEventListener('startWeeklyChallenge', handleWeeklyChallenge as EventListener);
+      window.removeEventListener('startSurvivalChallenge', handleSurvivalChallenge as EventListener);
+      window.removeEventListener('startBossRushChallenge', handleBossRushChallenge as EventListener);
     };
-  }, []);
+  }, [toastContext]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Game loop
   const gameLoop = React.useCallback((currentTime: number) => {
@@ -2844,15 +3207,46 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
             <span className="stat-label">Achievements:</span>
             <span className="stat-value">{achievements.filter(a => a.unlocked).length}/{achievements.length}</span>
           </div>
+          {(gameState as any).multiplayerMode && (
+            <div className="stat-item multiplayer-indicator">
+              <span className="stat-label">
+                {(gameState as any).multiplayerMode === 'local' && '👥 Local Multiplayer'}
+                {(gameState as any).multiplayerMode === 'online' && '🌐 Online Multiplayer'}
+                {(gameState as any).multiplayerMode === 'cooperative' && '🤝 Cooperative Mode'}
+              </span>
+              <span className="stat-value">
+                {(gameState as any).maxPlayers && `${(gameState as any).maxPlayers} Players`}
+                {(gameState as any).vsAI && ' vs AI'}
+              </span>
+            </div>
+          )}
+          {(gameState as any).challengeMode && (
+            <div className="stat-item challenge-indicator">
+              <span className="stat-label">
+                {(gameState as any).challengeMode === 'daily' && '📅 Daily Challenge'}
+                {(gameState as any).challengeMode === 'weekly' && '📆 Weekly Challenge'}
+                {(gameState as any).challengeMode === 'survival' && '💪 Survival Challenge'}
+                {(gameState as any).challengeMode === 'bossRush' && '🎪 Boss Rush Challenge'}
+              </span>
+              <span className="stat-value">
+                {(gameState as any).challengeReward && `+${(gameState as any).challengeReward} XP`}
+              </span>
+            </div>
+          )}
         </div>
       </div>
       
       <div className="game-canvas">
         <canvas 
           ref={canvasRef}
-          width={800} 
-          height={600}
           className="game-canvas-element responsive-canvas"
+          style={{
+            width: '100%',
+            height: 'auto',
+            maxWidth: '100vw',
+            maxHeight: '100vh',
+            objectFit: 'contain'
+          }}
         />
         {gameState.gameOver && (
           <div className="game-over-overlay">
