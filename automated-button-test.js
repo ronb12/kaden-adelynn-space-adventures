@@ -190,3 +190,4 @@ async function testModalButtons(page, modalName, testResults) {
 
 // Run the test
 runAutomatedButtonTest().catch(console.error);
+

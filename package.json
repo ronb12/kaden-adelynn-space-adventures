@@ -29,6 +29,11 @@
     "build:fast": "NODE_ENV=production node build.js",
     "build:dev": "NODE_ENV=development node build.js",
     "test": "react-scripts test",
+    "test:puppeteer": "node run-puppeteer-test.js",
+    "test:puppeteer:full": "node comprehensive-puppeteer-test.js",
+    "test:comprehensive": "node run-comprehensive-test.js",
+    "test:quick": "node quick-test.js",
+    "test:all": "npm run test && npm run test:puppeteer",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

@@ -1,0 +1,312 @@
+.save-load-modal {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 2px solid #0f3460;
+  border-radius: 15px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 800px;
+  overflow: hidden;
+}
+
+.save-load-content {
+  padding: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.tab-navigation {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #0f3460;
+}
+
+.tab-btn {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #34495e, #2c3e50);
+  border: 1px solid #3498db;
+  border-radius: 8px 8px 0 0;
+  color: #ecf0f1;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.tab-btn:hover {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  border-color: #e74c3c;
+}
+
+.saves-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.save-slot {
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  border: 2px solid #3498db;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.save-slot:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+}
+
+.save-info {
+  flex: 1;
+}
+
+.save-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.save-header h3 {
+  margin: 0;
+  color: #ecf0f1;
+  font-size: 18px;
+}
+
+.save-date {
+  color: #bdc3c7;
+  font-size: 14px;
+}
+
+.save-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #bdc3c7;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: bold;
+  color: #f39c12;
+}
+
+.save-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.load-btn {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: white;
+}
+
+.load-btn:hover {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  transform: translateY(-2px);
+}
+
+.export-btn {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+}
+
+.export-btn:hover {
+  background: linear-gradient(135deg, #2980b9, #3498db);
+  transform: translateY(-2px);
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+}
+
+.delete-btn:hover {
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  transform: translateY(-2px);
+}
+
+.no-saves {
+  text-align: center;
+  padding: 40px;
+  color: #bdc3c7;
+}
+
+.no-saves p {
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.import-section {
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  border: 2px solid #3498db;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.import-section h3 {
+  margin: 0 0 15px 0;
+  color: #ecf0f1;
+}
+
+.import-input {
+  margin: 10px 0;
+  padding: 10px;
+  border: 2px solid #3498db;
+  border-radius: 6px;
+  background: #34495e;
+  color: #ecf0f1;
+  cursor: pointer;
+}
+
+.import-help {
+  margin: 10px 0 0 0;
+  color: #bdc3c7;
+  font-size: 14px;
+}
+
+.save-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.save-info {
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  border: 2px solid #3498db;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.save-info h3 {
+  margin: 0 0 15px 0;
+  color: #ecf0f1;
+}
+
+.current-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.save-slots {
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  border: 2px solid #3498db;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.save-slots h3 {
+  margin: 0 0 20px 0;
+  color: #ecf0f1;
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.slot-info {
+  margin-bottom: 15px;
+}
+
+.slot-info h4 {
+  margin: 0 0 10px 0;
+  color: #ecf0f1;
+}
+
+.existing-save p {
+  margin: 5px 0;
+  color: #bdc3c7;
+  font-size: 14px;
+}
+
+.empty-slot {
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+.save-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  transform: translateY(-2px);
+}
+
+.save-btn:disabled {
+  background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .save-load-modal {
+    width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .save-slot {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .save-actions {
+    justify-content: center;
+  }
+  
+  .current-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .slots-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

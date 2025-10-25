@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boss Modal Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .boss-modal {
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            border: 2px solid rgba(139, 0, 0, 0.6);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            margin: 0 auto;
+        }
+        
+        .boss-selection {
+            margin-bottom: 20px;
+        }
+        
+        .boss-selection h3 {
+            color: #8b0000;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .boss-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .boss-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(139, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .boss-card:hover {
+            background: rgba(139, 0, 0, 0.1);
+            border-color: #8b0000;
+            box-shadow: 0 10px 20px rgba(139, 0, 0, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .boss-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .boss-card h4 {
+            color: #8b0000;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        .boss-card p {
+            color: #e0e0e0;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .boss-difficulty {
+            color: #ffd700;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .boss-status {
+            color: #00ff00;
+            font-size: 12px;
+        }
+        
+        .selection-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #00ff00;
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .debug-info {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-info">
+        <h2>🔍 Boss Modal Debug - Testing All 15 Bosses</h2>
+        <p>This page tests if all 15 bosses are rendering correctly in the modal.</p>
+    </div>
+    
+    <div class="boss-modal">
+        <div class="boss-selection">
+            <h3>👹 Select Boss to Battle</h3>
+            
+            <div class="boss-grid">
+                <!-- Original Bosses -->
+                <div class="boss-card">
+                    <div class="boss-icon">🚀</div>
+                    <h4>Destroyer</h4>
+                    <p>Fast attack warship</p>
+                    <div class="boss-difficulty">⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+
+                <div class="boss-card">
+                    <div class="boss-icon">⚔️</div>
+                    <h4>Battleship</h4>
+                    <p>Heavy combat vessel</p>
+                    <div class="boss-difficulty">⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+
+                <div class="boss-card">
+                    <div class="boss-icon">🛸</div>
+                    <h4>Mothership</h4>
+                    <p>Massive command vessel</p>
+                    <div class="boss-difficulty">⭐⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+
+                <!-- Cosmic Entities -->
+                <div class="boss-card">
+                    <div class="boss-icon">🐉</div>
+                    <h4>Space Dragon</h4>
+                    <p>Ancient cosmic dragon</p>
+                    <div class="boss-difficulty">⭐⭐⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+                
+                <div class="boss-card">
+                    <div class="boss-icon">👾</div>
+                    <h4>Void Reaper</h4>
+                    <p>Shadow entity from the void</p>
+                    <div class="boss-difficulty">⭐⭐⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+                
+                <div class="boss-card">
+                    <div class="boss-icon">🤖</div>
+                    <h4>Mech Titan</h4>
+                    <p>Giant robotic war machine</p>
+                    <div class="boss-difficulty">⭐⭐⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+
+                <!-- Alien Species -->
+                <div class="boss-card">
+                    <div class="boss-icon">💎</div>
+                    <h4>Crystal Guardian</h4>
+                    <p>Crystalline entity</p>
+                    <div class="boss-difficulty">⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+
+                <div class="boss-card">
+                    <div class="boss-icon">⚡</div>
+                    <h4>Plasma Beast</h4>
+                    <p>Energy-based creature</p>
+                    <div class="boss-difficulty">⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+
+                <div class="boss-card">
+                    <div class="boss-icon">🌀</div>
+                    <h4>Quantum Entity</h4>
+                    <p>Phase-shifting entity</p>
+                    <div class="boss-difficulty">⭐⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+
+                <!-- Mechanical Threats -->
+                <div class="boss-card">
+                    <div class="boss-icon">🤖</div>
+                    <h4>Cyber Dreadnought</h4>
+                    <p>AI-controlled warship</p>
+                    <div class="boss-difficulty">⭐⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+
+                <div class="boss-card">
+                    <div class="boss-icon">🧠</div>
+                    <h4>Neural Network</h4>
+                    <p>Living computer</p>
+                    <div class="boss-difficulty">⭐⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+
+                <div class="boss-card">
+                    <div class="boss-icon">🌌</div>
+                    <h4>Gravity Well</h4>
+                    <p>Gravity-manipulating entity</p>
+                    <div class="boss-difficulty">⭐⭐⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+
+                <!-- Elemental Forces -->
+                <div class="boss-card">
+                    <div class="boss-icon">☀️</div>
+                    <h4>Solar Flare</h4>
+                    <p>Solar energy entity</p>
+                    <div class="boss-difficulty">⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+
+                <div class="boss-card">
+                    <div class="boss-icon">🧊</div>
+                    <h4>Ice Leviathan</h4>
+                    <p>Frozen giant</p>
+                    <div class="boss-difficulty">⭐⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+
+                <div class="boss-card">
+                    <div class="boss-icon">⛈️</div>
+                    <h4>Storm King</h4>
+                    <p>Weather-controlling entity</p>
+                    <div class="boss-difficulty">⭐⭐⭐⭐</div>
+                    <div class="boss-status">Available</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="debug-info">
+            <h3>📊 Debug Information</h3>
+            <p><strong>Total Boss Cards:</strong> <span id="boss-count">Loading...</span></p>
+            <p><strong>Grid Height:</strong> <span id="grid-height">Loading...</span></p>
+            <p><strong>Modal Height:</strong> <span id="modal-height">Loading...</span></p>
+            <p><strong>Scrollable:</strong> <span id="scrollable">Loading...</span></p>
+        </div>
+    </div>
+
+    <script>
+        // Debug information
+        document.addEventListener('DOMContentLoaded', function() {
+            const bossCards = document.querySelectorAll('.boss-card');
+            const bossGrid = document.querySelector('.boss-grid');
+            const bossModal = document.querySelector('.boss-modal');
+            
+            document.getElementById('boss-count').textContent = bossCards.length;
+            document.getElementById('grid-height').textContent = bossGrid.offsetHeight + 'px';
+            document.getElementById('modal-height').textContent = bossModal.offsetHeight + 'px';
+            document.getElementById('scrollable').textContent = bossGrid.scrollHeight > bossGrid.clientHeight ? 'Yes' : 'No';
+            
+            console.log('Boss Cards Found:', bossCards.length);
+            console.log('Grid Height:', bossGrid.offsetHeight);
+            console.log('Grid Scroll Height:', bossGrid.scrollHeight);
+            console.log('Modal Height:', bossModal.offsetHeight);
+            
+            // Test scrolling
+            bossGrid.addEventListener('scroll', function() {
+                console.log('Grid scrolled to:', bossGrid.scrollTop);
+            });
+        });
+    </script>
+</body>
+</html>

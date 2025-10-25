@@ -24,6 +24,77 @@ import { ProceduralGenerationSystem } from './systems/ProceduralGenerationSystem
 import { spriteLoader } from './systems/SpriteLoader';
 import { ShipRenderer } from './graphics/ShipDesigns';
 import { EnhancedBossSystem } from './systems/EnhancedBossSystem';
+import { MoneySystem } from './systems/MoneySystem';
+import { SaveLoadSystem } from './systems/SaveLoadSystem';
+import { StoreModal } from './components/StoreModal';
+import { SaveLoadModal } from './components/SaveLoadModal';
+import './components/StoreModal.css';
+import './components/SaveLoadModal.css';
+
+// Add styles for game buttons
+const gameButtonStyles = `
+  .game-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    justify-content: center;
+  }
+  
+  .game-btn {
+    padding: 10px 20px;
+    border: 2px solid #3498db;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    color: #ecf0f1;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+  }
+  
+  .game-btn:hover {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+  }
+  
+  .store-btn {
+    border-color: #e74c3c;
+  }
+  
+  .store-btn:hover {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+  }
+  
+  .save-btn {
+    border-color: #27ae60;
+  }
+  
+  .save-btn:hover {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+  }
+  
+  @media (max-width: 768px) {
+    .game-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .game-btn {
+      width: 200px;
+    }
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = gameButtonStyles;
+  document.head.appendChild(styleSheet);
+}
 // import { SocialFeaturesSystem } from './systems/SocialFeaturesSystem';
 // import { MonetizationSystem } from './systems/MonetizationSystem';
 
@@ -925,7 +996,7 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
                   <div className="boss-status">Available</div>
                   {gameState?.selectedBoss === 'space-dragon' && <div className="selection-indicator">✓ Selected</div>}
                 </div>
-
+                
                 <div 
                   className={`boss-card ${gameState?.selectedBoss === 'void-reaper' ? 'selected' : ''}`} 
                   onClick={() => {
@@ -950,7 +1021,7 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
                   <div className="boss-status">Available</div>
                   {gameState?.selectedBoss === 'void-reaper' && <div className="selection-indicator">✓ Selected</div>}
                 </div>
-
+                
                 <div 
                   className={`boss-card ${gameState?.selectedBoss === 'mech-titan' ? 'selected' : ''}`} 
                   onClick={() => {
@@ -2142,6 +2213,8 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   const bulletHellSystem = React.useRef<BulletHellSystem>(new BulletHellSystem());
   const proceduralGeneration = React.useRef<ProceduralGenerationSystem>(new ProceduralGenerationSystem());
   const enhancedBossSystem = React.useRef<EnhancedBossSystem>(new EnhancedBossSystem());
+  const moneySystem = React.useRef<MoneySystem>(new MoneySystem());
+  const saveLoadSystem = React.useRef<SaveLoadSystem>(new SaveLoadSystem());
   // const socialFeatures = React.useRef<SocialFeaturesSystem>(new SocialFeaturesSystem());
   // const monetizationSystem = React.useRef<MonetizationSystem>(new MonetizationSystem());
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -2195,6 +2268,11 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   const [particles, setParticles] = React.useState<Particle[]>([]);
   const [keys, setKeys] = React.useState<{ [key: string]: boolean }>({});
   const [wingFighters, setWingFighters] = React.useState<Array<{id: string, x: number, y: number, width: number, height: number, speed: number, targetX: number, targetY: number, offset: number, lastShot?: number}>>([]);
+  
+  // New systems state
+  const [moneyCollectibles, setMoneyCollectibles] = React.useState<Array<{id: string, x: number, y: number, width: number, height: number, value: number, type: 'coin' | 'gem' | 'credit' | 'energy_core', collected: boolean, animationTime: number}>>([]);
+  const [showStore, setShowStore] = React.useState(false);
+  const [showSaveLoad, setShowSaveLoad] = React.useState(false);
   
   // Initialize mobile responsiveness and responsive canvas
   React.useEffect(() => {
@@ -2519,6 +2597,10 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     updateParticles(deltaTime);
     updateAchievements(deltaTime);
     
+    // Update money system
+    moneySystem.current.updateMoneyCollectibles(deltaTime, canvas);
+    setMoneyCollectibles(moneySystem.current.getMoneyCollectibles());
+    
     // Update new 10/10 systems
     if (enhanced3DGraphics.current) {
       enhanced3DGraphics.current.render(deltaTime);
@@ -2580,6 +2662,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     drawEnemies(ctx);
     drawBosses(ctx);
     drawPowerUps(ctx);
+    drawMoneyCollectibles(ctx);
     drawParticles(ctx);
     
     // Draw new 10/10 systems
@@ -2749,6 +2832,62 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     });
   };
   
+  const drawMoneyCollectibles = (ctx: CanvasRenderingContext2D) => {
+    moneyCollectibles.forEach(collectible => {
+      if (collectible.collected) return;
+      
+      ctx.save();
+      ctx.translate(collectible.x, collectible.y);
+      
+      // Money collectible glow with pulsing effect
+      const pulse = Math.sin(collectible.animationTime * 0.01) * 0.3 + 0.7;
+      const scale = 1 + Math.sin(collectible.animationTime * 0.005) * 0.1;
+      
+      ctx.scale(scale, scale);
+      
+      // Background circle
+      ctx.fillStyle = `rgba(255, 215, 0, ${pulse})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, 12, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Border
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Money symbol based on type
+      ctx.fillStyle = '#000000';
+      ctx.font = '14px Arial';
+      ctx.textAlign = 'center';
+      
+      let symbol = '🪙';
+      switch (collectible.type) {
+        case 'coin':
+          symbol = '🪙';
+          break;
+        case 'gem':
+          symbol = '💎';
+          break;
+        case 'credit':
+          symbol = '💳';
+          break;
+        case 'energy_core':
+          symbol = '⚡';
+          break;
+      }
+      
+      ctx.fillText(symbol, 0, 4);
+      
+      // Value text
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '10px Arial';
+      ctx.fillText(collectible.value.toString(), 0, -15);
+      
+      ctx.restore();
+    });
+  };
+  
   const drawParticles = (ctx: CanvasRenderingContext2D) => {
     particles.forEach(particle => {
       ctx.save();
@@ -2825,7 +2964,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     
     setBosses(prev => prev.map(boss => {
       // Basic boss movement and health updates
-      boss.y += boss.speed;
+          boss.y += boss.speed;
       
       // Boss shooting
       if (Date.now() - boss.lastShot > boss.shootInterval) {
@@ -3179,6 +3318,22 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
       setParticles(prev => [...prev, particle]);
     }
   };
+
+  const createParticle = (x: number, y: number, color: string, count: number = 5) => {
+    for (let i = 0; i < count; i++) {
+      const particle: Particle = {
+        x: x,
+        y: y,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        color: color,
+        life: 500,
+        maxLife: 500,
+        size: Math.random() * 2 + 1
+      };
+      setParticles(prev => [...prev, particle]);
+    }
+  };
   
   // Collision detection
   const checkCollisions = () => {
@@ -3322,6 +3477,38 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
           ...prev, 
           powerUpsCollected: prev.powerUpsCollected + 1
         }));
+        
+        return false;
+      }
+      return true;
+    }));
+    
+    // Player vs money collectibles
+    setMoneyCollectibles(prev => prev.filter(collectible => {
+      if (collectible.x < player.x + player.width &&
+          collectible.x + collectible.width > player.x &&
+          collectible.y < player.y + player.height &&
+          collectible.y + collectible.height > player.y) {
+        
+        // Collect money
+        moneySystem.current.collectMoney(collectible);
+        
+        // Show collection effect
+        createParticle(collectible.x + collectible.width / 2, collectible.y + collectible.height / 2, '#FFD700', 5);
+        
+        // Show toast notification
+        if (toastContext) {
+          const moneyType = collectible.type === 'coin' ? '🪙' : 
+                          collectible.type === 'gem' ? '💎' : 
+                          collectible.type === 'credit' ? '💳' : '⚡';
+          toastContext.showToast({
+            type: 'success',
+            title: `${moneyType} Collected!`,
+            message: `+${collectible.value} ${collectible.type}`,
+            icon: moneyType,
+            duration: 2000
+          });
+        }
         
         return false;
       }
@@ -3517,6 +3704,20 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
         <div className="power-up-info">
           ⚡ Collect power-ups for health, speed, and special abilities!
         </div>
+        <div className="game-buttons">
+          <button 
+            className="game-btn store-btn"
+            onClick={() => setShowStore(true)}
+          >
+            🛍️ Store
+          </button>
+          <button 
+            className="game-btn save-btn"
+            onClick={() => setShowSaveLoad(true)}
+          >
+            💾 Save/Load
+          </button>
+        </div>
       </div>
       
       {/* Touch Controls for Mobile */}
@@ -3559,6 +3760,103 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
           isVisible={showTouchControls}
         />
       )}
+      
+      {/* Store Modal */}
+      <StoreModal
+        isOpen={showStore}
+        onClose={() => setShowStore(false)}
+        moneySystem={moneySystem.current}
+        onPurchase={(upgradeId) => {
+          console.log('Upgrade purchased:', upgradeId);
+        }}
+        onToast={(message, type) => {
+          if (toastContext) {
+            const toastType = type === 'success' ? 'success' : type === 'error' ? 'warning' : 'success';
+            toastContext.showToast({
+              type: toastType,
+              title: type === 'success' ? '✅ Success!' : type === 'error' ? '❌ Error!' : 'ℹ️ Info',
+              message: message,
+              icon: type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️',
+              duration: 3000
+            });
+          }
+        }}
+      />
+      
+      {/* Save/Load Modal */}
+      <SaveLoadModal
+        isOpen={showSaveLoad}
+        onClose={() => setShowSaveLoad(false)}
+        saveLoadSystem={saveLoadSystem.current}
+        onLoad={(saveData) => {
+          console.log('Game loaded:', saveData);
+          // Implement game loading logic here
+        }}
+        onSave={(saveData) => {
+          console.log('Game saved:', saveData);
+          // Implement game saving logic here
+        }}
+        onToast={(message, type) => {
+          if (toastContext) {
+            const toastType = type === 'success' ? 'success' : type === 'error' ? 'warning' : 'success';
+            toastContext.showToast({
+              type: toastType,
+              title: type === 'success' ? '✅ Success!' : type === 'error' ? '❌ Error!' : 'ℹ️ Info',
+              message: message,
+              icon: type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️',
+              duration: 3000
+            });
+          }
+        }}
+        currentGameData={{
+          playerStats: {
+            score: gameState.score,
+            health: gameState.health,
+            maxHealth: gameState.maxHealth,
+            level: gameState.level,
+            enemiesKilled: gameState.enemiesKilled,
+            bossesKilled: gameState.bossesKilled,
+            powerUpsCollected: gameState.powerUpsCollected,
+            killStreak: gameState.killStreak,
+            maxKillStreak: gameState.maxKillStreak,
+            survivalTime: gameState.survivalTime,
+            maxCombo: gameState.maxCombo,
+            achievementsUnlocked: gameState.achievementsUnlocked
+          },
+          moneyData: moneySystem.current.getPlayerMoney(),
+          upgrades: moneySystem.current.getUpgrades().map(upgrade => ({
+            id: upgrade.id,
+            level: upgrade.level,
+            unlocked: upgrade.unlocked
+          })),
+          achievements: achievements.map(achievement => ({
+            id: achievement.id,
+            unlocked: achievement.unlocked,
+            progress: achievement.progress
+          })),
+          settings: {
+            audio: {
+              masterVolume: 1.0,
+              musicVolume: 0.8,
+              soundEffectsVolume: 0.9
+            },
+            graphics: {
+              quality: 'high',
+              particles: true,
+              shadows: true
+            },
+            controls: {
+              touchEnabled: false,
+              controllerEnabled: false
+            }
+          },
+          gameProgress: {
+            currentScene: 'menu',
+            selectedCharacter: 'kaden',
+            selectedBoss: undefined
+          }
+        }}
+      />
     </div>
   );
 };
