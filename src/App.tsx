@@ -824,14 +824,89 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
               <h3>👹 Select Boss to Battle</h3>
               
               <div className="boss-grid">
+                {/* Original Bosses */}
+                <div 
+                  className={`boss-card ${gameState?.selectedBoss === 'destroyer' ? 'selected' : ''}`} 
+                  onClick={() => {
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'destroyer' }));
+                    }
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'success',
+                        title: '🚀 Destroyer Selected!',
+                        message: 'Ready to battle the destroyer class warship!',
+                        icon: '🚀',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
+                  <div className="boss-icon">🚀</div>
+                  <h4>Destroyer</h4>
+                  <p>Fast attack warship</p>
+                  <div className="boss-difficulty">⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'destroyer' && <div className="selection-indicator">✓ Selected</div>}
+                </div>
+
+                <div 
+                  className={`boss-card ${gameState?.selectedBoss === 'battleship' ? 'selected' : ''}`} 
+                  onClick={() => {
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'battleship' }));
+                    }
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'success',
+                        title: '⚔️ Battleship Selected!',
+                        message: 'Ready to battle the heavy battleship!',
+                        icon: '⚔️',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
+                  <div className="boss-icon">⚔️</div>
+                  <h4>Battleship</h4>
+                  <p>Heavy combat vessel</p>
+                  <div className="boss-difficulty">⭐⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'battleship' && <div className="selection-indicator">✓ Selected</div>}
+                </div>
+
+                <div 
+                  className={`boss-card ${gameState?.selectedBoss === 'mothership' ? 'selected' : ''}`} 
+                  onClick={() => {
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'mothership' }));
+                    }
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'success',
+                        title: '🛸 Mothership Selected!',
+                        message: 'Ready to battle the massive mothership!',
+                        icon: '🛸',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
+                  <div className="boss-icon">🛸</div>
+                  <h4>Mothership</h4>
+                  <p>Massive command vessel</p>
+                  <div className="boss-difficulty">⭐⭐⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'mothership' && <div className="selection-indicator">✓ Selected</div>}
+                </div>
+
+                {/* Cosmic Entities */}
                 <div 
                   className={`boss-card ${gameState?.selectedBoss === 'space-dragon' ? 'selected' : ''}`} 
                   onClick={() => {
-                    console.log('Fight Space Dragon');
                     if (setGameState) {
                       setGameState(prev => ({ ...prev, selectedBoss: 'space-dragon' }));
                     }
-                    // Show selection confirmation
                     if (toastContext) {
                       toastContext.showToast({
                         type: 'success',
@@ -846,21 +921,23 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
                   <div className="boss-icon">🐉</div>
                   <h4>Space Dragon</h4>
                   <p>Ancient cosmic dragon</p>
-                  <div className="boss-difficulty">⭐⭐⭐</div>
+                  <div className="boss-difficulty">⭐⭐⭐⭐⭐</div>
                   <div className="boss-status">Available</div>
                   {gameState?.selectedBoss === 'space-dragon' && <div className="selection-indicator">✓ Selected</div>}
                 </div>
-                
+
                 <div 
-                  className="boss-card locked" 
+                  className={`boss-card ${gameState?.selectedBoss === 'void-reaper' ? 'selected' : ''}`} 
                   onClick={() => {
-                    console.log('Boss locked');
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'void-reaper' }));
+                    }
                     if (toastContext) {
                       toastContext.showToast({
-                        type: 'info',
-                        title: '🔒 Boss Locked',
-                        message: 'Defeat Space Dragon to unlock Void Reaper!',
-                        icon: '🔒',
+                        type: 'success',
+                        title: '👾 Void Reaper Selected!',
+                        message: 'Ready to battle the shadow entity!',
+                        icon: '👾',
                         duration: 3000
                       });
                     }
@@ -869,20 +946,23 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
                   <div className="boss-icon">👾</div>
                   <h4>Void Reaper</h4>
                   <p>Shadow entity from the void</p>
-                  <div className="boss-difficulty">⭐⭐⭐⭐</div>
-                  <div className="boss-status">Locked</div>
+                  <div className="boss-difficulty">⭐⭐⭐⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'void-reaper' && <div className="selection-indicator">✓ Selected</div>}
                 </div>
-                
+
                 <div 
-                  className="boss-card locked" 
+                  className={`boss-card ${gameState?.selectedBoss === 'mech-titan' ? 'selected' : ''}`} 
                   onClick={() => {
-                    console.log('Boss locked');
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'mech-titan' }));
+                    }
                     if (toastContext) {
                       toastContext.showToast({
-                        type: 'info',
-                        title: '🔒 Boss Locked',
-                        message: 'Defeat Void Reaper to unlock Mech Titan!',
-                        icon: '🔒',
+                        type: 'success',
+                        title: '🤖 Mech Titan Selected!',
+                        message: 'Ready to battle the robotic war machine!',
+                        icon: '🤖',
                         duration: 3000
                       });
                     }
@@ -892,7 +972,236 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose, settings,
                   <h4>Mech Titan</h4>
                   <p>Giant robotic war machine</p>
                   <div className="boss-difficulty">⭐⭐⭐⭐⭐</div>
-                  <div className="boss-status">Locked</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'mech-titan' && <div className="selection-indicator">✓ Selected</div>}
+                </div>
+
+                {/* Alien Species */}
+                <div 
+                  className={`boss-card ${gameState?.selectedBoss === 'crystal-guardian' ? 'selected' : ''}`} 
+                  onClick={() => {
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'crystal-guardian' }));
+                    }
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'success',
+                        title: '💎 Crystal Guardian Selected!',
+                        message: 'Ready to battle the crystalline entity!',
+                        icon: '💎',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
+                  <div className="boss-icon">💎</div>
+                  <h4>Crystal Guardian</h4>
+                  <p>Crystalline entity</p>
+                  <div className="boss-difficulty">⭐⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'crystal-guardian' && <div className="selection-indicator">✓ Selected</div>}
+                </div>
+
+                <div 
+                  className={`boss-card ${gameState?.selectedBoss === 'plasma-beast' ? 'selected' : ''}`} 
+                  onClick={() => {
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'plasma-beast' }));
+                    }
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'success',
+                        title: '⚡ Plasma Beast Selected!',
+                        message: 'Ready to battle the energy creature!',
+                        icon: '⚡',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
+                  <div className="boss-icon">⚡</div>
+                  <h4>Plasma Beast</h4>
+                  <p>Energy-based creature</p>
+                  <div className="boss-difficulty">⭐⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'plasma-beast' && <div className="selection-indicator">✓ Selected</div>}
+                </div>
+
+                <div 
+                  className={`boss-card ${gameState?.selectedBoss === 'quantum-entity' ? 'selected' : ''}`} 
+                  onClick={() => {
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'quantum-entity' }));
+                    }
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'success',
+                        title: '🌀 Quantum Entity Selected!',
+                        message: 'Ready to battle the phase-shifting entity!',
+                        icon: '🌀',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
+                  <div className="boss-icon">🌀</div>
+                  <h4>Quantum Entity</h4>
+                  <p>Phase-shifting entity</p>
+                  <div className="boss-difficulty">⭐⭐⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'quantum-entity' && <div className="selection-indicator">✓ Selected</div>}
+                </div>
+
+                {/* Mechanical Threats */}
+                <div 
+                  className={`boss-card ${gameState?.selectedBoss === 'cyber-dreadnought' ? 'selected' : ''}`} 
+                  onClick={() => {
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'cyber-dreadnought' }));
+                    }
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'success',
+                        title: '🤖 Cyber Dreadnought Selected!',
+                        message: 'Ready to battle the AI warship!',
+                        icon: '🤖',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
+                  <div className="boss-icon">🤖</div>
+                  <h4>Cyber Dreadnought</h4>
+                  <p>AI-controlled warship</p>
+                  <div className="boss-difficulty">⭐⭐⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'cyber-dreadnought' && <div className="selection-indicator">✓ Selected</div>}
+                </div>
+
+                <div 
+                  className={`boss-card ${gameState?.selectedBoss === 'neural-network' ? 'selected' : ''}`} 
+                  onClick={() => {
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'neural-network' }));
+                    }
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'success',
+                        title: '🧠 Neural Network Selected!',
+                        message: 'Ready to battle the living computer!',
+                        icon: '🧠',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
+                  <div className="boss-icon">🧠</div>
+                  <h4>Neural Network</h4>
+                  <p>Living computer</p>
+                  <div className="boss-difficulty">⭐⭐⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'neural-network' && <div className="selection-indicator">✓ Selected</div>}
+                </div>
+
+                <div 
+                  className={`boss-card ${gameState?.selectedBoss === 'gravity-well' ? 'selected' : ''}`} 
+                  onClick={() => {
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'gravity-well' }));
+                    }
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'success',
+                        title: '🌌 Gravity Well Selected!',
+                        message: 'Ready to battle the gravity manipulator!',
+                        icon: '🌌',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
+                  <div className="boss-icon">🌌</div>
+                  <h4>Gravity Well</h4>
+                  <p>Gravity-manipulating entity</p>
+                  <div className="boss-difficulty">⭐⭐⭐⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'gravity-well' && <div className="selection-indicator">✓ Selected</div>}
+                </div>
+
+                {/* Elemental Forces */}
+                <div 
+                  className={`boss-card ${gameState?.selectedBoss === 'solar-flare' ? 'selected' : ''}`} 
+                  onClick={() => {
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'solar-flare' }));
+                    }
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'success',
+                        title: '☀️ Solar Flare Selected!',
+                        message: 'Ready to battle the solar energy boss!',
+                        icon: '☀️',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
+                  <div className="boss-icon">☀️</div>
+                  <h4>Solar Flare</h4>
+                  <p>Solar energy entity</p>
+                  <div className="boss-difficulty">⭐⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'solar-flare' && <div className="selection-indicator">✓ Selected</div>}
+                </div>
+
+                <div 
+                  className={`boss-card ${gameState?.selectedBoss === 'ice-leviathan' ? 'selected' : ''}`} 
+                  onClick={() => {
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'ice-leviathan' }));
+                    }
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'success',
+                        title: '🧊 Ice Leviathan Selected!',
+                        message: 'Ready to battle the frozen giant!',
+                        icon: '🧊',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
+                  <div className="boss-icon">🧊</div>
+                  <h4>Ice Leviathan</h4>
+                  <p>Frozen giant</p>
+                  <div className="boss-difficulty">⭐⭐⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'ice-leviathan' && <div className="selection-indicator">✓ Selected</div>}
+                </div>
+
+                <div 
+                  className={`boss-card ${gameState?.selectedBoss === 'storm-king' ? 'selected' : ''}`} 
+                  onClick={() => {
+                    if (setGameState) {
+                      setGameState(prev => ({ ...prev, selectedBoss: 'storm-king' }));
+                    }
+                    if (toastContext) {
+                      toastContext.showToast({
+                        type: 'success',
+                        title: '⛈️ Storm King Selected!',
+                        message: 'Ready to battle the weather controller!',
+                        icon: '⛈️',
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
+                  <div className="boss-icon">⛈️</div>
+                  <h4>Storm King</h4>
+                  <p>Weather-controlling entity</p>
+                  <div className="boss-difficulty">⭐⭐⭐⭐</div>
+                  <div className="boss-status">Available</div>
+                  {gameState?.selectedBoss === 'storm-king' && <div className="selection-indicator">✓ Selected</div>}
                 </div>
               </div>
             </div>
@@ -1954,8 +2263,42 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     // Handle boss battle trigger
     const handleBossBattle = (event: CustomEvent) => {
       console.log('Boss battle triggered:', event.detail);
-      // Spawn a boss immediately
-      spawnBoss();
+      // Spawn a boss using EnhancedBossSystem
+      if (canvasRef.current) {
+        const newBoss = enhancedBossSystem.current.spawnBoss(canvasRef.current, gameState.score);
+        if (newBoss) {
+          // Use selected boss type if available, otherwise use random
+          const bossType = gameState.selectedBoss || newBoss.type;
+          
+          // Convert EnhancedBossSystem Boss to App Boss format
+          const appBoss: Boss = {
+            x: newBoss.x,
+            y: newBoss.y,
+            width: newBoss.width,
+            height: newBoss.height,
+            speed: newBoss.speed,
+            health: newBoss.health,
+            maxHealth: newBoss.maxHealth,
+            type: bossType,
+            phase: 1,
+            maxPhases: 3,
+            lastShot: 0,
+            shootInterval: 1000,
+            specialAttackCooldown: 0,
+            movementPattern: 'zigzag',
+            isActive: true,
+            shield: 100,
+            maxShield: 100,
+            weakPoints: [
+              {x: -20, y: -20, width: 15, height: 15, destroyed: false},
+              {x: 5, y: -20, width: 15, height: 15, destroyed: false},
+              {x: -20, y: 5, width: 15, height: 15, destroyed: false},
+              {x: 5, y: 5, width: 15, height: 15, destroyed: false}
+            ]
+          };
+          setBosses(prev => [...prev, appBoss]);
+        }
+      }
       // Show boss battle notification
       if (toastContext) {
         toastContext.showToast({
@@ -2191,7 +2534,36 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     if (canvasRef.current) {
       const newBoss = enhancedBossSystem.current.spawnBoss(canvasRef.current, gameState.score);
       if (newBoss) {
-        setBosses(prev => [...prev, newBoss]);
+        // Use selected boss type if available, otherwise use random
+        const bossType = gameState.selectedBoss || newBoss.type;
+        
+        // Convert EnhancedBossSystem Boss to App Boss format
+        const appBoss: Boss = {
+          x: newBoss.x,
+          y: newBoss.y,
+          width: newBoss.width,
+          height: newBoss.height,
+          speed: newBoss.speed,
+          health: newBoss.health,
+          maxHealth: newBoss.maxHealth,
+          type: bossType,
+          phase: 1,
+          maxPhases: 3,
+          lastShot: 0,
+          shootInterval: 1000,
+          specialAttackCooldown: 0,
+          movementPattern: 'zigzag',
+          isActive: true,
+          shield: 100,
+          maxShield: 100,
+          weakPoints: [
+            {x: -20, y: -20, width: 15, height: 15, destroyed: false},
+            {x: 5, y: -20, width: 15, height: 15, destroyed: false},
+            {x: -20, y: 5, width: 15, height: 15, destroyed: false},
+            {x: 5, y: 5, width: 15, height: 15, destroyed: false}
+          ]
+        };
+        setBosses(prev => [...prev, appBoss]);
       }
     }
     
@@ -2446,7 +2818,9 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   
   const updateBosses = (deltaTime: number) => {
     // Use EnhancedBossSystem for boss updates
-    enhancedBossSystem.current.updateBosses(deltaTime);
+    if (canvasRef.current) {
+      enhancedBossSystem.current.updateBosses(canvasRef.current, player);
+    }
     
     setBosses(prev => prev.map(boss => {
       // Basic boss movement and health updates
