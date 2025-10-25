@@ -22,6 +22,7 @@ import { Enhanced3DGraphics } from './systems/Enhanced3DGraphics';
 import { BulletHellSystem } from './systems/BulletHellSystem';
 import { ProceduralGenerationSystem } from './systems/ProceduralGenerationSystem';
 import { spriteLoader } from './systems/SpriteLoader';
+import { ShipRenderer } from './graphics/ShipDesigns';
 // import { SocialFeaturesSystem } from './systems/SocialFeaturesSystem';
 // import { MonetizationSystem } from './systems/MonetizationSystem';
 
@@ -2229,180 +2230,22 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   };
   
   const drawPlayer = (ctx: CanvasRenderingContext2D) => {
-    ctx.save();
-    ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
-    
-    // Enhanced player ship design
-    const shipColor = selectedCharacter === 'kaden' ? '#4a90e2' : '#e24a90';
-    const accentColor = selectedCharacter === 'kaden' ? '#2c5aa0' : '#a02c5a';
-    
-    // Main ship body - enhanced triangle
-    ctx.fillStyle = shipColor;
-    ctx.strokeStyle = accentColor;
-    ctx.lineWidth = 2;
-    
-    ctx.beginPath();
-    ctx.moveTo(0, -20);  // Top point
-    ctx.lineTo(-18, 15); // Bottom left
-    ctx.lineTo(-8, 18);  // Left wing connection
-    ctx.lineTo(8, 18);   // Right wing connection
-    ctx.lineTo(18, 15);  // Bottom right
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    
-    // Wing extensions
-    ctx.fillStyle = shipColor;
-    ctx.strokeStyle = accentColor;
-    ctx.lineWidth = 1;
-    
-    // Left wing
-    ctx.beginPath();
-    ctx.moveTo(-8, 18);
-    ctx.lineTo(-12, 20);
-    ctx.lineTo(-6, 22);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    
-    // Right wing
-    ctx.beginPath();
-    ctx.moveTo(8, 18);
-    ctx.lineTo(12, 20);
-    ctx.lineTo(6, 22);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    
-    // Cockpit/canopy
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(0, -8, 6, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Cockpit highlight
-    ctx.fillStyle = '#e0e0e0';
-    ctx.beginPath();
-    ctx.arc(0, -10, 3, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Engine details
-    ctx.fillStyle = '#00ffff';
-    ctx.fillRect(-6, 18, 4, 6);
-    ctx.fillRect(2, 18, 4, 6);
-    
-    // Engine glow effect
-    const glow = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
-    ctx.fillStyle = `rgba(0, 255, 255, ${glow * 0.8})`;
-    ctx.fillRect(-8, 20, 6, 8);
-    ctx.fillRect(2, 20, 6, 8);
-    
-    // Ship outline glow
-    ctx.strokeStyle = `rgba(255, 255, 255, ${glow * 0.5})`;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, -20);
-    ctx.lineTo(-18, 15);
-    ctx.lineTo(-8, 18);
-    ctx.lineTo(8, 18);
-    ctx.lineTo(18, 15);
-    ctx.closePath();
-    ctx.stroke();
-    
-    ctx.restore();
+    // Use the new sci-fi ship designs
+    if (selectedCharacter === 'kaden') {
+      ShipRenderer.drawKadenShip(ctx, player.x, player.y, player.width, player.height, 0);
+    } else {
+      ShipRenderer.drawAdelynnShip(ctx, player.x, player.y, player.width, player.height, 0);
+    }
   };
 
   const drawWingFighters = (ctx: CanvasRenderingContext2D) => {
     wingFighters.forEach(wingFighter => {
-      ctx.save();
-      ctx.translate(wingFighter.x + wingFighter.width / 2, wingFighter.y + wingFighter.height / 2);
-      
-      // Wing fighter design - exact mini version of player ship
-      const shipColor = selectedCharacter === 'kaden' ? '#4a90e2' : '#e24a90';
-      const accentColor = selectedCharacter === 'kaden' ? '#2c5aa0' : '#a02c5a';
-      
-      // Main ship body - mini triangle (scaled down from player ship)
-      ctx.fillStyle = shipColor;
-      ctx.strokeStyle = accentColor;
-      ctx.lineWidth = 1;
-      
-      ctx.beginPath();
-      ctx.moveTo(0, -10);  // Top point (scaled from -20)
-      ctx.lineTo(-9, 7.5); // Bottom left (scaled from -18, 15)
-      ctx.lineTo(-4, 9);  // Left wing connection (scaled from -8, 18)
-      ctx.lineTo(4, 9);   // Right wing connection (scaled from 8, 18)
-      ctx.lineTo(9, 7.5);  // Bottom right (scaled from 18, 15)
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      
-      // Wing extensions - mini version
-      ctx.fillStyle = shipColor;
-      ctx.strokeStyle = accentColor;
-      ctx.lineWidth = 0.5;
-      
-      // Left wing
-      ctx.beginPath();
-      ctx.moveTo(-4, 9);
-      ctx.lineTo(-6, 10);
-      ctx.lineTo(-3, 11);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      
-      // Right wing
-      ctx.beginPath();
-      ctx.moveTo(4, 9);
-      ctx.lineTo(6, 10);
-      ctx.lineTo(3, 11);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      
-      // Cockpit/canopy - mini version
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(0, -4, 3, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Cockpit highlight
-      ctx.fillStyle = '#e0e0e0';
-      ctx.beginPath();
-      ctx.arc(0, -5, 1.5, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Engine details - mini version
-      ctx.fillStyle = '#00ffff';
-      ctx.fillRect(-3, 9, 2, 3);
-      ctx.fillRect(1, 9, 2, 3);
-      
-      // Engine glow effect
-      const glow = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
-      ctx.fillStyle = `rgba(0, 255, 255, ${glow * 0.8})`;
-      ctx.fillRect(-4, 10, 3, 4);
-      ctx.fillRect(1, 10, 3, 4);
-      
-      // Ship outline glow
-      ctx.strokeStyle = `rgba(255, 255, 255, ${glow * 0.5})`;
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(0, -10);
-      ctx.lineTo(-9, 7.5);
-      ctx.lineTo(-4, 9);
-      ctx.lineTo(4, 9);
-      ctx.lineTo(9, 7.5);
-      ctx.closePath();
-      ctx.stroke();
-      
-      // Wing fighter identification glow (different from player)
-      const wingGlow = Math.sin(Date.now() * 0.008 + wingFighter.id.length) * 0.4 + 0.6;
-      ctx.strokeStyle = `rgba(255, 170, 0, ${wingGlow * 0.3})`;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(0, 0, 8, 0, Math.PI * 2);
-      ctx.stroke();
-      
-      ctx.restore();
+      // Use the new sci-fi ship designs for wing fighters too
+      if (selectedCharacter === 'kaden') {
+        ShipRenderer.drawKadenShip(ctx, wingFighter.x, wingFighter.y, wingFighter.width, wingFighter.height, 0);
+      } else {
+        ShipRenderer.drawAdelynnShip(ctx, wingFighter.x, wingFighter.y, wingFighter.width, wingFighter.height, 0);
+      }
     });
   };
   
