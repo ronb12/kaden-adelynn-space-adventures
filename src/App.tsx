@@ -7,6 +7,7 @@ import { InputSystem } from './systems/InputSystem';
 import { DeviceOptimization } from './systems/DeviceOptimization';
 import TouchControls from './components/TouchControls';
 import ToastManager, { ToastContext } from './components/ToastManager';
+import { ShipRenderer } from './graphics/ShipDesigns';
 
 // iOS-compatible styles
 const gameButtonStyles = `
@@ -794,27 +795,46 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
       // Draw player ship
       drawPlayerShip(ctx, player, selectedCharacter);
       
-      // Draw bullets
+      // Draw bullets with better design
       bullets.forEach(bullet => {
-        ctx.fillStyle = bullet.type === 'player' ? '#00ff00' : '#ff0000';
-        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        ctx.save();
+        if (bullet.type === 'player') {
+          // Player bullets - energy beam style
+          ctx.fillStyle = '#00ff00';
+          ctx.shadowColor = '#00ff00';
+          ctx.shadowBlur = 5;
+          ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+          
+          // Bullet core
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowBlur = 0;
+          ctx.fillRect(bullet.x + 1, bullet.y + 1, bullet.width - 2, bullet.height - 2);
+        } else {
+          // Enemy bullets - plasma style
+          ctx.fillStyle = '#ff0000';
+          ctx.shadowColor = '#ff0000';
+          ctx.shadowBlur = 5;
+          ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+          
+          // Bullet core
+          ctx.fillStyle = '#ffaa00';
+          ctx.shadowBlur = 0;
+          ctx.fillRect(bullet.x + 1, bullet.y + 1, bullet.width - 2, bullet.height - 2);
+        }
+        ctx.restore();
       });
       
-      // Draw enemies
+      // Draw enemies using proper ship designs
       enemies.forEach(enemy => {
-        // Enemy ship body - bright red for visibility
-        ctx.fillStyle = '#ff0000';
-        ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+        // Use different enemy types for variety
+        const enemyTypes = ['basic', 'fast', 'heavy', 'zigzag'];
+        const enemyType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
         
-        // Enemy ship details - darker red for contrast
-        ctx.fillStyle = '#cc0000';
-        ctx.fillRect(enemy.x + 5, enemy.y + 5, enemy.width - 10, enemy.height - 10);
+        ShipRenderer.drawEnemyShip(ctx, enemy.x, enemy.y, enemy.width, enemy.height, enemyType);
         
-        // Health bar background
+        // Health bar
         ctx.fillStyle = '#ff0000';
         ctx.fillRect(enemy.x, enemy.y - 10, enemy.width, 4);
-        
-        // Health bar foreground
         ctx.fillStyle = '#00ff00';
         ctx.fillRect(enemy.x, enemy.y - 10, (enemy.health / enemy.maxHealth) * enemy.width, 4);
       });
@@ -913,50 +933,20 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     }
   };
 
-  // Draw player ship
+  // Draw player ship using proper ship designs
   const drawPlayerShip = (ctx: CanvasRenderingContext2D, player: any, character: string) => {
-    ctx.save();
-    ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
-    
-    // Ship body based on character
     if (character === 'kaden') {
-      // Kaden's ship - more angular
-      ctx.fillStyle = '#4A90E2';
-      ctx.beginPath();
-      ctx.moveTo(0, -player.height / 2);
-      ctx.lineTo(-player.width / 2, player.height / 2);
-      ctx.lineTo(0, player.height / 4);
-      ctx.lineTo(player.width / 2, player.height / 2);
-      ctx.closePath();
-      ctx.fill();
-      
-      // Ship details - subtle white accent
-      ctx.fillStyle = '#ffffff';
-      ctx.globalAlpha = 0.3;
-      ctx.fillRect(-player.width / 6, -player.height / 6, player.width / 3, player.height / 3);
-      ctx.globalAlpha = 1.0;
+      ShipRenderer.drawKadenShip(ctx, player.x, player.y, player.width, player.height);
     } else {
-      // Adelynn's ship - more rounded
-      ctx.fillStyle = '#E24A90';
-      ctx.beginPath();
-      ctx.ellipse(0, 0, player.width / 2, player.height / 2, 0, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Ship details - subtle white accent
-      ctx.fillStyle = '#ffffff';
-      ctx.globalAlpha = 0.3;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, player.width / 4, player.height / 4, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1.0;
+      ShipRenderer.drawAdelynnShip(ctx, player.x, player.y, player.width, player.height);
     }
     
     // Health bar
+    ctx.save();
     ctx.fillStyle = '#ff0000';
-    ctx.fillRect(-player.width / 2, -player.height / 2 - 15, player.width, 4);
+    ctx.fillRect(player.x, player.y - 15, player.width, 4);
     ctx.fillStyle = '#00ff00';
-    ctx.fillRect(-player.width / 2, -player.height / 2 - 15, player.width, 4);
-    
+    ctx.fillRect(player.x, player.y - 15, player.width, 4);
     ctx.restore();
   };
   
