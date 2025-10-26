@@ -513,74 +513,96 @@ const App: React.FC = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Draw UI background panel
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, canvas.width, 150);
+    // Draw professional UI background panel
+    const uiHeight = 120;
+    const uiGradient = ctx.createLinearGradient(0, 0, 0, uiHeight);
+    uiGradient.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
+    uiGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.6)');
+    uiGradient.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
     
-    // Draw gradient overlay
-    const gradient = ctx.createLinearGradient(0, 0, 0, 150);
-    gradient.addColorStop(0, 'rgba(0, 170, 255, 0.1)');
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, 150);
+    ctx.fillStyle = uiGradient;
+    ctx.fillRect(0, 0, canvas.width, uiHeight);
+    
+    // Add subtle border
+    ctx.strokeStyle = 'rgba(0, 170, 255, 0.2)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, uiHeight - 1, canvas.width, 1);
 
-    // Score with glow effect
-    ctx.shadowColor = '#00aaff';
-    ctx.shadowBlur = 10;
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 24px Orbitron';
-    ctx.fillText(`SCORE: ${gameState.score.toLocaleString()}`, 30, 40);
+    // Professional typography for UI
+    ctx.font = '600 20px Inter, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
     
-    // Lives with glow effect
-    ctx.shadowColor = '#ff4444';
+    // Score with professional styling
+    ctx.shadowColor = 'rgba(0, 170, 255, 0.6)';
     ctx.shadowBlur = 8;
-    ctx.fillText(`LIVES: ${playerRef.current.lives}`, 30, 70);
-    
-    // Health bar
-    const healthBarWidth = 200;
-    const healthBarHeight = 20;
-    const healthBarX = 30;
-    const healthBarY = 90;
-    
-    // Health bar background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(`SCORE`, 30, 20);
     ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.font = '700 24px Inter, sans-serif';
+    ctx.fillText(gameState.score.toLocaleString(), 30, 45);
+    
+    // Lives with professional styling
+    ctx.font = '600 20px Inter, sans-serif';
+    ctx.shadowColor = 'rgba(255, 68, 68, 0.6)';
+    ctx.shadowBlur = 8;
+    ctx.fillText(`LIVES`, 30, 70);
+    ctx.shadowBlur = 0;
+    ctx.font = '700 24px Inter, sans-serif';
+    ctx.fillText(playerRef.current.lives.toString(), 30, 95);
+    
+    // Professional health bar
+    const healthBarWidth = 180;
+    const healthBarHeight = 8;
+    const healthBarX = 200;
+    const healthBarY = 25;
+    
+    // Health bar background with rounded corners
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.fillRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
     
-    // Health bar fill
+    // Health bar fill with gradient
     const healthPercentage = playerRef.current.health / playerRef.current.maxHealth;
-    const healthColor = healthPercentage > 0.6 ? '#00ff00' : healthPercentage > 0.3 ? '#ffff00' : '#ff0000';
+    const healthGradient = ctx.createLinearGradient(healthBarX, 0, healthBarX + healthBarWidth, 0);
     
-    ctx.fillStyle = healthColor;
-    ctx.shadowColor = healthColor;
-    ctx.shadowBlur = 5;
+    if (healthPercentage > 0.6) {
+      healthGradient.addColorStop(0, '#00ff88');
+      healthGradient.addColorStop(1, '#00cc66');
+    } else if (healthPercentage > 0.3) {
+      healthGradient.addColorStop(0, '#ffaa00');
+      healthGradient.addColorStop(1, '#ff8800');
+    } else {
+      healthGradient.addColorStop(0, '#ff4444');
+      healthGradient.addColorStop(1, '#cc2222');
+    }
+    
+    ctx.fillStyle = healthGradient;
     ctx.fillRect(healthBarX, healthBarY, healthBarWidth * healthPercentage, healthBarHeight);
     
     // Health text
-    ctx.shadowBlur = 0;
+    ctx.font = '600 16px Inter, sans-serif';
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 16px Orbitron';
-    ctx.fillText(`HEALTH: ${playerRef.current.health}/${playerRef.current.maxHealth}`, healthBarX, healthBarY - 5);
+    ctx.fillText(`HEALTH`, healthBarX, healthBarY - 20);
     
-    // Level
-    ctx.shadowColor = '#ffff00';
-    ctx.shadowBlur = 8;
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 20px Orbitron';
-    ctx.fillText(`LEVEL: ${gameState.level}`, canvas.width - 200, 40);
+    // Level and time on the right
+    ctx.font = '600 18px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.shadowColor = 'rgba(255, 255, 0, 0.6)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(`LEVEL ${gameState.level}`, canvas.width - 30, 25);
     
-    // Game time
-    ctx.shadowColor = '#00ffff';
-    ctx.shadowBlur = 8;
-    ctx.fillText(`TIME: ${Math.floor(gameState.gameTime / 1000)}s`, canvas.width - 200, 70);
+    ctx.shadowColor = 'rgba(0, 255, 255, 0.6)';
+    ctx.fillText(`${Math.floor(gameState.gameTime / 1000)}s`, canvas.width - 30, 50);
     
-    // Instructions
+    // Professional instructions
     ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.font = '14px Orbitron';
-    ctx.fillText('ARROW KEYS: MOVE | SPACE: SHOOT | ESC: PAUSE', canvas.width / 2 - 200, canvas.height - 20);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '500 14px Inter, sans-serif';
+    ctx.fillText('ARROW KEYS: MOVE • SPACE: SHOOT • ESC: PAUSE', canvas.width / 2, canvas.height - 15);
     
     ctx.shadowBlur = 0;
+    ctx.textAlign = 'left';
   }, [gameState]);
 
   const startGame = () => {
