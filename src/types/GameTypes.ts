@@ -1,38 +1,22 @@
+// Game Types for Triangle Ship Space Adventure
 export interface Player {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  speed: number;
-  maxSpeed: number;
-  health: number;
-  maxHealth: number;
-  invulnerable: boolean;
-  invulnerabilityTime: number;
-  level: number;
-  xp: number;
-  maxXP: number;
-  hasShield: boolean;
-  shieldTime: number;
-  rapidFire: boolean;
-  rapidFireTime: number;
-  doubleShot: boolean;
-  wingFighters: WingFighter[];
-}
-
-export interface WingFighter {
   id: string;
   x: number;
   y: number;
   width: number;
   height: number;
   speed: number;
-  targetX: number;
-  targetY: number;
-  offset: number;
+  health: number;
+  maxHealth: number;
+  lives: number;
+  score: number;
+  invulnerable: boolean;
+  invulnerabilityTime: number;
+  character: 'kaden' | 'adelynn';
 }
 
 export interface Enemy {
+  id: string;
   x: number;
   y: number;
   width: number;
@@ -40,11 +24,34 @@ export interface Enemy {
   speed: number;
   health: number;
   maxHealth: number;
-  type: string;
-  color: string;
-  movementPattern: string;
-  lastDirectionChange: number;
+  type: 'basic' | 'fast' | 'heavy' | 'zigzag';
   direction: number;
+  shootTimer: number;
+}
+
+export interface Bullet {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  speed: number;
+  direction: number;
+  type: 'player' | 'enemy';
+  damage: number;
+  owner: string;
+}
+
+export interface Collectible {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  type: 'health' | 'shield' | 'score' | 'power' | 'speed' | 'ammo';
+  value: number;
+  duration?: number;
+  collected: boolean;
 }
 
 export interface Boss {
@@ -56,81 +63,20 @@ export interface Boss {
   health: number;
   maxHealth: number;
   speed: number;
-  type: string;
-  color: string;
-  attackPattern: string;
-  lastAttack: number;
-  attackCooldown: number;
+  type: 'destroyer' | 'battleship';
+  shootTimer: number;
   phase: number;
-  maxPhase: number;
 }
 
-export interface Bullet {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  speed: number;
-  type: string;
-  color: string;
-  damage: number;
-  owner: 'player' | 'enemy' | 'boss';
-  direction?: number;
-}
-
-export interface PowerUp {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  type: string;
-  color: string;
-  icon: string;
-  duration: number;
-  value: number;
-}
-
-export interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  unlocked: boolean;
-  unlockedAt?: Date;
-  progress: number;
-  maxProgress: number;
-}
-
-export interface GameStats {
+export interface GameState {
   score: number;
-  highScore: number;
   lives: number;
   health: number;
-  maxHealth: number;
-  combo: number;
-  killStreak: number;
-  maxCombo: number;
-  maxKillStreak: number;
-  playerLevel: number;
-  playerXP: number;
-  bossesDefeated: number;
-  enemiesDestroyed: number;
-  powerUpsCollected: number;
+  level: number;
   gameTime: number;
-  difficulty: 'easy' | 'medium' | 'hard';
-  wingFighters: number;
-  shieldsUsed: number;
-  weaponsUsed: number;
-  livesLost: number;
-  shieldTime: number;
-  rapidFireTime: number;
-  doubleShotTime: number;
-  rapidFireUses: number;
-  doubleShotUses: number;
-  shieldUses: number;
-  speedBoostUses: number;
-  healthBoostUses: number;
-  scoreMultiplierUses: number;
+  isPlaying: boolean;
+  isPaused: boolean;
+  gameOver: boolean;
 }
 
-export type GameState = 'menu' | 'playing' | 'paused' | 'gameOver' | 'settings';
+export type GameScene = 'menu' | 'playing' | 'paused' | 'gameOver' | 'character' | 'settings';
