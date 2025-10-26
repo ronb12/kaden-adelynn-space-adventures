@@ -66,16 +66,47 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
+  overflow-y: auto;
+  padding: 20px 10px;
+  min-height: 100vh;
+  scroll-behavior: smooth;
+}
+
+/* Scroll indicator */
+.main-menu::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-menu::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.main-menu::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.6);
+  border-radius: 4px;
+}
+
+.main-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.8);
 }
 
 /* Title Section */
 .title-section {
-  position: relative;
+  position: sticky;
+  top: 0;
   text-align: center;
   margin-bottom: 40px;
-  z-index: 2;
+  margin-top: 20px;
+  z-index: 10;
+  width: 100%;
+  max-width: 800px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(26, 26, 46, 0.8));
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid rgba(0, 212, 255, 0.3);
 }
 
 .title-bg {
@@ -127,6 +158,8 @@ body {
   gap: 20px;
   margin-bottom: 40px;
   z-index: 2;
+  width: 100%;
+  max-width: 400px;
 }
 
 .select-pilot-btn, .start-mission-btn, .settings-btn {
@@ -177,6 +210,8 @@ body {
   gap: 20px;
   margin-bottom: 40px;
   z-index: 2;
+  width: 100%;
+  max-width: 600px;
 }
 
 .feature-row {
@@ -229,12 +264,16 @@ body {
 
 /* Game Info */
 .game-info {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: none;
   text-align: center;
   z-index: 2;
+  width: 100%;
+  max-width: 600px;
+  margin-top: 20px;
+  padding: 0 20px;
 }
 
 .info-panel {
@@ -2048,6 +2087,82 @@ kbd {
     height: 35px;
     font-size: 10px;
   }
+  
+  /* Extra Small Mobile Main Menu Fixes */
+  .main-menu {
+    padding: 10px 3px;
+  }
+  
+  .title-section {
+    margin-bottom: 20px;
+    padding: 0 3px;
+  }
+  
+  .main-title {
+    font-size: 22px;
+    line-height: 1.0;
+    margin-bottom: 10px;
+  }
+  
+  .subtitle {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  .tagline {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  
+  .main-buttons {
+    margin-bottom: 20px;
+    gap: 10px;
+  }
+  
+  .select-pilot-btn, .start-mission-btn {
+    width: 240px;
+    height: 48px;
+    font-size: 15px;
+    padding: 10px 15px;
+  }
+  
+  .settings-btn {
+    width: 160px;
+    height: 42px;
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+  
+  .feature-buttons {
+    margin-bottom: 20px;
+    gap: 10px;
+  }
+  
+  .feature-row {
+    gap: 10px;
+  }
+  
+  .feature-btn {
+    width: 90px;
+    height: 32px;
+    font-size: 9px;
+    padding: 6px 8px;
+  }
+  
+  .game-info {
+    margin-top: 12px;
+    padding: 0 3px;
+  }
+  
+  .info-panel {
+    margin-bottom: 10px;
+    padding: 10px;
+    font-size: 11px;
+  }
+  
+  .branding {
+    font-size: 9px;
+  }
 }
 
 /* Mobile Responsive Canvas */
@@ -2244,6 +2359,78 @@ kbd {
   .top-3-comparison {
     padding: 12px;
   }
+  
+  /* Mobile Main Menu Fixes */
+  .main-menu {
+    padding: 20px 10px;
+    min-height: 100vh;
+    overflow-y: auto;
+    justify-content: flex-start;
+  }
+  
+  .title-section {
+    margin-bottom: 30px;
+    margin-top: 10px;
+    padding: 0 10px;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .main-title {
+    font-size: 32px;
+    line-height: 1.2;
+    margin-bottom: 15px;
+    word-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  .subtitle {
+    font-size: 18px;
+    margin-bottom: 15px;
+    word-wrap: break-word;
+  }
+  
+  .tagline {
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+  }
+  
+  .main-buttons {
+    margin-bottom: 30px;
+    gap: 15px;
+  }
+  
+  .feature-buttons {
+    margin-bottom: 30px;
+    gap: 15px;
+  }
+  
+  .feature-row {
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .game-info {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    margin-top: 20px;
+    padding: 0 10px;
+  }
+  
+  .info-panel {
+    margin-bottom: 15px;
+    padding: 15px;
+    font-size: 13px;
+  }
+  
+  .branding {
+    font-size: 11px;
+    text-align: center;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2274,6 +2461,82 @@ kbd {
   
   .top-3-comparison p {
     font-size: 12px;
+  }
+  
+  /* Small Mobile Main Menu Fixes */
+  .main-menu {
+    padding: 15px 5px;
+  }
+  
+  .title-section {
+    margin-bottom: 25px;
+    padding: 0 5px;
+  }
+  
+  .main-title {
+    font-size: 28px;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+  
+  .subtitle {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  
+  .tagline {
+    font-size: 13px;
+    line-height: 1.3;
+  }
+  
+  .main-buttons {
+    margin-bottom: 25px;
+    gap: 12px;
+  }
+  
+  .select-pilot-btn, .start-mission-btn {
+    width: 280px;
+    height: 55px;
+    font-size: 18px;
+    padding: 12px 20px;
+  }
+  
+  .settings-btn {
+    width: 180px;
+    height: 45px;
+    font-size: 16px;
+    padding: 10px 15px;
+  }
+  
+  .feature-buttons {
+    margin-bottom: 25px;
+    gap: 12px;
+  }
+  
+  .feature-row {
+    gap: 12px;
+  }
+  
+  .feature-btn {
+    width: 120px;
+    height: 40px;
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+  
+  .game-info {
+    margin-top: 15px;
+    padding: 0 5px;
+  }
+  
+  .info-panel {
+    margin-bottom: 12px;
+    padding: 12px;
+    font-size: 12px;
+  }
+  
+  .branding {
+    font-size: 10px;
   }
 }
 

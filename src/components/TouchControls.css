@@ -84,12 +84,12 @@
   box-shadow: 0 6px 20px rgba(255, 100, 100, 0.6);
 }
 
-/* Weapon Buttons */
+/* Weapon Buttons - Hidden by default, only show when needed */
 .weapon-buttons {
   position: absolute;
   top: 20px;
   right: 20px;
-  display: flex;
+  display: none; /* Hidden by default */
   flex-direction: column;
   gap: 10px;
   pointer-events: auto;
