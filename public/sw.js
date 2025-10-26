@@ -2,7 +2,7 @@
 // Version: 1.0.0
 // Cache Strategy: Cache First with Network Fallback
 
-const CACHE_NAME = 'kaden-adelynn-space-adventures-v1.0.1';
+const CACHE_NAME = 'kaden-adelynn-space-adventures-v2.0.0';
 const urlsToCache = [
   '/',
   '/index.html',
