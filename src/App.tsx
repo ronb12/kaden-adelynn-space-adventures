@@ -110,13 +110,33 @@ const App: React.FC = () => {
     ctx.fillStyle = '#000011';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw starfield background
+    // Draw enhanced starfield background
+    const time = Date.now() * 0.001;
     ctx.fillStyle = '#ffffff';
-    for (let i = 0; i < 100; i++) {
-      const x = (i * 37) % canvas.width;
-      const y = (i * 23 + Date.now() * 0.1) % canvas.height;
-      ctx.fillRect(x, y, 1, 1);
+    
+    // Create multiple layers of stars
+    for (let layer = 0; layer < 3; layer++) {
+      const starCount = layer === 0 ? 200 : layer === 1 ? 100 : 50;
+      const starSize = layer === 0 ? 1 : layer === 1 ? 2 : 3;
+      const starSpeed = (layer + 1) * 0.1;
+      const starOpacity = layer === 0 ? 0.8 : layer === 1 ? 0.6 : 0.4;
+      
+      ctx.globalAlpha = starOpacity;
+      ctx.fillStyle = layer === 0 ? '#ffffff' : layer === 1 ? '#cccccc' : '#aaaaaa';
+      
+      for (let i = 0; i < starCount; i++) {
+        const x = (i * 37) % canvas.width;
+        const y = (i * 23 + time * starSpeed * 100) % canvas.height;
+        
+        // Add twinkling effect
+        const twinkle = Math.sin(time * 2 + i) * 0.5 + 0.5;
+        ctx.globalAlpha = starOpacity * twinkle;
+        
+        ctx.fillRect(x, y, starSize, starSize);
+      }
     }
+    
+    ctx.globalAlpha = 1;
 
     // Update game time
     setGameState(prev => ({
@@ -493,19 +513,74 @@ const App: React.FC = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Score
+    // Draw UI background panel
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, canvas.width, 150);
+    
+    // Draw gradient overlay
+    const gradient = ctx.createLinearGradient(0, 0, 0, 150);
+    gradient.addColorStop(0, 'rgba(0, 170, 255, 0.1)');
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, 150);
+
+    // Score with glow effect
+    ctx.shadowColor = '#00aaff';
+    ctx.shadowBlur = 10;
     ctx.fillStyle = '#ffffff';
-    ctx.font = '20px Arial';
-    ctx.fillText(`Score: ${gameState.score}`, 20, 30);
+    ctx.font = 'bold 24px Orbitron';
+    ctx.fillText(`SCORE: ${gameState.score.toLocaleString()}`, 30, 40);
     
-    // Lives
-    ctx.fillText(`Lives: ${playerRef.current.lives}`, 20, 60);
+    // Lives with glow effect
+    ctx.shadowColor = '#ff4444';
+    ctx.shadowBlur = 8;
+    ctx.fillText(`LIVES: ${playerRef.current.lives}`, 30, 70);
     
-    // Health
-    ctx.fillText(`Health: ${playerRef.current.health}/${playerRef.current.maxHealth}`, 20, 90);
+    // Health bar
+    const healthBarWidth = 200;
+    const healthBarHeight = 20;
+    const healthBarX = 30;
+    const healthBarY = 90;
+    
+    // Health bar background
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.fillRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
+    
+    // Health bar fill
+    const healthPercentage = playerRef.current.health / playerRef.current.maxHealth;
+    const healthColor = healthPercentage > 0.6 ? '#00ff00' : healthPercentage > 0.3 ? '#ffff00' : '#ff0000';
+    
+    ctx.fillStyle = healthColor;
+    ctx.shadowColor = healthColor;
+    ctx.shadowBlur = 5;
+    ctx.fillRect(healthBarX, healthBarY, healthBarWidth * healthPercentage, healthBarHeight);
+    
+    // Health text
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 16px Orbitron';
+    ctx.fillText(`HEALTH: ${playerRef.current.health}/${playerRef.current.maxHealth}`, healthBarX, healthBarY - 5);
     
     // Level
-    ctx.fillText(`Level: ${gameState.level}`, 20, 120);
+    ctx.shadowColor = '#ffff00';
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 20px Orbitron';
+    ctx.fillText(`LEVEL: ${gameState.level}`, canvas.width - 200, 40);
+    
+    // Game time
+    ctx.shadowColor = '#00ffff';
+    ctx.shadowBlur = 8;
+    ctx.fillText(`TIME: ${Math.floor(gameState.gameTime / 1000)}s`, canvas.width - 200, 70);
+    
+    // Instructions
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = '14px Orbitron';
+    ctx.fillText('ARROW KEYS: MOVE | SPACE: SHOOT | ESC: PAUSE', canvas.width / 2 - 200, canvas.height - 20);
+    
+    ctx.shadowBlur = 0;
   }, [gameState]);
 
   const startGame = () => {
