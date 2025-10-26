@@ -1,1052 +1,911 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 
-// Import game systems
-import { CompleteGameIntegration } from './systems/CompleteGameIntegration';
-import { InputSystem } from './systems/InputSystem';
-import { DeviceOptimization } from './systems/DeviceOptimization';
-import TouchControls from './components/TouchControls';
-import ToastManager, { ToastContext } from './components/ToastManager';
+// Import all the new systems
+import { PowerUpSystem } from './systems/PowerUpSystem';
+import { WingFighterSystem } from './systems/WingFighterSystem';
+import { ShieldSystem } from './systems/ShieldSystem';
+import { ComboSystem } from './systems/ComboSystem';
+import { KillStreakSystem } from './systems/KillStreakSystem';
+import { EnhancedBossSystem } from './systems/EnhancedBossSystem';
+import { EnhancedEnemySystem } from './systems/EnhancedEnemySystem';
+import { EnhancedAchievementSystem } from './systems/EnhancedAchievementSystem';
+import { AudioSystem } from './systems/AudioSystem';
+import { DifficultySystem } from './systems/DifficultySystem';
+import { MobileSystem } from './systems/MobileSystem';
+import ResponsiveSystem from './systems/ResponsiveSystem';
+
+// Import new features
+import { Storyline } from './story/Storyline';
 import { ShipRenderer } from './graphics/ShipDesigns';
+import { KadenSpriteRenderer } from './graphics/KadenSprite';
+import { AdelynnSpriteRenderer } from './graphics/AdelynnSprite';
+import SettingsPanel from './components/SettingsPanel';
+import CharacterSelection from './components/CharacterSelection';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
-// iOS-compatible styles
-const gameButtonStyles = `
-  .game-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    justify-content: center;
-  }
-  
-  .game-btn {
-    padding: 10px 20px;
-    border: 2px solid #3498db;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #2c3e50, #34495e);
-    color: #ecf0f1;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-  }
-  
-  .game-btn:hover {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
-  }
-  
-  /* iOS-specific styles */
-  @supports (-webkit-touch-callout: none) {
-    .game-btn {
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    canvas {
-      -webkit-transform: translateZ(0);
-      transform: translateZ(0);
-    }
-  }
-  
-  /* iOS viewport height fix */
-  :root {
-    --vh: 1vh;
-  }
-  
-  .app {
-    height: 100vh;
-    height: calc(var(--vh, 1vh) * 100);
-  }
-  
-  @media (max-width: 768px) {
-    .game-buttons {
-      flex-direction: column;
-      align-items: center;
-    }
-    
-    .game-btn {
-      width: 200px;
-    }
-  }
-`;
+// Import types
+import { Player, Enemy, Bullet, PowerUp, Boss, GameStats, GameState } from './types/GameTypes';
 
-// Inject styles
-if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement('style');
-  styleSheet.textContent = gameButtonStyles;
-  document.head.appendChild(styleSheet);
-}
-
-// Game Settings Interface
-interface GameSettings {
-  audio: {
-    masterVolume: number;
-    musicVolume: number;
-    soundEffectsVolume: number;
-    voiceVolume: number;
-  };
-  graphics: {
-    quality: 'Low' | 'Medium' | 'High' | 'Ultra';
-    resolution: string;
-    fullscreen: boolean;
-    vsync: boolean;
-    particles: boolean;
-    shadows: boolean;
-  };
-  controls: {
-    keyBindings: {
-      moveUp: string;
-      moveDown: string;
-      moveLeft: string;
-      moveRight: string;
-      shoot: string;
-      pause: string;
-    };
-    mouseSensitivity: number;
-    controllerEnabled: boolean;
-  };
-  accessibility: {
-    colorBlindMode: boolean;
-    highContrast: boolean;
-    largeText: boolean;
-    screenReader: boolean;
-  };
-}
-
-// Game State Interface
-interface GameState {
-  currentScene: 'menu' | 'game' | 'settings' | 'achievements' | 'boss' | 'powerups' | 'multiplayer' | 'story' | 'challenges';
-  selectedCharacter: 'kaden' | 'adelynn';
-  settings: GameSettings;
-  gameStats: {
-    enemiesKilled: number;
-    bossesKilled: number;
-    killStreak: number;
-    maxKillStreak: number;
-    powerUpsCollected: number;
-    weaponsUsed: number;
-    perfectHits: number;
-    shotsFired: number;
-    bulletsDodged: number;
-    damageTaken: number;
-    survivalTime: number;
-    levelTime: number;
-    maxCombo: number;
-    currentCombo: number;
-    survivedWith1HP: boolean;
-    powerUpTypesCollected: Set<string>;
-    achievementsUnlocked: number;
-  };
-}
-
-// Main App Component
 const App: React.FC = () => {
-  // Initialize game integration
-  const gameIntegration = useRef<CompleteGameIntegration | null>(null);
-  const toastContext = React.useContext(ToastContext);
-  
-  // Initialize input and device systems
-  const inputSystem = useRef<InputSystem | null>(null);
-  const deviceOptimization = useRef<DeviceOptimization | null>(null);
-  const [deviceInfo, setDeviceInfo] = useState<any>(null);
-  const [showTouchControls, setShowTouchControls] = useState(false);
-  
-  const [gameState, setGameState] = useState<GameState>({
-    currentScene: 'menu',
-    selectedCharacter: 'kaden',
-    settings: {
-      audio: {
-        masterVolume: 80,
-        musicVolume: 70,
-        soundEffectsVolume: 90,
-        voiceVolume: 80
-      },
-      graphics: {
-        quality: 'High',
-        resolution: '1920x1080',
-        fullscreen: false,
-        vsync: true,
-        particles: true,
-        shadows: true
-      },
-      controls: {
-        keyBindings: {
-          moveUp: 'ArrowUp',
-          moveDown: 'ArrowDown',
-          moveLeft: 'ArrowLeft',
-          moveRight: 'ArrowRight',
-          shoot: 'Space',
-          pause: 'Escape'
-        },
-        mouseSensitivity: 1.0,
-        controllerEnabled: true
-      },
-      accessibility: {
-        colorBlindMode: false,
-        highContrast: false,
-        largeText: false,
-        screenReader: false
-      }
-    },
-    gameStats: {
-      enemiesKilled: 0,
-      bossesKilled: 0,
-      killStreak: 0,
-      maxKillStreak: 0,
-      powerUpsCollected: 0,
-      weaponsUsed: 0,
-      perfectHits: 0,
-      shotsFired: 0,
-      bulletsDodged: 0,
-      damageTaken: 0,
-      survivalTime: 0,
-      levelTime: 0,
-      maxCombo: 0,
-      currentCombo: 0,
-      survivedWith1HP: false,
-      powerUpTypesCollected: new Set(),
-      achievementsUnlocked: 0
-    }
-  });
-
-  const [showModal, setShowModal] = useState<string | null>(null);
-  const [achievements, setAchievements] = useState<Array<{id: string, name: string, description: string, unlocked: boolean, progress: number, maxProgress: number}>>([
-    { id: 'first_kill', name: 'First Blood', description: 'Kill your first enemy', unlocked: false, progress: 0, maxProgress: 1 },
-    { id: 'survivor', name: 'Survivor', description: 'Survive for 60 seconds', unlocked: false, progress: 0, maxProgress: 60 },
-    { id: 'combo_master', name: 'Combo Master', description: 'Achieve a 10x combo', unlocked: false, progress: 0, maxProgress: 10 }
-  ]);
-
-  // Initialize game integration
-  useEffect(() => {
-    const initializeGame = async () => {
-      try {
-        if (!gameIntegration.current) {
-          gameIntegration.current = new CompleteGameIntegration();
-          console.log('🎮 Game integration initialized');
-          gameIntegration.current.start();
-          console.log('✅ Game initialization complete');
-        }
-      } catch (error) {
-        console.error('Failed to initialize game:', error);
-      }
-    };
-    
-    initializeGame();
-    
-    return () => {
-      if (gameIntegration.current) {
-        gameIntegration.current.destroy();
-      }
-    };
-  }, []);
-  
-  // iOS-specific initialization
-  useEffect(() => {
-    const initializeIOS = () => {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
-        console.log('🍎 iOS initialization starting...');
-        
-        // Force hardware acceleration
-        const canvas = document.querySelector('canvas');
-        if (canvas) {
-          canvas.style.transform = 'translateZ(0)';
-          canvas.style.webkitTransform = 'translateZ(0)';
-        }
-        
-        // Prevent iOS Safari from hiding the address bar
-        window.addEventListener('orientationchange', () => {
-          setTimeout(() => {
-            window.scrollTo(0, 1);
-          }, 100);
-        });
-        
-        // Handle iOS viewport changes
-        const handleViewportChange = () => {
-          const vh = window.innerHeight * 0.01;
-          document.documentElement.style.setProperty('--vh', `${vh}px`);
-        };
-        
-        window.addEventListener('resize', handleViewportChange);
-        window.addEventListener('orientationchange', handleViewportChange);
-        handleViewportChange();
-        
-        // iOS touch event optimization
-        document.addEventListener('touchstart', (e) => {
-          if (e.touches.length > 1) {
-            e.preventDefault();
-          }
-        }, { passive: false });
-        
-        document.addEventListener('touchmove', (e) => {
-          if (e.touches.length > 1) {
-            e.preventDefault();
-          }
-        }, { passive: false });
-        
-        console.log('🍎 iOS initialization complete');
-      }
-    };
-    
-    initializeIOS();
-  }, []);
-
-  // Initialize input and device systems
-  useEffect(() => {
-    if (!deviceOptimization.current) {
-      deviceOptimization.current = new DeviceOptimization();
-      const device = deviceOptimization.current.getDeviceInfo();
-      setDeviceInfo(device);
-      setShowTouchControls(device.hasTouch && (device.type === 'mobile' || device.type === 'tablet'));
-      console.log('📱 Device detected:', device);
-      
-      // iOS-specific optimizations
-      if (device.platform === 'ios') {
-        console.log('🍎 iOS device detected - applying optimizations');
-        
-        // Prevent zoom on double tap
-        let lastTouchEnd = 0;
-        const preventZoom = (e: TouchEvent) => {
-          const now = new Date().getTime();
-          if (now - lastTouchEnd <= 300) {
-            e.preventDefault();
-          }
-          lastTouchEnd = now;
-        };
-        
-        // Prevent pull-to-refresh
-        const preventPullToRefresh = (e: TouchEvent) => {
-          if (e.touches.length > 1) {
-            e.preventDefault();
-          }
-        };
-        
-        // Prevent context menu
-        const preventContextMenu = (e: Event) => {
-          e.preventDefault();
-        };
-        
-        // Add event listeners
-        document.addEventListener('touchend', preventZoom, { passive: false });
-        document.addEventListener('touchmove', preventPullToRefresh, { passive: false });
-        document.addEventListener('contextmenu', preventContextMenu);
-        
-        // iOS Safari specific optimizations
-        if (device.browser === 'safari') {
-          // Prevent bounce scrolling
-          document.body.style.overflow = 'hidden';
-          document.body.style.position = 'fixed';
-          document.body.style.width = '100%';
-          document.body.style.height = '100%';
-          
-          // Hide address bar
-          window.addEventListener('load', () => {
-            setTimeout(() => {
-              window.scrollTo(0, 1);
-            }, 0);
-          });
-        }
-        
-        // Add iOS-specific meta tags if not present
-        const addIOSMetaTags = () => {
-          const existingViewport = document.querySelector('meta[name="viewport"]');
-          if (!existingViewport) {
-            const viewport = document.createElement('meta');
-            viewport.name = 'viewport';
-            viewport.content = 'width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0, shrink-to-fit=no';
-            document.head.appendChild(viewport);
-          }
-          
-          // Add iOS status bar styling
-          const existingStatusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
-          if (!existingStatusBar) {
-            const statusBar = document.createElement('meta');
-            statusBar.name = 'apple-mobile-web-app-status-bar-style';
-            statusBar.content = 'black-translucent';
-            document.head.appendChild(statusBar);
-          }
-          
-          // Add iOS web app capabilities
-          const existingWebApp = document.querySelector('meta[name="apple-mobile-web-app-capable"]');
-          if (!existingWebApp) {
-            const webApp = document.createElement('meta');
-            webApp.name = 'apple-mobile-web-app-capable';
-            webApp.content = 'yes';
-            document.head.appendChild(webApp);
-          }
-        };
-        
-        addIOSMetaTags();
-      }
-    }
-    
-    if (!inputSystem.current) {
-      inputSystem.current = new InputSystem();
-      console.log('🎮 Input system initialized');
-    }
-  }, []);
-
-  // Handle scene changes
-  const changeScene = (scene: GameState['currentScene']) => {
-    setGameState(prev => ({ ...prev, currentScene: scene }));
-  };
-
-  // Handle character selection
-  const selectCharacter = (character: 'kaden' | 'adelynn') => {
-    setGameState(prev => ({ ...prev, selectedCharacter: character }));
-  };
-
-  // Handle modal display
-  const showFeatureModal = (feature: string) => {
-    setShowModal(feature);
-  };
-
-  const closeModal = () => {
-    setShowModal(null);
-  };
-
-  // Handle settings updates
-  const updateSettings = (newSettings: Partial<GameSettings>) => {
-    setGameState(prev => ({
-      ...prev,
-      settings: { ...prev.settings, ...newSettings }
-    }));
-  };
-
-  // Render current scene
-  const renderScene = () => {
-    switch (gameState.currentScene) {
-      case 'game':
-        return <GameScene 
-          onSceneChange={changeScene}
-          selectedCharacter={gameState.selectedCharacter}
-          gameStats={gameState.gameStats}
-          achievements={achievements}
-          setAchievements={setAchievements}
-          inputSystem={inputSystem.current}
-          deviceInfo={deviceInfo}
-          showTouchControls={showTouchControls}
-          gameIntegration={gameIntegration.current}
-        />;
-      default:
-        return <MainMenu 
-          onSceneChange={changeScene}
-          onCharacterSelect={selectCharacter}
-          selectedCharacter={gameState.selectedCharacter}
-          onShowModal={showFeatureModal}
-        />;
-    }
-  };
-
-  return (
-    <ToastManager>
-      <div className="app">
-        {renderScene()}
-        
-        {/* Feature Modals */}
-        {showModal === 'settings' && (
-          <SettingsModal 
-            onClose={closeModal}
-            settings={gameState.settings}
-            onUpdateSettings={updateSettings}
-          />
-        )}
-      </div>
-    </ToastManager>
-  );
-};
-
-// Main Menu Component
-interface MainMenuProps {
-  onSceneChange: (scene: GameState['currentScene']) => void;
-  onCharacterSelect: (character: 'kaden' | 'adelynn') => void;
-  selectedCharacter: 'kaden' | 'adelynn';
-  onShowModal: (feature: string) => void;
-}
-
-const MainMenu: React.FC<MainMenuProps> = ({ onSceneChange, onCharacterSelect, selectedCharacter, onShowModal }) => {
-  const [showCharacterModal, setShowCharacterModal] = useState(false);
-
-  return (
-    <div className="main-menu">
-      {/* Modern Background */}
-      <div className="background">
-        <div className="stars"></div>
-        <div className="grid"></div>
-      </div>
-      
-      <div className="title-section">
-        <div className="title-bg"></div>
-        <h1 className="main-title">🚀 Kaden & Adelynn Space Adventures</h1>
-        <h2 className="subtitle">Epic 2D Space Shooter</h2>
-        <p className="tagline">Fight aliens, collect power-ups, defeat bosses, and save the galaxy!</p>
-      </div>
-      
-      <div className="main-buttons">
-        <button 
-          className="select-pilot-btn"
-          onClick={() => setShowCharacterModal(true)}
-        >
-          👦🏿👧 Select Your Pilot
-        </button>
-        
-        <button 
-          className="start-mission-btn"
-          onClick={() => onSceneChange('game')}
-        >
-          🚀 Start Mission
-        </button>
-        
-        <button 
-          className="settings-btn"
-          onClick={() => onShowModal('settings')}
-        >
-          ⚙️ Settings
-        </button>
-      </div>
-      
-      <div className="feature-buttons">
-        <div className="feature-row">
-          <button className="feature-btn achievements" onClick={() => onShowModal('achievements')}>
-            🏆 Achievements
-          </button>
-          <button className="feature-btn boss" onClick={() => onShowModal('boss')}>
-            👹 Boss Battles
-          </button>
-          <button className="feature-btn powerups" onClick={() => onShowModal('powerups')}>
-            ⚡ Power-ups
-          </button>
-        </div>
-        
-        <div className="feature-row">
-          <button className="feature-btn multiplayer" onClick={() => onShowModal('multiplayer')}>
-            👥 Multiplayer
-          </button>
-          <button className="feature-btn story" onClick={() => onShowModal('story')}>
-            📖 Story Mode
-          </button>
-          <button className="feature-btn challenges" onClick={() => onShowModal('challenges')}>
-            🎯 Challenges
-          </button>
-        </div>
-      </div>
-      
-      <div className="game-info">
-        <div className="info-panel">
-          <p>🎮 Use arrow keys or WASD to move, Space to shoot</p>
-          <p>📱 Touch controls available on mobile devices</p>
-          <p>🎯 Collect power-ups and defeat bosses to progress</p>
-        </div>
-        <div className="branding">
-          <p>© 2024 Bradley Virtual Solutions - Epic Space Adventures</p>
-        </div>
-      </div>
-      
-      {/* Character Selection Modal */}
-      {showCharacterModal && (
-        <CharacterModal 
-          onClose={() => setShowCharacterModal(false)}
-          onSelect={onCharacterSelect}
-          selectedCharacter={selectedCharacter}
-        />
-      )}
-    </div>
-  );
-};
-
-// Character Modal Component
-interface CharacterModalProps {
-  onClose: () => void;
-  onSelect: (character: 'kaden' | 'adelynn') => void;
-  selectedCharacter: 'kaden' | 'adelynn';
-}
-
-const CharacterModal: React.FC<CharacterModalProps> = ({ onClose, onSelect, selectedCharacter }) => {
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="character-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>👦🏿👧 Select Your Pilot</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
-        </div>
-        
-        <div className="character-cards">
-          <div 
-            className={`character-card ${selectedCharacter === 'kaden' ? 'selected' : ''}`}
-            onClick={() => onSelect('kaden')}
-          >
-            <div className="character-sprite">👦🏿</div>
-            <h3>Kaden</h3>
-            <p>Brave space pilot with lightning reflexes and tactical expertise. Perfect for aggressive players who love fast-paced action.</p>
-          </div>
-          
-          <div 
-            className={`character-card ${selectedCharacter === 'adelynn' ? 'selected' : ''}`}
-            onClick={() => onSelect('adelynn')}
-          >
-            <div className="character-sprite">👧</div>
-            <h3>Adelynn</h3>
-            <p>Skilled navigator with strategic thinking and precision shooting. Ideal for players who prefer calculated approaches.</p>
-          </div>
-        </div>
-        
-        <button className="confirm-btn" onClick={onClose}>
-          ✅ Confirm Selection
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Settings Modal Component
-interface SettingsModalProps {
-  onClose: () => void;
-  settings: GameSettings;
-  onUpdateSettings: (newSettings: Partial<GameSettings>) => void;
-}
-
-const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onUpdateSettings }) => {
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>⚙️ Game Settings</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
-        </div>
-        
-        <div className="settings-content">
-          <div className="settings-section">
-            <h3>🔊 Audio Settings</h3>
-            <div className="setting-group">
-              <label>Master Volume: {settings.audio.masterVolume}%</label>
-              <input 
-                type="range" 
-                min="0" 
-                max="100" 
-                value={settings.audio.masterVolume}
-                onChange={(e) => onUpdateSettings({
-                  audio: { ...settings.audio, masterVolume: parseInt(e.target.value) }
-                })}
-                className="slider"
-              />
-            </div>
-          </div>
-          
-          <div className="settings-actions">
-            <button className="reset-btn" onClick={() => console.log('Reset settings')}>
-              🔄 Reset
-            </button>
-            <button className="save-btn" onClick={onClose}>
-              💾 Save
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Game Scene Component
-interface GameSceneProps {
-  onSceneChange: (scene: GameState['currentScene']) => void;
-  selectedCharacter: 'kaden' | 'adelynn';
-  gameStats: GameState['gameStats'];
-  achievements: Array<{id: string, name: string, description: string, unlocked: boolean, progress: number, maxProgress: number}>;
-  setAchievements: React.Dispatch<React.SetStateAction<Array<{id: string, name: string, description: string, unlocked: boolean, progress: number, maxProgress: number}>>>;
-  inputSystem: InputSystem | null;
-  deviceInfo: any;
-  showTouchControls: boolean;
-  gameIntegration: CompleteGameIntegration | null;
-}
-
-const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter, gameStats, achievements, setAchievements, inputSystem, deviceInfo, showTouchControls, gameIntegration }) => {
-  const toastContext = React.useContext(ToastContext);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameLoopRef = useRef<number | undefined>(undefined);
+  const gameLoopRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(0);
   
   // Game state
-  const [gameState, setGameState] = useState({
-    paused: false,
-    gameOver: false,
-    score: 0,
+  const [gameState, setGameState] = useState<GameState>('menu');
+  const [selectedCharacter, setSelectedCharacter] = useState<string>('kaden');
+  const [showSettings, setShowSettings] = useState(false);
+  const [showCharacterSelection, setShowCharacterSelection] = useState(false);
+  const [currentStoryEvent, setCurrentStoryEvent] = useState<string>('');
+  
+  // Game objects
+  const playerRef = useRef<Player>({
+    x: 0,
+    y: 0,
+    width: 50,
+    height: 60,
+    speed: 5,
+    maxSpeed: 8,
+    health: 100,
+    maxHealth: 100,
+    invulnerable: false,
+    invulnerabilityTime: 0,
     level: 1,
-    lives: 3
+    xp: 0,
+    maxXP: 100,
+    hasShield: false,
+    shieldTime: 0,
+    rapidFire: false,
+    rapidFireTime: 0,
+    doubleShot: false,
+    wingFighters: []
   });
   
-  const [player, setPlayer] = useState({
-    x: 400,
-    y: 500,
-    width: 40,
-    height: 40,
-    speed: 5
-  });
+  const bulletsRef = useRef<Bullet[]>([]);
+  const enemiesRef = useRef<Enemy[]>([]);
+  const bossesRef = useRef<Boss[]>([]);
+  const powerUpsRef = useRef<PowerUp[]>([]);
+  const keysRef = useRef<{ [key: string]: boolean }>({});
+  const touchRef = useRef({ startX: 0, startY: 0, currentX: 0, currentY: 0 });
   
-  const [bullets, setBullets] = useState<Array<{x: number, y: number, width: number, height: number, speed: number, direction: number, type: 'player' | 'enemy'}>>([]);
-  const [enemies, setEnemies] = useState<Array<{x: number, y: number, width: number, height: number, speed: number, health: number, maxHealth: number}>>([]);
-  const [lastShot, setLastShot] = useState(0);
+  // Game stats
+  const [gameStats, setGameStats] = useState<GameStats>({
+    score: 0,
+    highScore: parseInt(localStorage.getItem('highScore') || '0'),
+    lives: 3,
+    health: 100,
+    maxHealth: 100,
+    combo: 0,
+    killStreak: 0,
+    maxCombo: 0,
+    maxKillStreak: 0,
+    playerLevel: 1,
+    playerXP: 0,
+    bossesDefeated: 0,
+    enemiesDestroyed: 0,
+    powerUpsCollected: 0,
+    gameTime: 0,
+    difficulty: 'medium',
+    wingFighters: 0,
+    shieldsUsed: 0,
+    weaponsUsed: 0,
+    livesLost: 0,
+    shieldTime: 0,
+    rapidFireTime: 0,
+    doubleShotTime: 0,
+    rapidFireUses: 0,
+    doubleShotUses: 0,
+    shieldUses: 0,
+    speedBoostUses: 0,
+    healthBoostUses: 0,
+    scoreMultiplierUses: 0
+  });
 
-  // Keyboard controls
+  // System refs
+  const powerUpSystemRef = useRef(new PowerUpSystem());
+  const wingFighterSystemRef = useRef(new WingFighterSystem());
+  const shieldSystemRef = useRef(new ShieldSystem());
+  const comboSystemRef = useRef(new ComboSystem());
+  const killStreakSystemRef = useRef(new KillStreakSystem());
+  const bossSystemRef = useRef(new EnhancedBossSystem());
+  const enemySystemRef = useRef(new EnhancedEnemySystem());
+  const achievementSystemRef = useRef(new EnhancedAchievementSystem());
+  const audioSystemRef = useRef(new AudioSystem());
+  const difficultySystemRef = useRef(new DifficultySystem());
+  const mobileSystemRef = useRef(new MobileSystem());
+  const responsiveSystemRef = useRef(new ResponsiveSystem());
+
+  // Initialize canvas with responsive system
   useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (gameState.paused || gameState.gameOver) return;
+    const canvas = canvasRef.current;
+    if (canvas) {
+      // Initialize responsive system
+      const responsiveSettings = responsiveSystemRef.current.initialize();
       
-      const canvas = canvasRef.current;
-      if (!canvas) return;
+      // Update canvas with responsive settings
+      responsiveSystemRef.current.updateCanvas(canvas);
       
-      switch (e.key) {
-        case 'ArrowUp':
-        case 'w':
-        case 'W':
-          e.preventDefault();
-          setPlayer(prev => ({ ...prev, y: Math.max(0, prev.y - prev.speed) }));
-          break;
-        case 'ArrowDown':
-        case 's':
-        case 'S':
-          e.preventDefault();
-          setPlayer(prev => ({ ...prev, y: Math.min(canvas.height - prev.height, prev.y + prev.speed) }));
-          break;
-        case 'ArrowLeft':
-        case 'a':
-        case 'A':
-          e.preventDefault();
-          setPlayer(prev => ({ ...prev, x: Math.max(0, prev.x - prev.speed) }));
-          break;
-        case 'ArrowRight':
-        case 'd':
-        case 'D':
-          e.preventDefault();
-          setPlayer(prev => ({ ...prev, x: Math.min(canvas.width - prev.width, prev.x + prev.speed) }));
-          break;
-        case ' ':
-          e.preventDefault();
-          if (Date.now() - lastShot > 200) {
-            setLastShot(Date.now());
-            setBullets(prev => [...prev, {
-              x: player.x + player.width / 2,
-              y: player.y,
-              width: 4,
-              height: 10,
-              speed: 8,
-              direction: -1,
-              type: 'player' as const
-            }]);
-          }
-          break;
-        case 'Escape':
-          e.preventDefault();
-          setGameState(prev => ({ ...prev, paused: !prev.paused }));
-          break;
+      // Initialize player position
+      playerRef.current.x = canvas.width / 2 - 25;
+      playerRef.current.y = canvas.height - 80;
+    }
+  }, []);
+
+  // Initialize audio system on first user interaction
+  useEffect(() => {
+    const initAudio = async () => {
+      await audioSystemRef.current.initOnUserInteraction();
+    };
+    
+    // Initialize audio on any user interaction
+    const handleUserInteraction = () => {
+      initAudio();
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+    
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('keydown', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
+    
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+  }, []);
+
+  // Keyboard event handlers
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      keysRef.current[event.code] = true;
+      
+      if (event.code === 'KeyS') {
+        event.preventDefault();
+        console.log('🎮 S key pressed!');
+        shoot();
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [gameState.paused, gameState.gameOver, player, lastShot]);
+    const handleKeyUp = (event: KeyboardEvent) => {
+      keysRef.current[event.code] = false;
+    };
 
-  // Initialize game integration when component mounts
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  // Touch event handlers
   useEffect(() => {
-    if (gameIntegration && canvasRef.current) {
-      console.log('🎮 Initializing game integration in GameScene...');
-      
-      // Set canvas ID for the integration system
-      canvasRef.current.id = 'gameCanvas';
-      
-      // Initialize the game integration
-      gameIntegration.initialize().then((success) => {
-        if (success) {
-          console.log('✅ Game integration initialized successfully');
-          gameIntegration.start();
-          console.log('🚀 Game started with full features');
-        } else {
-          console.error('❌ Failed to initialize game integration');
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleTouchStart = (event: TouchEvent) => {
+      event.preventDefault();
+      const touch = event.touches[0];
+      touchRef.current.startX = touch.clientX;
+      touchRef.current.startY = touch.clientY;
+      touchRef.current.currentX = touch.clientX;
+      touchRef.current.currentY = touch.clientY;
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      event.preventDefault();
+      const touch = event.touches[0];
+      touchRef.current.currentX = touch.clientX;
+      touchRef.current.currentY = touch.clientY;
+    };
+
+    const handleTouchEnd = (event: TouchEvent) => {
+      event.preventDefault();
+      const touch = event.changedTouches[0];
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const touchX = touch.clientX - rect.left;
+      const touchY = touch.clientY - rect.top;
+
+      // Check if touch is on shoot button
+      const shootButton = document.querySelector('.touch-shoot-button');
+      if (shootButton) {
+        const buttonRect = shootButton.getBoundingClientRect();
+        if (touchX >= buttonRect.left - rect.left && 
+            touchX <= buttonRect.right - rect.left &&
+            touchY >= buttonRect.top - rect.top && 
+            touchY <= buttonRect.bottom - rect.top) {
+          shoot();
+          mobileSystemRef.current.lightVibrate();
+          return;
         }
-      });
+      }
+
+      // Handle touch movement for player control
+      const deltaX = touchRef.current.currentX - touchRef.current.startX;
+      const deltaY = touchRef.current.currentY - touchRef.current.startY;
+      
+      if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+        // Move player based on touch movement
+        const canvas = canvasRef.current;
+        if (canvas) {
+          playerRef.current.x = Math.max(0, Math.min(canvas.width - playerRef.current.width, playerRef.current.x + deltaX * 0.5));
+          playerRef.current.y = Math.max(0, Math.min(canvas.height - playerRef.current.height, playerRef.current.y + deltaY * 0.5));
+        }
+      }
+    };
+
+    canvas.addEventListener('touchstart', handleTouchStart);
+    canvas.addEventListener('touchmove', handleTouchMove);
+    canvas.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      canvas.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
+
+  const startGame = useCallback(() => {
+    setGameState('playing');
+    
+    // Reset game stats
+    setGameStats(prevStats => ({
+      ...prevStats,
+      score: 0,
+      enemiesDestroyed: 0,
+      bossesDefeated: 0,
+      combo: 0,
+      killStreak: 0,
+      gameTime: 0,
+      weaponsUsed: 0,
+      livesLost: 0
+    }));
+    
+    // Reset player position
+    const canvas = canvasRef.current;
+    if (canvas) {
+      playerRef.current = {
+        x: canvas.width / 2 - 25,
+        y: canvas.height - 80,
+        width: 50,
+        height: 60,
+        speed: 5,
+        maxSpeed: 8,
+        health: 100,
+        maxHealth: 100,
+        invulnerable: false,
+        invulnerabilityTime: 0,
+        level: 1,
+        xp: 0,
+        maxXP: 100,
+        hasShield: false,
+        shieldTime: 0,
+        rapidFire: false,
+        rapidFireTime: 0,
+        doubleShot: false,
+        wingFighters: []
+      };
     }
     
-    return () => {
-      if (gameIntegration) {
-        gameIntegration.stop();
-      }
-    };
-  }, [gameIntegration]);
-
-  // Game loop for rendering
-  useEffect(() => {
-    const gameLoop = () => {
-      if (gameState.paused || gameState.gameOver) return;
-      
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      
-      // Clear canvas
-      ctx.fillStyle = '#000011';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw starfield
-      drawStarfield(ctx, canvas.width, canvas.height);
-      
-      // Draw player ship
-      drawPlayerShip(ctx, player, selectedCharacter);
-      
-      // Draw bullets with better design
-      bullets.forEach(bullet => {
-        ctx.save();
-        if (bullet.type === 'player') {
-          // Player bullets - energy beam style
-          ctx.fillStyle = '#00ff00';
-          ctx.shadowColor = '#00ff00';
-          ctx.shadowBlur = 5;
-          ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-          
-          // Bullet core
-          ctx.fillStyle = '#ffffff';
-          ctx.shadowBlur = 0;
-          ctx.fillRect(bullet.x + 1, bullet.y + 1, bullet.width - 2, bullet.height - 2);
-        } else {
-          // Enemy bullets - plasma style
-          ctx.fillStyle = '#ff0000';
-          ctx.shadowColor = '#ff0000';
-          ctx.shadowBlur = 5;
-          ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-          
-          // Bullet core
-          ctx.fillStyle = '#ffaa00';
-          ctx.shadowBlur = 0;
-          ctx.fillRect(bullet.x + 1, bullet.y + 1, bullet.width - 2, bullet.height - 2);
-        }
-        ctx.restore();
-      });
-      
-      // Draw enemies using proper ship designs
-      enemies.forEach(enemy => {
-        // Use different enemy types for variety
-        const enemyTypes = ['basic', 'fast', 'heavy', 'zigzag'];
-        const enemyType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
-        
-        ShipRenderer.drawEnemyShip(ctx, enemy.x, enemy.y, enemy.width, enemy.height, enemyType);
-        
-        // Health bar
-        ctx.fillStyle = '#ff0000';
-        ctx.fillRect(enemy.x, enemy.y - 10, enemy.width, 4);
-        ctx.fillStyle = '#00ff00';
-        ctx.fillRect(enemy.x, enemy.y - 10, (enemy.health / enemy.maxHealth) * enemy.width, 4);
-      });
-      
-      // Update bullets
-      setBullets(prev => prev.map(bullet => ({
-        ...bullet,
-        y: bullet.y + (bullet.speed * bullet.direction)
-      })).filter(bullet => bullet.y > 0 && bullet.y < canvas.height));
-      
-      // Update enemies
-      setEnemies(prev => prev.map(enemy => ({
-        ...enemy,
-        y: enemy.y + enemy.speed
-      })).filter(enemy => enemy.y < canvas.height));
-      
-      // Collision detection - bullets vs enemies
-      setBullets(prev => prev.filter(bullet => {
-        if (bullet.type === 'player') {
-          const hitEnemyIndex = enemies.findIndex(enemy => 
-            bullet.x < enemy.x + enemy.width &&
-            bullet.x + bullet.width > enemy.x &&
-            bullet.y < enemy.y + enemy.height &&
-            bullet.y + bullet.height > enemy.y
-          );
-          
-          if (hitEnemyIndex !== -1) {
-            // Hit enemy
-            setEnemies(prevEnemies => prevEnemies.map((enemy, index) => {
-              if (index === hitEnemyIndex) {
-                const newHealth = enemy.health - 25;
-                if (newHealth <= 0) {
-                  // Enemy destroyed - add score
-                  setGameState(prev => ({ ...prev, score: prev.score + 100 }));
-                }
-                return { ...enemy, health: newHealth };
-              }
-              return enemy;
-            }));
-            return false; // Remove bullet
-          }
-        }
-        return true; // Keep bullet
-      }));
-      
-      // Collision detection - player vs enemies
-      enemies.forEach((enemy, enemyIndex) => {
-        if (player.x < enemy.x + enemy.width &&
-            player.x + player.width > enemy.x &&
-            player.y < enemy.y + enemy.height &&
-            player.y + player.height > enemy.y) {
-          
-          // Player hit - remove enemy and lose life
-          setEnemies(prev => prev.filter((_, i) => i !== enemyIndex));
-          setGameState(prev => ({ 
-            ...prev, 
-            lives: prev.lives - 1,
-            gameOver: prev.lives <= 1
-          }));
-        }
-      });
-      
-      // Spawn enemies occasionally
-      if (Math.random() < 0.02) {
-        setEnemies(prev => [...prev, {
-          x: Math.random() * (canvas.width - 40),
-          y: -40,
-          width: 40,
-          height: 40,
-          speed: 2,
-          health: 100,
-          maxHealth: 100
-        }]);
-      }
-      
-      gameLoopRef.current = requestAnimationFrame(gameLoop);
-    };
+    // Clear all game objects
+    bulletsRef.current = [];
+    enemiesRef.current = [];
+    bossesRef.current = [];
+    powerUpsRef.current = [];
     
-    gameLoopRef.current = requestAnimationFrame(gameLoop);
+    // Reset systems
+    comboSystemRef.current = new ComboSystem();
+    killStreakSystemRef.current = new KillStreakSystem();
+    achievementSystemRef.current = new EnhancedAchievementSystem();
     
-    return () => {
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-      }
-    };
-  }, [gameState.paused, gameState.gameOver, player, bullets, enemies, selectedCharacter]);
+    console.log('🎮 Game started!');
+  }, []);
 
-  // Draw starfield
-  const drawStarfield = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+  // Game loop
+  const gameLoop = useCallback(() => {
+    if (gameState !== 'playing') return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Clear canvas
+    ctx.fillStyle = '#000011';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw starfield background
     ctx.fillStyle = '#ffffff';
     for (let i = 0; i < 100; i++) {
-      const x = (i * 37) % width;
-      const y = (i * 23) % height;
-      const size = Math.random() * 2;
-      ctx.fillRect(x, y, size, size);
+      const x = (i * 37) % canvas.width;
+      const y = (i * 23 + Date.now() * 0.1) % canvas.height;
+      ctx.fillRect(x, y, 1, 1);
     }
-  };
 
-  // Draw player ship using proper ship designs
-  const drawPlayerShip = (ctx: CanvasRenderingContext2D, player: any, character: string) => {
-    if (character === 'kaden') {
-      ShipRenderer.drawKadenShip(ctx, player.x, player.y, player.width, player.height);
-    } else {
-      ShipRenderer.drawAdelynnShip(ctx, player.x, player.y, player.width, player.height);
+    // Update game time
+    setGameStats(prevStats => ({
+      ...prevStats,
+      gameTime: prevStats.gameTime + 16
+    }));
+
+    // Update systems
+    comboSystemRef.current.updateCombo(16);
+    killStreakSystemRef.current.updateStreak(16);
+
+    // Update player
+    updatePlayer();
+    
+    // Update bullets
+    updateBullets();
+    
+    // Update enemies
+    updateEnemies();
+    
+    // Update bosses
+    updateBosses();
+    
+    // Update power-ups
+    updatePowerUps();
+    
+    // Check collisions
+    checkCollisions();
+    
+    // Draw everything
+    drawPlayer(ctx);
+    drawBullets(ctx);
+    drawEnemies(ctx);
+    drawBosses(ctx);
+    drawPowerUps(ctx);
+    drawUI(ctx);
+
+    // Continue game loop
+    requestAnimationFrame(gameLoop);
+  }, [gameState]);
+
+  // Start game loop when game starts
+  useEffect(() => {
+    if (gameState === 'playing') {
+      gameLoop();
+    }
+  }, [gameState, gameLoop]);
+
+  // Update functions
+  const updatePlayer = useCallback(() => {
+    const player = playerRef.current;
+    const keys = keysRef.current;
+
+    // Handle player movement
+    if (keys['ArrowLeft'] || keys['KeyA']) {
+      player.x = Math.max(0, player.x - player.speed);
+    }
+    if (keys['ArrowRight'] || keys['KeyD']) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        player.x = Math.min(canvas.width - player.width, player.x + player.speed);
+      }
+    }
+    if (keys['ArrowUp'] || keys['KeyW']) {
+      player.y = Math.max(0, player.y - player.speed);
+    }
+    if (keys['ArrowDown'] || keys['KeyS']) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        player.y = Math.min(canvas.height - player.height, player.y + player.speed);
+      }
+    }
+
+    // Update invulnerability
+    if (player.invulnerable) {
+      player.invulnerabilityTime--;
+      if (player.invulnerabilityTime <= 0) {
+        player.invulnerable = false;
+      }
+    }
+  }, []);
+
+  const updateBullets = useCallback(() => {
+    const bullets = bulletsRef.current;
+    
+    if (bullets.length > 0) {
+      console.log('🔫 Updating bullets:', bullets.length);
     }
     
-    // Health bar
-    ctx.save();
-    ctx.fillStyle = '#ff0000';
-    ctx.fillRect(player.x, player.y - 15, player.width, 4);
-    ctx.fillStyle = '#00ff00';
-    ctx.fillRect(player.x, player.y - 15, player.width, 4);
-    ctx.restore();
-  };
-  
-  return (
-    <div className="game-scene">
-      <div className="game-header">
-        <button className="back-to-menu-btn" onClick={() => onSceneChange('menu')}>
-          ← Back to Menu
-        </button>
+    bullets.forEach((bullet, index) => {
+      bullet.y += bullet.speed * (bullet.owner === 'player' ? -1 : 1);
+      
+      // Remove bullets that are off screen
+      const canvas = canvasRef.current;
+      if (canvas && (bullet.y < 0 || bullet.y > canvas.height)) {
+        bullets.splice(index, 1);
+        console.log('🗑️ Bullet removed, remaining:', bullets.length);
+      }
+    });
+  }, []);
+
+  const updateEnemies = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    // Use enhanced enemy system
+    const newEnemy = enemySystemRef.current.spawnEnemy(canvas, gameStats.score);
+    if (newEnemy) {
+      enemiesRef.current.push(newEnemy);
+    }
+    
+    // Update existing enemies with enhanced AI
+    enemiesRef.current.forEach((enemy, index) => {
+      enemySystemRef.current.updateEnemyAI(enemy, playerRef.current.x, playerRef.current.y, canvas, 16);
+      
+      // Remove enemies that are off screen
+      if (enemy.y > canvas.height) {
+        enemiesRef.current.splice(index, 1);
+      }
+    });
+  }, []);
+
+  const updateBosses = useCallback(() => {
+    // Boss spawning logic would go here
+    // For now, just update existing bosses
+    const bosses = bossesRef.current;
+    bosses.forEach((boss, index) => {
+      boss.y += boss.speed;
+      
+      // Remove bosses that are off screen
+      const canvas = canvasRef.current;
+      if (canvas && boss.y > canvas.height) {
+        bosses.splice(index, 1);
+      }
+    });
+  }, []);
+
+  const updatePowerUps = useCallback(() => {
+    const powerUps = powerUpsRef.current;
+    
+    powerUps.forEach((powerUp, index) => {
+      powerUp.y += 2; // Fixed speed for power-ups
+      
+      // Remove power-ups that are off screen
+      const canvas = canvasRef.current;
+      if (canvas && powerUp.y > canvas.height) {
+        powerUps.splice(index, 1);
+      }
+    });
+  }, []);
+
+  const checkCollisions = useCallback(() => {
+    const player = playerRef.current;
+    const bullets = bulletsRef.current;
+    const enemies = enemiesRef.current;
+    const powerUps = powerUpsRef.current;
+
+    // Player vs Enemies
+    enemies.forEach((enemy, enemyIndex) => {
+      if (player.x < enemy.x + enemy.width &&
+          player.x + player.width > enemy.x &&
+          player.y < enemy.y + enemy.height &&
+          player.y + player.height > enemy.y) {
         
-        <div className="game-stats">
-          <div className="stat-item">
-            <span className="stat-label">Score</span>
-            <span className="stat-value">{gameState.score}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Level</span>
-            <span className="stat-value">{gameState.level}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Lives</span>
-            <span className="stat-value">{gameState.lives}</span>
-          </div>
-        </div>
-      </div>
-      
-      <div className="game-canvas">
-        <canvas 
-          ref={canvasRef}
-          id="gameCanvas" 
-          width={800} 
-          height={600}
-          className="responsive-canvas"
-        ></canvas>
-        
-        {gameState.gameOver && (
-          <div className="game-over-overlay">
-            <div className="game-over-content">
-              <h2>💥 Game Over!</h2>
-              <p>Final Score: {gameState.score}</p>
-              <p>Level Reached: {gameState.level}</p>
-              <button className="restart-btn" onClick={() => window.location.reload()}>
-                🔄 Play Again
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-      
-      <div className="game-controls">
-        <div className="control-info">
-          🎮 Use arrow keys or WASD to move, Space to shoot
-        </div>
-        {showTouchControls && (
-          <div className="power-up-info">
-            📱 Touch controls enabled for mobile
-          </div>
-        )}
-      </div>
-      
-      {/* Touch Controls for Mobile */}
-      {showTouchControls && (
-        <TouchControls
-          onMovement={(x, y) => {
-            // Handle touch movement
-            if (inputSystem) {
-              // Update player position based on touch input
-              setPlayer(prev => ({
-                ...prev,
-                x: Math.max(0, Math.min(800 - prev.width, prev.x + x * 5)),
-                y: Math.max(0, Math.min(600 - prev.height, prev.y + y * 5))
+        // Player takes damage
+        takeDamage(20);
+        enemies.splice(enemyIndex, 1);
+      }
+    });
+
+    // Bullets vs Enemies
+    bullets.forEach((bullet, bulletIndex) => {
+      if (bullet.owner === 'player') {
+        enemies.forEach((enemy, enemyIndex) => {
+          if (bullet.x < enemy.x + enemy.width &&
+              bullet.x + bullet.width > enemy.x &&
+              bullet.y < enemy.y + enemy.height &&
+              bullet.y + bullet.height > enemy.y) {
+            
+            // Enemy takes damage
+            enemy.health--;
+            bullets.splice(bulletIndex, 1);
+            
+            if (enemy.health <= 0) {
+              // Enemy destroyed - use combo system
+              enemies.splice(enemyIndex, 1);
+              const comboMultiplier = comboSystemRef.current.addKill();
+              const baseScore = 100;
+              const finalScore = baseScore * comboMultiplier;
+              
+              setGameStats(prevStats => ({
+                ...prevStats,
+                score: prevStats.score + finalScore,
+                enemiesDestroyed: prevStats.enemiesDestroyed + 1
               }));
             }
-          }}
-          onShoot={() => {
-            // Handle touch shoot
-            if (Date.now() - lastShot > 200) {
-              setLastShot(Date.now());
-              setBullets(prev => [...prev, {
-                x: player.x + player.width / 2,
-                y: player.y,
-                width: 4,
-                height: 10,
-                speed: 8,
-                direction: -1,
-                type: 'player' as const
-              }]);
-            }
-          }}
-          onWeaponSwitch={(weapon) => {
-            // Handle weapon switching
-            console.log('Switching to weapon:', weapon);
-          }}
-          onPause={() => {
-            // Handle pause
-            setGameState(prev => ({ ...prev, paused: !prev.paused }));
-          }}
-          isVisible={showTouchControls}
-        />
+          }
+        });
+      }
+    });
+
+    // Player vs Power-ups
+    powerUps.forEach((powerUp, powerUpIndex) => {
+      if (player.x < powerUp.x + powerUp.width &&
+          player.x + player.width > powerUp.x &&
+          player.y < powerUp.y + powerUp.height &&
+          player.y + player.height > powerUp.y) {
+        
+        // Collect power-up
+        powerUps.splice(powerUpIndex, 1);
+        // Power-up effects would be applied here
+        setGameStats(prevStats => ({
+          ...prevStats,
+          score: prevStats.score + 50
+        }));
+      }
+    });
+  }, []);
+
+  const takeDamage = useCallback((damage: number) => {
+    const player = playerRef.current;
+    
+    if (player.invulnerable) return;
+    
+    player.health -= damage;
+    player.invulnerable = true;
+    player.invulnerabilityTime = 60; // 1 second at 60fps
+    
+    if (player.health <= 0) {
+      setGameState('gameOver');
+      setGameStats(prevStats => ({
+        ...prevStats,
+        livesLost: prevStats.livesLost + 1
+      }));
+    }
+  }, []);
+
+  // Draw functions
+  const drawPlayer = useCallback((ctx: CanvasRenderingContext2D) => {
+    const player = playerRef.current;
+    
+    if (player.invulnerable) {
+      ctx.globalAlpha = 0.5;
+    }
+
+    // Draw enhanced player ship using ShipRenderer
+    if (selectedCharacter === 'kaden') {
+      ShipRenderer.drawKadenShip(ctx, player.x, player.y, player.width, player.height, 0);
+    } else if (selectedCharacter === 'adelynn') {
+      ShipRenderer.drawAdelynnShip(ctx, player.x, player.y, player.width, player.height, 0);
+    }
+
+    ctx.globalAlpha = 1;
+  }, [selectedCharacter]);
+
+  const drawBullets = useCallback((ctx: CanvasRenderingContext2D) => {
+    const bullets = bulletsRef.current;
+    
+    if (bullets.length > 0) {
+      console.log('🎨 Drawing bullets:', bullets.length);
+    }
+    
+    bullets.forEach(bullet => {
+      ctx.save();
+      
+      // Enhanced bullet drawing
+      if (bullet.owner === 'player') {
+        // Player bullets - energy blasts
+        ctx.fillStyle = bullet.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = bullet.color;
+        
+        // Draw energy bullet
+        ctx.beginPath();
+        ctx.arc(bullet.x + bullet.width/2, bullet.y + bullet.height/2, bullet.width/2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Add glow effect
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath();
+        ctx.arc(bullet.x + bullet.width/2, bullet.y + bullet.height/2, bullet.width/4, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Enemy bullets - plasma shots
+        ctx.fillStyle = bullet.color;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = bullet.color;
+        
+        // Draw plasma bullet
+        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        
+        // Add inner glow
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.5;
+        ctx.fillRect(bullet.x + 1, bullet.y + 1, bullet.width - 2, bullet.height - 2);
+      }
+      
+      ctx.restore();
+    });
+  }, []);
+
+  const drawEnemies = useCallback((ctx: CanvasRenderingContext2D) => {
+    const enemies = enemiesRef.current;
+    
+    enemies.forEach(enemy => {
+      ShipRenderer.drawEnemyShip(ctx, enemy.x, enemy.y, enemy.width, enemy.height, enemy.type, 0);
+    });
+  }, []);
+
+  const drawBosses = useCallback((ctx: CanvasRenderingContext2D) => {
+    const bosses = bossesRef.current;
+    
+    bosses.forEach(boss => {
+      ShipRenderer.drawBossShip(ctx, boss.x, boss.y, boss.width, boss.height, boss.health, boss.maxHealth);
+    });
+  }, []);
+
+  const drawPowerUps = useCallback((ctx: CanvasRenderingContext2D) => {
+    const powerUps = powerUpsRef.current;
+    
+    powerUps.forEach(powerUp => {
+      ctx.fillStyle = powerUp.color;
+      ctx.shadowBlur = 5;
+      ctx.shadowColor = powerUp.color;
+      ctx.fillRect(powerUp.x, powerUp.y, powerUp.width, powerUp.height);
+      ctx.shadowBlur = 0;
+    });
+  }, []);
+
+  const drawUI = useCallback((ctx: CanvasRenderingContext2D) => {
+    const player = playerRef.current;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Score
+    ctx.fillStyle = '#00aaff';
+    ctx.font = '24px Arial';
+    ctx.fillText(`Score: ${gameStats.score.toLocaleString()}`, 20, 40);
+
+    // Combo display
+    const currentCombo = comboSystemRef.current.getCurrentCombo();
+    const comboMultiplier = comboSystemRef.current.getComboMultiplier();
+    if (currentCombo > 0) {
+      ctx.fillStyle = '#ff6600';
+      ctx.font = '20px Arial';
+      ctx.fillText(`Combo: ${currentCombo}x${comboMultiplier}`, 20, 70);
+    }
+
+    // Health bar
+    const healthBarWidth = 200;
+    const healthBarHeight = 20;
+    const healthPercentage = player.health / player.maxHealth;
+    
+    ctx.fillStyle = '#333333';
+    ctx.fillRect(20, canvas.height - 40, healthBarWidth, healthBarHeight);
+    
+    ctx.fillStyle = healthPercentage > 0.5 ? '#00ff00' : healthPercentage > 0.25 ? '#ffff00' : '#ff0000';
+    ctx.fillRect(20, canvas.height - 40, healthBarWidth * healthPercentage, healthBarHeight);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '16px Arial';
+    ctx.fillText(`Health: ${player.health}/${player.maxHealth}`, 20, canvas.height - 45);
+  }, [gameStats.score]);
+
+  const shoot = useCallback(() => {
+    if (gameState !== 'playing') return;
+
+    const player = playerRef.current;
+    const bullets = bulletsRef.current;
+
+    // Player bullet
+    bullets.push({
+      x: player.x + player.width / 2 - 2,
+      y: player.y,
+      width: 4,
+      height: 10,
+      speed: 8,
+      type: 'energy',
+      color: '#00aaff',
+      damage: 1,
+      owner: 'player'
+    });
+
+    // Debug logging
+    console.log('🚀 Player shot! Bullets count:', bullets.length);
+
+    // Update weapons used stat
+    setGameStats(prevStats => ({
+      ...prevStats,
+      weaponsUsed: prevStats.weaponsUsed + 1
+    }));
+  }, [gameState]);
+
+  return (
+    <div className="game-container">
+      <canvas 
+        ref={canvasRef}
+        className="game-canvas"
+        width={800}
+        height={600}
+      />
+      
+      {gameState === 'menu' && (
+        <div className="main-menu-container">
+          {/* Animated Background */}
+          <div className="menu-background">
+            <div className="stars"></div>
+            <div className="nebula"></div>
+          </div>
+          
+          {/* Main Menu Content */}
+          <div className="menu-content">
+            {/* Game Title with Scrolling Animation */}
+            <div className="title-container">
+              <h1 className="game-title">
+                <span className="title-text">🚀 Kaden & Adelynn Space Adventures</span>
+              </h1>
+              <p className="game-subtitle">Epic Space Shooter Adventure</p>
+              <p style={{color: 'white', fontSize: '14px', marginTop: '10px'}}>Debug: Menu is rendering, gameState: {gameState}</p>
+            </div>
+            
+            {/* Character Display Section */}
+            <div className="character-section">
+              <div className="selected-character-card">
+                <div className="character-sprite-container">
+                  <canvas 
+                    ref={(canvas) => {
+                      if (canvas) {
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) return;
+                        canvas.width = 120;
+                        canvas.height = 120;
+                        
+                        // Clear canvas
+                        ctx.clearRect(0, 0, 120, 120);
+                        
+                        // Draw character
+                        if (selectedCharacter === 'kaden') {
+                          const kadenRenderer = new KadenSpriteRenderer();
+                          kadenRenderer.renderKaden(ctx, 60, 60, 'idle', Date.now());
+                        } else if (selectedCharacter === 'adelynn') {
+                          const adelynnRenderer = new AdelynnSpriteRenderer();
+                          adelynnRenderer.renderAdelynn(ctx, 60, 60, 'idle', Date.now());
+                        }
+                      }
+                    }}
+                    width="120" 
+                    height="120"
+                    className="character-sprite"
+                  />
+                </div>
+                <div className="character-info">
+                  <h3 className="character-name">
+                    {Storyline.characters[selectedCharacter as keyof typeof Storyline.characters]?.name}
+                  </h3>
+                  <p className="character-ship">
+                    {Storyline.characters[selectedCharacter as keyof typeof Storyline.characters]?.ship}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Menu Buttons */}
+            <div className="menu-buttons-container">
+              <button className="menu-button primary" onClick={startGame}>
+                <span className="button-icon">🎮</span>
+                <span className="button-text">Start Game</span>
+              </button>
+              
+              <button className="menu-button secondary" onClick={() => setShowCharacterSelection(true)}>
+                <span className="button-icon">👥</span>
+                <span className="button-text">Choose Character</span>
+              </button>
+              
+              <button className="menu-button secondary" onClick={() => setShowSettings(true)}>
+                <span className="button-icon">⚙️</span>
+                <span className="button-text">Settings</span>
+              </button>
+            </div>
+            
+            {/* Game Information */}
+            <div className="game-info-section">
+              <div className="info-grid">
+                <div className="info-item">
+                  <span className="info-icon">🎯</span>
+                  <span className="info-text">Defend the galaxy from alien invaders!</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-icon">🚀</span>
+                  <span className="info-text">Power-ups, Boss Battles, Achievements & More!</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-icon">🎮</span>
+                  <span className="info-text">Arrow Keys / WASD to move, S to shoot</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-icon">📱</span>
+                  <span className="info-text">Touch controls with haptic feedback</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Company Branding */}
+            <div className="company-branding">
+              <p>© 2025 Bradley Virtual Solutions, LLC</p>
+            </div>
+          </div>
+        </div>
       )}
+      
+      {gameState === 'gameOver' && (
+        <div className="game-over-overlay">
+          <h2 className="game-over-title">💥 Game Over!</h2>
+          <div className="game-over-stats">
+            <p><strong>🏆 Final Score:</strong> {gameStats.score.toLocaleString()}</p>
+            <p><strong>⭐ High Score:</strong> {gameStats.highScore.toLocaleString()}</p>
+            <p><strong>👾 Enemies Destroyed:</strong> {gameStats.enemiesDestroyed}</p>
+            <p><strong>👹 Bosses Defeated:</strong> {gameStats.bossesDefeated}</p>
+            <p><strong>🔥 Max Combo:</strong> {gameStats.maxCombo}</p>
+            <p><strong>⚔️ Max Kill Streak:</strong> {gameStats.maxKillStreak}</p>
+            <p><strong>⏰ Survival Time:</strong> {Math.floor(gameStats.gameTime / 1000)}s</p>
+          </div>
+          <div className="game-over-buttons">
+            <button className="menu-button" onClick={startGame}>
+              🔄 Play Again
+            </button>
+            <button className="menu-button" onClick={() => setGameState('menu')}>
+              🏠 Main Menu
+            </button>
+          </div>
+          <p className="company-branding"><strong>© 2025 Bradley Virtual Solutions, LLC</strong></p>
+        </div>
+      )}
+      
+      {gameState === 'playing' && mobileSystemRef.current.hasTouchSupport() && (
+        <div className="touch-controls">
+          <button 
+            className="touch-shoot-button"
+            onTouchStart={(e) => {
+              e.preventDefault();
+              shoot();
+              mobileSystemRef.current.lightVibrate();
+            }}
+          >
+            🔫 SHOOT
+          </button>
+        </div>
+      )}
+
+      {/* Settings Panel */}
+      <SettingsPanel 
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        onSettingsChange={() => {}}
+      />
+
+      {/* Character Selection */}
+      <CharacterSelection 
+        isOpen={showCharacterSelection}
+        onClose={() => setShowCharacterSelection(false)}
+        onCharacterSelect={setSelectedCharacter}
+      />
+
+      {/* Story Event Display */}
+      {currentStoryEvent && (
+        <div className="story-event-display">
+          <div className="story-event-content">
+            <h3>📖 Story Event</h3>
+            <p>{currentStoryEvent}</p>
+            <button onClick={() => setCurrentStoryEvent('')}>Continue</button>
+          </div>
+        </div>
+      )}
+      
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 };
