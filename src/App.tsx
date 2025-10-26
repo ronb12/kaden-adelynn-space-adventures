@@ -684,7 +684,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
   });
   
   const [bullets, setBullets] = useState<Array<{x: number, y: number, width: number, height: number, speed: number, direction: number, type: 'player' | 'enemy'}>>([]);
-  const [enemies, setEnemies] = useState<Array<{x: number, y: number, width: number, height: number, speed: number, health: number}>>([]);
+  const [enemies, setEnemies] = useState<Array<{x: number, y: number, width: number, height: number, speed: number, health: number, maxHealth: number}>>([]);
   const [lastShot, setLastShot] = useState(0);
 
   // Keyboard controls
@@ -802,14 +802,21 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
       
       // Draw enemies
       enemies.forEach(enemy => {
-        ctx.fillStyle = '#ff6666';
+        // Enemy ship body - bright red for visibility
+        ctx.fillStyle = '#ff0000';
         ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
         
-        // Health bar
+        // Enemy ship details - darker red for contrast
+        ctx.fillStyle = '#cc0000';
+        ctx.fillRect(enemy.x + 5, enemy.y + 5, enemy.width - 10, enemy.height - 10);
+        
+        // Health bar background
         ctx.fillStyle = '#ff0000';
         ctx.fillRect(enemy.x, enemy.y - 10, enemy.width, 4);
+        
+        // Health bar foreground
         ctx.fillStyle = '#00ff00';
-        ctx.fillRect(enemy.x, enemy.y - 10, (enemy.health / 100) * enemy.width, 4);
+        ctx.fillRect(enemy.x, enemy.y - 10, (enemy.health / enemy.maxHealth) * enemy.width, 4);
       });
       
       // Update bullets
@@ -824,15 +831,62 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
         y: enemy.y + enemy.speed
       })).filter(enemy => enemy.y < canvas.height));
       
+      // Collision detection - bullets vs enemies
+      setBullets(prev => prev.filter(bullet => {
+        if (bullet.type === 'player') {
+          const hitEnemyIndex = enemies.findIndex(enemy => 
+            bullet.x < enemy.x + enemy.width &&
+            bullet.x + bullet.width > enemy.x &&
+            bullet.y < enemy.y + enemy.height &&
+            bullet.y + bullet.height > enemy.y
+          );
+          
+          if (hitEnemyIndex !== -1) {
+            // Hit enemy
+            setEnemies(prevEnemies => prevEnemies.map((enemy, index) => {
+              if (index === hitEnemyIndex) {
+                const newHealth = enemy.health - 25;
+                if (newHealth <= 0) {
+                  // Enemy destroyed - add score
+                  setGameState(prev => ({ ...prev, score: prev.score + 100 }));
+                }
+                return { ...enemy, health: newHealth };
+              }
+              return enemy;
+            }));
+            return false; // Remove bullet
+          }
+        }
+        return true; // Keep bullet
+      }));
+      
+      // Collision detection - player vs enemies
+      enemies.forEach((enemy, enemyIndex) => {
+        if (player.x < enemy.x + enemy.width &&
+            player.x + player.width > enemy.x &&
+            player.y < enemy.y + enemy.height &&
+            player.y + player.height > enemy.y) {
+          
+          // Player hit - remove enemy and lose life
+          setEnemies(prev => prev.filter((_, i) => i !== enemyIndex));
+          setGameState(prev => ({ 
+            ...prev, 
+            lives: prev.lives - 1,
+            gameOver: prev.lives <= 1
+          }));
+        }
+      });
+      
       // Spawn enemies occasionally
-      if (Math.random() < 0.01) {
+      if (Math.random() < 0.02) {
         setEnemies(prev => [...prev, {
           x: Math.random() * (canvas.width - 40),
           y: -40,
           width: 40,
           height: 40,
           speed: 2,
-          health: 100
+          health: 100,
+          maxHealth: 100
         }]);
       }
       
@@ -876,9 +930,11 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
       ctx.closePath();
       ctx.fill();
       
-      // Ship details
+      // Ship details - subtle white accent
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(-player.width / 4, -player.height / 4, player.width / 2, player.height / 2);
+      ctx.globalAlpha = 0.3;
+      ctx.fillRect(-player.width / 6, -player.height / 6, player.width / 3, player.height / 3);
+      ctx.globalAlpha = 1.0;
     } else {
       // Adelynn's ship - more rounded
       ctx.fillStyle = '#E24A90';
@@ -886,11 +942,13 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
       ctx.ellipse(0, 0, player.width / 2, player.height / 2, 0, 0, Math.PI * 2);
       ctx.fill();
       
-      // Ship details
+      // Ship details - subtle white accent
       ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 0.3;
       ctx.beginPath();
-      ctx.ellipse(0, 0, player.width / 3, player.height / 3, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, player.width / 4, player.height / 4, 0, 0, Math.PI * 2);
       ctx.fill();
+      ctx.globalAlpha = 1.0;
     }
     
     // Health bar
