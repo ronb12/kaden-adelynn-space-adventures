@@ -428,6 +428,7 @@ const App: React.FC = () => {
           inputSystem={inputSystem.current}
           deviceInfo={deviceInfo}
           showTouchControls={showTouchControls}
+          gameIntegration={gameIntegration.current}
         />;
       default:
         return <MainMenu 
@@ -657,9 +658,10 @@ interface GameSceneProps {
   inputSystem: InputSystem | null;
   deviceInfo: any;
   showTouchControls: boolean;
+  gameIntegration: CompleteGameIntegration | null;
 }
 
-const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter, gameStats, achievements, setAchievements, inputSystem, deviceInfo, showTouchControls }) => {
+const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter, gameStats, achievements, setAchievements, inputSystem, deviceInfo, showTouchControls, gameIntegration }) => {
   const toastContext = React.useContext(ToastContext);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number | undefined>(undefined);
@@ -743,6 +745,33 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [gameState.paused, gameState.gameOver, player, lastShot]);
+
+  // Initialize game integration when component mounts
+  useEffect(() => {
+    if (gameIntegration && canvasRef.current) {
+      console.log('🎮 Initializing game integration in GameScene...');
+      
+      // Set canvas ID for the integration system
+      canvasRef.current.id = 'gameCanvas';
+      
+      // Initialize the game integration
+      gameIntegration.initialize().then((success) => {
+        if (success) {
+          console.log('✅ Game integration initialized successfully');
+          gameIntegration.start();
+          console.log('🚀 Game started with full features');
+        } else {
+          console.error('❌ Failed to initialize game integration');
+        }
+      });
+    }
+    
+    return () => {
+      if (gameIntegration) {
+        gameIntegration.stop();
+      }
+    };
+  }, [gameIntegration]);
 
   // Game loop for rendering
   useEffect(() => {
@@ -899,7 +928,7 @@ const GameScene: React.FC<GameSceneProps> = ({ onSceneChange, selectedCharacter,
       <div className="game-canvas">
         <canvas 
           ref={canvasRef}
-          id="game-canvas" 
+          id="gameCanvas" 
           width={800} 
           height={600}
           className="responsive-canvas"
